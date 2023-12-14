@@ -1,4 +1,4 @@
-namespace Shared;
+namespace Base.EventBus;
 
 public interface IIntegrationEvent
 {

@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
+using Base.EventBus;
 using Kafka.Message;
-using Shared;
 
 namespace Kafka.Producer
 {

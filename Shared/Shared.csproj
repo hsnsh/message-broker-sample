@@ -6,4 +6,9 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\Base.EventBus.Kafka\Base.EventBus.Kafka.csproj" />
+      <ProjectReference Include="..\Base.EventBus.RabbitMQ\Base.EventBus.RabbitMQ.csproj" />
+    </ItemGroup>
+
 </Project>

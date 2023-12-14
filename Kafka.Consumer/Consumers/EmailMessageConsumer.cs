@@ -2,6 +2,7 @@
 using Confluent.Kafka;
 using Kafka.Message;
 using Kafka.Message.Tools;
+using Shared;
 
 namespace Kafka.Consumer.Consumers
 {

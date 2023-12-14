@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Base.EventBus;
 using Confluent.Kafka;
 using Kafka.Message;
 using Kafka.Producer.Converters;
 using Newtonsoft.Json;
-using Shared;
 
 namespace Kafka.Producer
 {

@@ -1,6 +1,7 @@
 ﻿
 
 using Kafka.Message;
+using Shared;
 
 namespace Kafka.Producer
 {

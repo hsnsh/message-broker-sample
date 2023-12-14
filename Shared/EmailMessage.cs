@@ -1,6 +1,6 @@
-﻿using Shared;
+﻿using Base.EventBus;
 
-namespace Kafka.Message
+namespace Shared
 {
     public class EmailMessage : IIntegrationEvent
     {
