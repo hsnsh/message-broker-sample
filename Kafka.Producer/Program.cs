@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+
 using Kafka.Message;
 
 namespace Kafka.Producer

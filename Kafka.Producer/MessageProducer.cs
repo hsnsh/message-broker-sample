@@ -4,6 +4,7 @@ using Confluent.Kafka;
 using Kafka.Message;
 using Kafka.Producer.Converters;
 using Newtonsoft.Json;
+using Shared;
 
 namespace Kafka.Producer
 {
@@ -34,7 +35,7 @@ namespace Kafka.Producer
         //     Console.WriteLine(!r.Error.IsError ? $"Delivered message to {r.TopicPartitionOffset}" : $"Delivery Error: {r.Error.Reason}");
         // }
 
-        public bool Produce(IMessageBase message, string topic, string key = null)
+        public bool Produce(IIntegrationEvent message, string topic, string key = null)
         {
             //https://stackoverflow.com/a/29515696
             //If you require that messages with the same key (for instance, a unique id) are always seen in the
@@ -56,7 +57,7 @@ namespace Kafka.Producer
             }
         }
 
-        public async Task<bool> ProduceAsync(IMessageBase message, string topic, string key = null)
+        public async Task<bool> ProduceAsync(IIntegrationEvent message, string topic, string key = null)
         {
             //https://stackoverflow.com/a/29515696
             //If you require that messages with the same key (for instance, a unique id) are always seen in the
