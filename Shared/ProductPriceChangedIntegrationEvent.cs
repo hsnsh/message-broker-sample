@@ -2,7 +2,7 @@ using Base.EventBus;
 
 namespace Shared;
 
-public class ProductPriceChangedIntegrationEvent : IIntegrationEvent
+public class ProductPriceChangedIntegrationEvent : IntegrationEvent
 {
     public int ProductId { get; private set; }
     public decimal NewPrice { get; private set; }

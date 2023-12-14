@@ -2,14 +2,14 @@ namespace Base.EventBus;
 
 public interface IEventBus
 {
-    Task PublishAsync(IIntegrationEvent @event);
+    void Publish(IntegrationEvent @event);
 
-    IDisposable Subscribe<TEvent, THandler>()
-        where TEvent : IIntegrationEvent
+    void Subscribe<TEvent, THandler>()
+        where TEvent : IntegrationEvent
         where THandler : IIntegrationEventHandler<TEvent>;
 
     void Unsubscribe<TEvent, THandler>()
-        where TEvent : IIntegrationEvent
+        where TEvent : IntegrationEvent
         where THandler : IIntegrationEventHandler<TEvent>;
 }
 

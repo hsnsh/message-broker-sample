@@ -9,11 +9,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Confluent.Kafka" Version="2.1.1"/>
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
-    </ItemGroup>
-
-    <ItemGroup>
         <ProjectReference Include="..\Kafka.Message\Kafka.Message.csproj"/>
     </ItemGroup>
 

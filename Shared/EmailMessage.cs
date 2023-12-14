@@ -2,7 +2,7 @@
 
 namespace Shared
 {
-    public class EmailMessage : IIntegrationEvent
+    public class EmailMessage : IntegrationEvent
     {
         public string To { get; set; }
         public string Subject { get; set; }
