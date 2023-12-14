@@ -25,7 +25,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Base.EventBus.RabbitMQ", "B
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Services", "Services", "{72EA5373-07DA-4764-AD5F-73D83A4788AB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotificationProducer", "NotificationProducer\NotificationProducer.csproj", "{5B8ACEAA-53C6-4AA9-9A10-C9A9F18ABC1B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShipmentProducer", "ShipmentProducer\ShipmentProducer.csproj", "{5B8ACEAA-53C6-4AA9-9A10-C9A9F18ABC1B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogConsumer", "LogConsumer\LogConsumer.csproj", "{12C37FC3-3D7B-4218-8F2D-48972004BE0E}"
 EndProject
