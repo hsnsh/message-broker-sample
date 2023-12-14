@@ -1,35 +1,32 @@
-﻿using System;
-using Confluent.Kafka;
-using Kafka.Message;
+﻿using Confluent.Kafka;
 using Kafka.Message.Tools;
 using Shared;
 
-namespace Kafka.Consumer.Consumers
+namespace Kafka.Consumer.Consumers;
+
+public class EmailMessageConsumer : MessageConsumerBase<EmailMessage>
 {
-    public class EmailMessageConsumer : MessageConsumerBase<EmailMessage>
+    public EmailMessageConsumer() : base("emailmessage-topic")
     {
-        public EmailMessageConsumer() : base("emailmessage-topic")
-        {
-        }
+    }
 
-        public EmailMessageConsumer(string? consumerSuffix = "group") : base("emailmessage-topic", consumerSuffix)
-        {
-        }
+    public EmailMessageConsumer(string? consumerSuffix = "group") : base("emailmessage-topic", consumerSuffix)
+    {
+    }
 
-        public override void OnMessageDelivered(EmailMessage message)
-        {
-            ConsoleWriter.Info($"To: {message.To} \nContent: {message.Content} \nSubject: {message.Subject}");
-            //todo email send business logic
+    public override void OnMessageDelivered(EmailMessage message)
+    {
+        ConsoleWriter.Info($"To: {message.To} \nContent: {message.Content} \nSubject: {message.Subject}");
+        //todo email send business logic
 
-            throw new Exception("exception:test error");
-        }
+        throw new Exception("exception:test error");
+    }
 
-        public override void OnErrorOccured(Error error)
-        {
-            ConsoleWriter.Info(new[] { "AAA", "BBB" });
-            ConsoleWriter.Error("OnErrorOccured: {0}", error);
+    public override void OnErrorOccured(Error error)
+    {
+        ConsoleWriter.Info(new[] { "AAA", "BBB" });
+        ConsoleWriter.Error("OnErrorOccured: {0}", error);
 
-            //todo onerror business
-        }
+        //todo onerror business
     }
 }

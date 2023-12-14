@@ -1,13 +1,10 @@
-﻿using System.Threading.Tasks;
-using Base.EventBus;
-using Kafka.Message;
+﻿using Base.EventBus;
 
-namespace Kafka.Producer
+namespace Kafka.Producer;
+
+public interface IMessageProducer
 {
-    public interface IMessageProducer
-    {
-        bool Produce(IntegrationEvent message, string topic, string key = null);
+    bool Produce(IntegrationEvent message, string topic, string key = null);
 
-        Task<bool> ProduceAsync(IntegrationEvent message, string topic, string key = null);
-    }
+    Task<bool> ProduceAsync(IntegrationEvent message, string topic, string key = null);
 }

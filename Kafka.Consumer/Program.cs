@@ -1,19 +1,17 @@
-﻿using System;
-using Kafka.Consumer.Consumers;
+﻿using Kafka.Consumer.Consumers;
 using Kafka.Message.Tools;
 
-namespace Kafka.Consumer
+namespace Kafka.Consumer;
+
+class Program
 {
-    class Program
+    static void Main(string[] args)
     {
-        static void Main(string[] args)
-        {
-            ConsoleWriter.Info("Consumer Started !");
+        ConsoleWriter.Info("Consumer Started !");
 
-            var emailMessageConsumer = new EmailMessageConsumer(args?[0]);
-            emailMessageConsumer.StartConsuming();
+        var emailMessageConsumer = new EmailMessageConsumer(args?[0]);
+        emailMessageConsumer.StartConsuming();
 
-            Console.ReadLine();
-        }
+        Console.ReadLine();
     }
 }

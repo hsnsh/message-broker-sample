@@ -37,7 +37,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         _subsManager.OnEventRemoved += SubsManager_OnEventRemoved;
     }
 
-    public void Publish(IntegrationEvent @event)
+    public async Task  Publish(IntegrationEvent @event)
     {
         if (!_persistentConnection.IsConnected)
         {

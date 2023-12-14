@@ -1,11 +1,10 @@
 ﻿using Base.EventBus;
 
-namespace Shared
+namespace Shared;
+
+public class EmailMessage : IntegrationEvent
 {
-    public class EmailMessage : IntegrationEvent
-    {
-        public string To { get; set; }
-        public string Subject { get; set; }
-        public string Content { get; set; }
-    }
+    public string To { get; set; }
+    public string Subject { get; set; }
+    public string Content { get; set; }
 }
