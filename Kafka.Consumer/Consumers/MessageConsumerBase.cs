@@ -7,11 +7,13 @@ namespace Kafka.Consumer.Consumers
 {
     public abstract class MessageConsumerBase<IMessage>
     {
+        private readonly string _consumerSuffix;
         private readonly string _topic;
         private bool KeepConsuming { get; set; }
 
-        protected MessageConsumerBase(string topic)
+        protected MessageConsumerBase(string topic, string? consumerSuffix = "group")
         {
+            _consumerSuffix = consumerSuffix ?? "group";
             _topic = topic;
             KeepConsuming = true;
         }
@@ -20,7 +22,7 @@ namespace Kafka.Consumer.Consumers
         {
             var conf = new ConsumerConfig
             {
-                GroupId = "emailmessage-consumer-group",
+                GroupId = $"emailmessage-consumer-{_consumerSuffix}",
                 BootstrapServers = "kafka:9092",
                 AutoOffsetReset = AutoOffsetReset.Earliest
             };
