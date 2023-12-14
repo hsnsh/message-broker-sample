@@ -1,8 +1,8 @@
-﻿using Confluent.Kafka;
-using Kafka.Message.Tools;
+﻿using Base.Core;
+using Confluent.Kafka;
 using Newtonsoft.Json;
 
-namespace Kafka.Consumer.Consumers;
+namespace Base.EventBus.Kafka;
 
 public abstract class MessageConsumerBase<IMessage>
 {

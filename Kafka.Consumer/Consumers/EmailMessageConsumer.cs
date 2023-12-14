@@ -1,5 +1,6 @@
-﻿using Confluent.Kafka;
-using Kafka.Message.Tools;
+﻿using Base.Core;
+using Base.EventBus.Kafka;
+using Confluent.Kafka;
 using Shared;
 
 namespace Kafka.Consumer.Consumers;

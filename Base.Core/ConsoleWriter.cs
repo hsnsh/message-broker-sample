@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace Kafka.Message.Tools;
+namespace Base.Core;
 
 public static class ConsoleWriter
 {

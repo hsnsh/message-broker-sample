@@ -7,9 +7,10 @@
         <Nullable>enable</Nullable>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     </PropertyGroup>
-    
-    <ItemGroup>
-        <ProjectReference Include="..\Kafka.Message\Kafka.Message.csproj"/>
-    </ItemGroup>
 
+    <ItemGroup>
+        <ProjectReference Include="..\Shared\Shared.csproj" />
+    </ItemGroup>
+   
+    
 </Project>

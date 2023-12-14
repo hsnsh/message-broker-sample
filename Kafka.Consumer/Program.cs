@@ -1,5 +1,5 @@
-﻿using Kafka.Consumer.Consumers;
-using Kafka.Message.Tools;
+﻿using Base.Core;
+using Kafka.Consumer.Consumers;
 
 namespace Kafka.Consumer;
 
