@@ -1,8 +1,8 @@
 ﻿#nullable enable
+using System.Net;
 using Base.EventBus.Kafka.Converters;
 using Base.EventBus.SubManagers;
 using Confluent.Kafka;
-using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -11,25 +11,21 @@ namespace Base.EventBus.Kafka;
 
 public class EventBusKafka : IEventBus, IDisposable
 {
-    private readonly ILogger<EventBusKafka> _logger;
-    private readonly JsonSerializerSettings _options = DefaultJsonOptions.Get();
-
-    private readonly IEventBusSubscriptionsManager _subsManager;
     private readonly IServiceProvider _serviceProvider;
+    private readonly ILogger<EventBusKafka> _logger;
     private readonly EventBusConfig _eventBusConfig;
     private readonly string _bootstrapServer;
+
+    private readonly IEventBusSubscriptionsManager _subsManager;
+    private readonly JsonSerializerSettings _options = DefaultJsonOptions.Get();
 
     public EventBusKafka(IServiceProvider serviceProvider, ILoggerFactory loggerFactory, EventBusConfig eventBusConfig, string bootstrapServer)
     {
         _serviceProvider = serviceProvider;
-        if (string.IsNullOrWhiteSpace(bootstrapServer))
-        {
-            throw new ArgumentNullException(nameof(bootstrapServer));
-        }
-
-        _eventBusConfig = eventBusConfig ?? new EventBusConfig();
-        _bootstrapServer = bootstrapServer;
         _logger = loggerFactory.CreateLogger<EventBusKafka>() ?? throw new ArgumentNullException(nameof(loggerFactory));
+        _eventBusConfig = eventBusConfig;
+        _bootstrapServer = bootstrapServer ?? throw new ArgumentNullException(nameof(bootstrapServer));
+
         _subsManager = new InMemoryEventBusSubscriptionsManager(TrimEventName);
         _subsManager.OnEventRemoved += SubsManager_OnEventRemoved;
     }
@@ -39,46 +35,59 @@ public class EventBusKafka : IEventBus, IDisposable
         var eventName = @event.GetType().Name;
         eventName = TrimEventName(eventName);
 
-        _logger.LogTrace("Creating MessageBroker channel to publish event: {EventName} {Event}", eventName, @event);
+        var producerConfig = new ProducerConfig
+        {
+            BootstrapServers = _bootstrapServer,
+            EnableDeliveryReports = true,
+            ClientId = Dns.GetHostName(),
+            Debug = "msg",
 
-        //https://stackoverflow.com/a/29515696
-        //If you require that messages with the same key (for instance, a unique id) are always seen in the
-        //correct order, attaching a key to messages will ensure messages with the
-        //same key always go to the same partition. TL;DR If you dont give key, it will use round robin
-        IProducer<string, string> _producer = null;
+            // retry settings:
+            // Receive acknowledgement from all sync replicas
+            Acks = Acks.All,
+            // Number of times to retry before giving up
+            MessageSendMaxRetries = 3,
+            // Duration to retry before next attempt
+            RetryBackoffMs = 1000,
+            // Set to true if you don't want to reorder messages on retry
+            EnableIdempotence = true
+        };
+
+        using var producer = new ProducerBuilder<long, string>(producerConfig)
+            .SetKeySerializer(Serializers.Int64)
+            .SetValueSerializer(Serializers.Utf8)
+            .SetLogHandler((_, message) => _logger.LogInformation("Facility: {Facility}-{Level} Message: {Message}", message.Facility, message.Level, message.Message))
+            .SetErrorHandler((_, e) => _logger.LogError("Error: {Reason}. Is Fatal: {IsFatal}", e.Reason, e.IsFatal))
+            .Build();
         try
         {
-            _producer = new ProducerBuilder<string, string>(new ProducerConfig { BootstrapServers = _bootstrapServer })
-                .SetErrorHandler(ErrorHandler)
-                .Build();
+            _logger.LogInformation("Kafka Producer loop started...");
 
+            var message = JsonConvert.SerializeObject(@event, _options);
 
-            var deliveryReport = await _producer.ProduceAsync(eventName, new Message<string, string>
+            var deliveryReport = await producer.ProduceAsync(eventName,
+                new Message<long, string>
+                {
+                    Key = DateTime.UtcNow.Ticks,
+                    Value = message
+                });
+
+            producer.Flush(new TimeSpan(0, 0, 10));
+            _logger.LogInformation("Message sent (value: \'{Message}\'). Delivery status: {DeliveryReportStatus}", message, deliveryReport.Status);
+
+            if (deliveryReport.Status != PersistenceStatus.Persisted)
             {
-                Key = null,
-                Value = JsonConvert.SerializeObject(@event, _options)
-            });
-
-            if (deliveryReport.TopicPartitionOffset != null)
-            {
-                _logger.LogInformation("Completed MessageBroker channel to publish event: {EventName} {Event}", eventName, deliveryReport.Value);
+                // delivery might have failed after retries. This message requires manual processing.
+                _logger.LogError("Message not ack\'d by all brokers (value: \'{Message}\'). Delivery status: {DeliveryReportStatus}", message, deliveryReport.Status);
             }
-            else
-            {
-                _logger.LogError("Failed MessageBroker channel to publish event: {EventName} {Event}", eventName, deliveryReport.Value);
-            }
+
+            Thread.Sleep(TimeSpan.FromSeconds(2));
         }
-        catch (ProduceException<string, string> produceException)
+        catch (ProduceException<long, string> e)
         {
-            _logger.LogError("Failed MessageBroker channel to publish event: {EventName} , {Error}", eventName, produceException.Message);
-        }
-        finally
-        {
-            if (_producer != null)
-            {
-                _producer.Flush(new TimeSpan(0, 0, 10));
-                _producer.Dispose();
-            }
+            // Log this message for manual processing.
+            _logger.LogInformation("Permanent error: {Message} for message (value: \'{DeliveryResultValue}\')", e.Message, e.DeliveryResult.Value);
+            _logger.LogInformation("Exiting Kafka Producer...");
         }
     }
 
@@ -131,7 +140,7 @@ public class EventBusKafka : IEventBus, IDisposable
         _subsManager.Clear();
     }
 
-    private void SubsManager_OnEventRemoved([CanBeNull] object sender, string eventName)
+    private void SubsManager_OnEventRemoved(object? sender, string eventName)
     {
         // if (!_persistentConnection.IsConnected)
         // {
@@ -160,7 +169,7 @@ public class EventBusKafka : IEventBus, IDisposable
         consumer.StartConsuming();
     }
 
-    private async void OnMessageDelivered([CanBeNull] object sender, IntegrationEvent message)
+    private async void OnMessageDelivered(object? sender, IntegrationEvent message)
     {
         var eventName = message.GetType().Name;
         eventName = TrimEventName(eventName);
@@ -169,39 +178,24 @@ public class EventBusKafka : IEventBus, IDisposable
         {
             var subscriptions = _subsManager.GetHandlersForEvent(eventName);
 
-            using (var scope = _serviceProvider.CreateScope())
+            using var scope = _serviceProvider.CreateScope();
+            foreach (var subscription in subscriptions)
             {
-                foreach (var subscription in subscriptions)
+                var handler = scope.ServiceProvider.GetService(subscription.HandlerType);
+                if (handler == null)
                 {
-                    var handler = scope.ServiceProvider.GetService(subscription.HandlerType);
-                    if (handler == null)
-                    {
-                        _logger.LogWarning("{ConsumerGroupId} consumed message [ {Topic} ] => No event handler for event", _eventBusConfig.SubscriberClientAppName, eventName);
-                        continue;
-                    }
-
-                    var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(message.GetType());
-                    await (Task)concreteType.GetMethod("Handle").Invoke(handler, new[] { message });
+                    _logger.LogWarning("{ConsumerGroupId} consumed message [ {Topic} ] => No event handler for event", _eventBusConfig.SubscriberClientAppName, eventName);
+                    continue;
                 }
+
+                var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(message.GetType());
+                await (Task)concreteType.GetMethod("Handle")?.Invoke(handler, new object[] { message })!;
             }
         }
         else
         {
             _logger.LogWarning("{ConsumerGroupId} consumed message [ {Topic} ] => No subscription for event", _eventBusConfig.SubscriberClientAppName, eventName);
         }
-    }
-
-    private void ErrorHandler(IProducer<string, string> arg1, Error arg2)
-    {
-        // _logHelper.FrameworkInformationLog(new FrameworkInformationLog()
-        // {
-        //     Description = "ErrorHandler for producer invoked.",
-        //     Reason = FrameworkLogReason.ProducerWriteMessageFailed.ToString("G"),
-        //     Exception =
-        //         $"Exception occured: {arg2.Reason}. Code: {arg2.Code}, IsFatal: {arg2.IsFatal}, IsError: {arg2.IsError}, IsBrokerError: {arg2.IsBrokerError}, IsLocalError: {arg2.IsLocalError}",
-        //     RequestSource = "KAFKA",
-        //     Hostname = Dns.GetHostName()
-        // });
     }
 
     private string TrimEventName(string eventName)
