@@ -1,6 +1,5 @@
 ﻿using Base.EventBus;
 using Base.EventBus.Kafka;
-using Base.EventBus.RabbitMQ;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

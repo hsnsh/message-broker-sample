@@ -2,7 +2,7 @@ using Base.EventBus;
 using Microsoft.Extensions.Logging;
 using Shared;
 
-namespace LogConsumer.handlers;
+namespace LogConsumer.EventHandlers;
 
 public sealed class OrderStartedIntegrationEventHandler : IIntegrationEventHandler<OrderStartedIntegrationEvent>
 {

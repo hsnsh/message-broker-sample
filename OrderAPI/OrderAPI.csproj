@@ -7,9 +7,7 @@
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     </PropertyGroup>
 
-    <ItemGroup>
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3"/>
-    </ItemGroup>
+
 
     <ItemGroup>
       <Content Include="..\.dockerignore">
@@ -18,7 +16,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Shared\Shared.csproj" />
+      <ProjectReference Include="..\Hosting\Hosting.csproj" />
     </ItemGroup>
 
 </Project>

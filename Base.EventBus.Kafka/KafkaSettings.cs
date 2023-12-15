@@ -1,4 +1,4 @@
-namespace Base.EventBus.RabbitMQ;
+namespace Base.EventBus.Kafka;
 
 public class KafkaConnectionSettings
 {

@@ -1,5 +1,4 @@
-﻿using Base.Core;
-using Confluent.Kafka;
+﻿using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
