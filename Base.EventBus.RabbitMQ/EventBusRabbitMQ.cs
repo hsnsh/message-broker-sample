@@ -37,7 +37,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         _subsManager.OnEventRemoved += SubsManager_OnEventRemoved;
     }
 
-    public async Task  Publish(IntegrationEvent @event)
+    public async Task  Publish(IIntegrationEvent @event)
     {
         if (!_persistentConnection.IsConnected)
         {
@@ -48,17 +48,17 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
             .Or<SocketException>()
             .WaitAndRetry(_eventBusConfig.ConnectionRetryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
             {
-                _logger.LogWarning(ex, "Could not publish event: {EventId} after {Timeout}s ({ExceptionMessage})", @event.Id, $"{time.TotalSeconds:n1}", ex.Message);
+                _logger.LogWarning(ex, "Could not publish event: {Event} after {Timeout}s ({ExceptionMessage})", @event, $"{time.TotalSeconds:n1}", ex.Message);
             });
 
         var eventName = @event.GetType().Name;
         eventName = TrimEventName(eventName);
 
-        _logger.LogTrace("Creating RabbitMQ channel to publish event: {EventId} ({EventName})", @event.Id, eventName);
+        _logger.LogTrace("Creating RabbitMQ channel to publish event: {Event} ({EventName})", @event, eventName);
 
         using (var channel = _persistentConnection.CreateModel())
         {
-            _logger.LogTrace("Declaring RabbitMQ exchange to publish event: {EventId}", @event.Id);
+            _logger.LogTrace("Declaring RabbitMQ exchange to publish event: {Event}", @event);
 
             channel.ExchangeDeclare(exchange: _eventBusConfig.DefaultTopicName, type: "direct"); //Ensure exchange exists while publishing
 
@@ -69,7 +69,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
                 var properties = channel.CreateBasicProperties();
                 properties.DeliveryMode = 2; // persistent
 
-                _logger.LogTrace("Publishing event to RabbitMQ: {EventId}", @event.Id);
+                _logger.LogTrace("Publishing event to RabbitMQ: {Event}", @event);
 
                 channel.BasicPublish(
                     exchange: _eventBusConfig.DefaultTopicName,
@@ -81,7 +81,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         }
     }
 
-    public void Subscribe<T, TH>() where T : IntegrationEvent where TH : IIntegrationEventHandler<T>
+    public void Subscribe<T, TH>() where T : IIntegrationEvent where TH : IIntegrationEventHandler<T>
     {
         var eventName = typeof(T).Name;
         eventName = TrimEventName(eventName);
@@ -110,7 +110,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         StartBasicConsume(eventName);
     }
 
-    public void Unsubscribe<T, TH>() where T : IntegrationEvent where TH : IIntegrationEventHandler<T>
+    public void Unsubscribe<T, TH>() where T : IIntegrationEvent where TH : IIntegrationEventHandler<T>
     {
         var eventName = _subsManager.GetEventKey<T>();
         eventName = TrimEventName(eventName);

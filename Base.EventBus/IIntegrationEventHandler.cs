@@ -1,12 +1,12 @@
 namespace Base.EventBus;
 
-public interface IIntegrationEventHandler<TEvent> : IntegrationEventHandler
-    where TEvent : IntegrationEvent
+public interface IIntegrationEventHandler<TEvent> : IIntegrationEventHandler
+    where TEvent : IIntegrationEvent
 {
     Task Handle(TEvent @event);
 }
 
 
-public interface IntegrationEventHandler
+public interface IIntegrationEventHandler
 {
 }

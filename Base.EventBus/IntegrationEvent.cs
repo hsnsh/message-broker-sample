@@ -2,11 +2,25 @@ using System.Text.Json.Serialization;
 
 namespace Base.EventBus;
 
-public abstract class IntegrationEvent
+public interface IIntegrationEvent
+{
+    public Guid Id { get; }
+
+    public DateTime CreationTime { get; }
+}
+
+public abstract class BaseIntegrationEvent : IIntegrationEvent
 {
     [JsonInclude]
-    public Guid Id { get; private set; } = Guid.NewGuid();
+    public Guid Id { get; }
 
     [JsonInclude]
-    public DateTime CreationDate { get; private set; } = DateTime.UtcNow;
+    public DateTime CreationTime { get; }
+
+    [Newtonsoft.Json.JsonConstructor]
+    protected BaseIntegrationEvent(Guid id, DateTime creationTime)
+    {
+        Id = id;
+        CreationTime = creationTime;
+    }
 }

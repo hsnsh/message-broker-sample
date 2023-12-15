@@ -18,7 +18,7 @@ public class InMemoryEventBusSubscriptionsManager : IEventBusSubscriptionsManage
     public bool IsEmpty => _handlers is { Count: 0 };
     public void Clear() => _handlers.Clear();
 
-    public void AddSubscription<T, TH>() where T : IntegrationEvent where TH : IIntegrationEventHandler<T>
+    public void AddSubscription<T, TH>() where T : IIntegrationEvent where TH : IIntegrationEventHandler<T>
     {
         var eventName = GetEventKey<T>();
 
@@ -30,14 +30,14 @@ public class InMemoryEventBusSubscriptionsManager : IEventBusSubscriptionsManage
         }
     }
 
-    public void RemoveSubscription<T, TH>() where TH : IIntegrationEventHandler<T> where T : IntegrationEvent
+    public void RemoveSubscription<T, TH>() where TH : IIntegrationEventHandler<T> where T : IIntegrationEvent
     {
         var handlerToRemove = FindSubscriptionToRemove<T, TH>();
         var eventName = GetEventKey<T>();
         DoRemoveHandler(eventName, handlerToRemove);
     }
 
-    public bool HasSubscriptionsForEvent<T>() where T : IntegrationEvent
+    public bool HasSubscriptionsForEvent<T>() where T : IIntegrationEvent
     {
         var key = GetEventKey<T>();
         return HasSubscriptionsForEvent(key);
@@ -45,7 +45,7 @@ public class InMemoryEventBusSubscriptionsManager : IEventBusSubscriptionsManage
 
     public bool HasSubscriptionsForEvent(string eventName) => _handlers.ContainsKey(eventName);
 
-    public IEnumerable<SubscriptionInfo> GetHandlersForEvent<T>() where T : IntegrationEvent
+    public IEnumerable<SubscriptionInfo> GetHandlersForEvent<T>() where T : IIntegrationEvent
     {
         var key = GetEventKey<T>();
         return GetHandlersForEvent(key);
@@ -96,7 +96,7 @@ public class InMemoryEventBusSubscriptionsManager : IEventBusSubscriptionsManage
         }
     }
 
-    private SubscriptionInfo FindSubscriptionToRemove<T, TH>() where T : IntegrationEvent where TH : IIntegrationEventHandler<T>
+    private SubscriptionInfo FindSubscriptionToRemove<T, TH>() where T : IIntegrationEvent where TH : IIntegrationEventHandler<T>
     {
         var eventName = GetEventKey<T>();
         return DoFindSubscriptionToRemove(eventName, typeof(TH));

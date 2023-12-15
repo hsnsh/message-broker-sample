@@ -7,11 +7,11 @@ namespace Kafka.Consumer.Consumers;
 
 public class EmailKafkaConsumer : KafkaConsumerBase<EmailMessageIntegrationEvent>
 {
-    public EmailKafkaConsumer() : base("emailmessage-topic")
+    public EmailKafkaConsumer() : base("localhost:9092", "consumer-test", "emailmessage-topic")
     {
     }
 
-    public EmailKafkaConsumer(string? consumerSuffix = "group") : base("emailmessage-topic", consumerSuffix)
+    public EmailKafkaConsumer(string? consumerSuffix = "group") : base("localhost:9092", consumerSuffix, "emailmessage-topic")
     {
     }
 

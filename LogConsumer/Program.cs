@@ -1,9 +1,11 @@
 ﻿using Base.EventBus;
 using Base.EventBus.Kafka;
+using Base.EventBus.RabbitMQ;
 using LogConsumer.handlers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Shared;
 
 namespace LogConsumer;
@@ -19,25 +21,39 @@ internal static class Program
 
         var services = new ServiceCollection();
 
-        services.AddTransient<EmailMessageIntegrationEventHandler>();
-        
+        services.AddTransient<OrderStartedIntegrationEventHandler>();
+
         services.AddSingleton<ILoggerFactory>(sp =>
         {
             return LoggerFactory.Create(static builder => builder.AddConsole());
         });
 
+        // Add our Config object so it can be injected
+        services.Configure<KafkaEventBusSettings>(configuration.GetSection("Kafka:EventBus"));
+        services.Configure<KafkaConnectionSettings>(configuration.GetSection("Kafka:Connection"));
         services.AddSingleton<IEventBus, EventBusKafka>(sp =>
         {
+            // var busSettings = new KafkaEventBusSettings();
+            // var conf= sp.GetRequiredService<IConfiguration>();
+            // conf.Bind("Kafka:EventBus", busSettings);
+            var busSettings = sp.GetRequiredService<IOptions<KafkaEventBusSettings>>();
+            var connectionSettings = sp.GetRequiredService<IOptions<KafkaConnectionSettings>>();
+
+            EventBusConfig config = new()
+            {
+                SubscriberClientAppName = busSettings.Value.ConsumerGroupId, DefaultTopicName = string.Empty, ConnectionRetryCount = busSettings.Value.ConnectionRetryCount, EventNameSuffix = busSettings.Value.EventNameSuffix,
+            };
+
             var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
 
-            return new EventBusKafka(sp, loggerFactory);
+            return new EventBusKafka(sp, loggerFactory, config, $"{connectionSettings.Value.HostName}:{connectionSettings.Value.Port}");
         });
 
         var sp = services.BuildServiceProvider();
 
         IEventBus _eventBus = sp.GetRequiredService<IEventBus>();
 
-        _eventBus.Subscribe<EmailMessageIntegrationEvent, EmailMessageIntegrationEventHandler>();
+        _eventBus.Subscribe<OrderStartedIntegrationEvent, OrderStartedIntegrationEventHandler>();
     }
 
     private static IConfiguration GetConfiguration() =>

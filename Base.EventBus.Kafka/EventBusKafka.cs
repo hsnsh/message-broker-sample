@@ -12,58 +12,48 @@ namespace Base.EventBus.Kafka;
 public class EventBusKafka : IEventBus, IDisposable
 {
     private readonly ILogger<EventBusKafka> _logger;
-    private readonly IProducer<string, string> _producer;
     private readonly JsonSerializerSettings _options = DefaultJsonOptions.Get();
 
     private readonly IEventBusSubscriptionsManager _subsManager;
     private readonly IServiceProvider _serviceProvider;
+    private readonly EventBusConfig _eventBusConfig;
+    private readonly string _bootstrapServer;
 
-    public EventBusKafka(IServiceProvider serviceProvider, ILoggerFactory loggerFactory)
+    public EventBusKafka(IServiceProvider serviceProvider, ILoggerFactory loggerFactory, EventBusConfig eventBusConfig, string bootstrapServer)
     {
         _serviceProvider = serviceProvider;
-        // _persistentConnection = persistentConnection ?? throw new ArgumentNullException(nameof(persistentConnection));
-        // _eventBusConfig = eventBusConfig ?? new EventBusConfig();
+        if (string.IsNullOrWhiteSpace(bootstrapServer))
+        {
+            throw new ArgumentNullException(nameof(bootstrapServer));
+        }
+
+        _eventBusConfig = eventBusConfig ?? new EventBusConfig();
+        _bootstrapServer = bootstrapServer;
         _logger = loggerFactory.CreateLogger<EventBusKafka>() ?? throw new ArgumentNullException(nameof(loggerFactory));
         _subsManager = new InMemoryEventBusSubscriptionsManager(TrimEventName);
         _subsManager.OnEventRemoved += SubsManager_OnEventRemoved;
-
-        var config = new ProducerConfig { BootstrapServers = "kafka:9092" };
-
-        _producer = new ProducerBuilder<string, string>(config)
-            .SetErrorHandler(ErrorHandler)
-            .Build();
     }
 
-
-    public async Task Publish(IntegrationEvent @event)
+    public async Task Publish(IIntegrationEvent @event)
     {
-        // if (!_persistentConnection.IsConnected)
-        // {
-        //     _persistentConnection.TryConnect();
-        // }
-        //
-        // var policy = Policy.Handle<BrokerUnreachableException>()
-        //     .Or<SocketException>()
-        //     .WaitAndRetry(_eventBusConfig.ConnectionRetryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
-        //     {
-        //         _logger.LogWarning(ex, "Could not publish event: {EventId} after {Timeout}s ({ExceptionMessage})", @event.Id, $"{time.TotalSeconds:n1}", ex.Message);
-        //     });
+        var eventName = @event.GetType().Name;
+        eventName = TrimEventName(eventName);
 
-        var eventTopicName = @event.GetType().Name;
-        if (eventTopicName.EndsWith("IntegrationEvent"))
-        {
-            eventTopicName = eventTopicName[..^"IntegrationEvent".Length];
-        }
-
-        _logger.LogTrace("Creating MessageBroker channel to publish event: {EventId} ({EventName})", @event.Id, eventTopicName);
+        _logger.LogTrace("Creating MessageBroker channel to publish event: {EventName} {Event}", eventName, @event);
 
         //https://stackoverflow.com/a/29515696
         //If you require that messages with the same key (for instance, a unique id) are always seen in the
         //correct order, attaching a key to messages will ensure messages with the
         //same key always go to the same partition. TL;DR If you dont give key, it will use round robin
+        IProducer<string, string> _producer = null;
         try
         {
-            var deliveryReport = await _producer.ProduceAsync(eventTopicName, new Message<string, string>
+            _producer = new ProducerBuilder<string, string>(new ProducerConfig { BootstrapServers = _bootstrapServer })
+                .SetErrorHandler(ErrorHandler)
+                .Build();
+
+
+            var deliveryReport = await _producer.ProduceAsync(eventName, new Message<string, string>
             {
                 Key = null,
                 Value = JsonConvert.SerializeObject(@event, _options)
@@ -71,20 +61,28 @@ public class EventBusKafka : IEventBus, IDisposable
 
             if (deliveryReport.TopicPartitionOffset != null)
             {
-                _logger.LogInformation("Completed MessageBroker channel to publish event: {EventId} ({EventName})", @event.Id, eventTopicName);
+                _logger.LogInformation("Completed MessageBroker channel to publish event: {EventName} {Event}", eventName, deliveryReport.Value);
             }
             else
             {
-                _logger.LogError("Failed MessageBroker channel to publish event: {EventId} ({EventName})", @event.Id, eventTopicName);
+                _logger.LogError("Failed MessageBroker channel to publish event: {EventName} {Event}", eventName, deliveryReport.Value);
             }
         }
         catch (ProduceException<string, string> produceException)
         {
-            _logger.LogError("Failed MessageBroker channel to publish event: {EventId} ({EventName}) , {Error}", @event.Id, eventTopicName, produceException.Message);
+            _logger.LogError("Failed MessageBroker channel to publish event: {EventName} , {Error}", eventName, produceException.Message);
+        }
+        finally
+        {
+            if (_producer != null)
+            {
+                _producer.Flush(new TimeSpan(0, 0, 10));
+                _producer.Dispose();
+            }
         }
     }
 
-    public void Subscribe<T, TH>() where T : IntegrationEvent where TH : IIntegrationEventHandler<T>
+    public void Subscribe<T, TH>() where T : IIntegrationEvent where TH : IIntegrationEventHandler<T>
     {
         var eventName = typeof(T).Name;
         eventName = TrimEventName(eventName);
@@ -113,62 +111,24 @@ public class EventBusKafka : IEventBus, IDisposable
         StartBasicConsume<T>(eventName);
     }
 
-    public void Unsubscribe<T, TH>() where T : IntegrationEvent where TH : IIntegrationEventHandler<T>
+    public void Unsubscribe<T, TH>() where T : IIntegrationEvent where TH : IIntegrationEventHandler<T>
     {
-        // var eventName = _subsManager.GetEventKey<T>();
-        // eventName = TrimEventName(eventName);
-        //
-        // _logger.LogInformation("Unsubscribing from event {EventName}", eventName);
-        //
-        // _subsManager.RemoveSubscription<T, TH>();
+        var eventName = _subsManager.GetEventKey<T>();
+        eventName = TrimEventName(eventName);
+
+        _logger.LogInformation("Unsubscribing from event {EventName}", eventName);
+
+        _subsManager.RemoveSubscription<T, TH>();
     }
 
     public void Dispose()
     {
-        if (_producer != null)
-        {
-            _producer.Dispose();
-        }
-
         // if (_consumerChannel != null)
         // {
         //     _consumerChannel.Dispose();
         // }
-        //
-        // _subsManager.Clear();
-    }
 
-    private void ErrorHandler(IProducer<string, string> arg1, Error arg2)
-    {
-        // _logHelper.FrameworkInformationLog(new FrameworkInformationLog()
-        // {
-        //     Description = "ErrorHandler for producer invoked.",
-        //     Reason = FrameworkLogReason.ProducerWriteMessageFailed.ToString("G"),
-        //     Exception =
-        //         $"Exception occured: {arg2.Reason}. Code: {arg2.Code}, IsFatal: {arg2.IsFatal}, IsError: {arg2.IsError}, IsBrokerError: {arg2.IsBrokerError}, IsLocalError: {arg2.IsLocalError}",
-        //     RequestSource = "KAFKA",
-        //     Hostname = Dns.GetHostName()
-        // });
-    }
-
-    private string TrimEventName(string eventName)
-    {
-        // if (_eventBusConfig.DeleteEventPrefix && eventName.StartsWith(_eventBusConfig.EventNamePrefix))
-        // {
-        //     eventName = eventName.Substring(_eventBusConfig.EventNamePrefix.Length);
-        // }
-
-        // if (_eventBusConfig.DeleteEventSuffix && eventName.EndsWith(_eventBusConfig.EventNameSuffix))
-        // {
-        //     eventName = eventName.Substring(0, eventName.Length - _eventBusConfig.EventNameSuffix.Length);
-        // }
-
-        if (eventName.EndsWith("IntegrationEvent"))
-        {
-            eventName = eventName[..^"IntegrationEvent".Length];
-        }
-
-        return eventName;
+        _subsManager.Clear();
     }
 
     private void SubsManager_OnEventRemoved([CanBeNull] object sender, string eventName)
@@ -191,16 +151,16 @@ public class EventBusKafka : IEventBus, IDisposable
         // }
     }
 
-    private void StartBasicConsume<T>(string eventName) where T : IntegrationEvent
+    private void StartBasicConsume<T>(string eventName) where T : IIntegrationEvent
     {
         _logger.LogTrace("Starting MessageBroker basic consume");
 
-        var consumer = new KafkaConsumerBase<T>(eventName, "group");
+        var consumer = new KafkaConsumerBase<T>(_bootstrapServer, _eventBusConfig.SubscriberClientAppName, eventName);
         consumer.OnMessageDelivered += OnMessageDelivered;
         consumer.StartConsuming();
     }
 
-    private async void OnMessageDelivered([CanBeNull] object sender, IntegrationEvent message)
+    private async void OnMessageDelivered([CanBeNull] object sender, IIntegrationEvent message)
     {
         var eventName = message.GetType().Name;
         eventName = TrimEventName(eventName);
@@ -227,5 +187,33 @@ public class EventBusKafka : IEventBus, IDisposable
         {
             _logger.LogWarning("No subscription for MessageBroker event: {EventName}", eventName);
         }
+    }
+
+    private void ErrorHandler(IProducer<string, string> arg1, Error arg2)
+    {
+        // _logHelper.FrameworkInformationLog(new FrameworkInformationLog()
+        // {
+        //     Description = "ErrorHandler for producer invoked.",
+        //     Reason = FrameworkLogReason.ProducerWriteMessageFailed.ToString("G"),
+        //     Exception =
+        //         $"Exception occured: {arg2.Reason}. Code: {arg2.Code}, IsFatal: {arg2.IsFatal}, IsError: {arg2.IsError}, IsBrokerError: {arg2.IsBrokerError}, IsLocalError: {arg2.IsLocalError}",
+        //     RequestSource = "KAFKA",
+        //     Hostname = Dns.GetHostName()
+        // });
+    }
+
+    private string TrimEventName(string eventName)
+    {
+        if (_eventBusConfig.DeleteEventPrefix && eventName.StartsWith(_eventBusConfig.EventNamePrefix))
+        {
+            eventName = eventName.Substring(_eventBusConfig.EventNamePrefix.Length);
+        }
+
+        if (_eventBusConfig.DeleteEventSuffix && eventName.EndsWith(_eventBusConfig.EventNameSuffix))
+        {
+            eventName = eventName.Substring(0, eventName.Length - _eventBusConfig.EventNameSuffix.Length);
+        }
+
+        return eventName;
     }
 }

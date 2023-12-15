@@ -4,44 +4,41 @@ using Newtonsoft.Json;
 
 namespace Base.EventBus.Kafka;
 
-public class KafkaConsumerBase<TEvent> where TEvent : IntegrationEvent
+public class KafkaConsumerBase<TEvent> where TEvent : IIntegrationEvent
 {
-    public event EventHandler<IntegrationEvent> OnMessageDelivered;
+    public event EventHandler<IIntegrationEvent> OnMessageDelivered;
 
-    private readonly string _consumerSuffix;
-    private readonly string _topic;
+    private readonly ConsumerConfig _consumerConfig;
+    private readonly string _subscribeTopicName;
     private bool KeepConsuming { get; set; }
 
-    public KafkaConsumerBase(string topic, string? consumerSuffix = "group")
+    public KafkaConsumerBase(string bootstrapServer, string consumerGroupId, string subscribeTopicName)
     {
-        _consumerSuffix = consumerSuffix ?? "group";
-        _topic = topic;
+        _subscribeTopicName = subscribeTopicName;
+        _consumerConfig = new ConsumerConfig
+        {
+            GroupId = consumerGroupId,
+            BootstrapServers = bootstrapServer,
+            AutoOffsetReset = AutoOffsetReset.Earliest
+        };
         KeepConsuming = true;
     }
 
     public void StartConsuming()
     {
-        var conf = new ConsumerConfig
-        {
-            GroupId = $"emailmessage-consumer-{_consumerSuffix}",
-            BootstrapServers = "kafka:9092",
-            AutoOffsetReset = AutoOffsetReset.Earliest
-        };
-
-        var consumer = new ConsumerBuilder<Ignore, string>(conf)
+        var consumer = new ConsumerBuilder<Ignore, string>(_consumerConfig)
             .SetErrorHandler(ErrorHandler)
             .Build();
 
-
-        consumer.Subscribe(_topic);
+        consumer.Subscribe(_subscribeTopicName);
 
         while (KeepConsuming)
         {
             try
             {
-                ConsoleWriter.Info("Wait consume...");
+                ConsoleWriter.Info($"Wait consume...({_subscribeTopicName})");
                 var consumedTextMessage = consumer.Consume();
-                ConsoleWriter.Info($"Consumed message '{consumedTextMessage.Value}' Topic: '{consumedTextMessage.Topic}'.");
+                ConsoleWriter.Info($"Topic: '{consumedTextMessage.Topic}'. Consumed message '{consumedTextMessage.Value}'");
 
                 var message = JsonConvert.DeserializeObject<TEvent>(consumedTextMessage.Value);
 
