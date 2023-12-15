@@ -4,13 +4,15 @@ using Newtonsoft.Json;
 
 namespace Base.EventBus.Kafka;
 
-public abstract class MessageConsumerBase<IMessage>
+public class KafkaConsumerBase<TEvent> where TEvent : IntegrationEvent
 {
+    public event EventHandler<IntegrationEvent> OnMessageDelivered;
+
     private readonly string _consumerSuffix;
     private readonly string _topic;
     private bool KeepConsuming { get; set; }
 
-    protected MessageConsumerBase(string topic, string? consumerSuffix = "group")
+    public KafkaConsumerBase(string topic, string? consumerSuffix = "group")
     {
         _consumerSuffix = consumerSuffix ?? "group";
         _topic = topic;
@@ -41,9 +43,9 @@ public abstract class MessageConsumerBase<IMessage>
                 var consumedTextMessage = consumer.Consume();
                 ConsoleWriter.Info($"Consumed message '{consumedTextMessage.Value}' Topic: '{consumedTextMessage.Topic}'.");
 
-                var message = JsonConvert.DeserializeObject<IMessage>(consumedTextMessage.Value);
+                var message = JsonConvert.DeserializeObject<TEvent>(consumedTextMessage.Value);
 
-                OnMessageDelivered(message);
+                OnMessageDelivered(this, message);
             }
             catch (ConsumeException ce)
             {
@@ -75,7 +77,7 @@ public abstract class MessageConsumerBase<IMessage>
         // });
     }
 
-    public abstract void OnMessageDelivered(IMessage message);
-
-    public abstract void OnErrorOccured(Error error);
+    public virtual void OnErrorOccured(Error error)
+    {
+    }
 }

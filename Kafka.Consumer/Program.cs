@@ -9,7 +9,7 @@ class Program
     {
         ConsoleWriter.Info("Consumer Started !");
 
-        var emailMessageConsumer = new EmailMessageConsumer(args?[0]);
+        var emailMessageConsumer = new EmailKafkaConsumer(args?[0]);
         emailMessageConsumer.StartConsuming();
 
         Console.ReadLine();

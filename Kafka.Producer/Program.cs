@@ -11,7 +11,7 @@ class Program
         while (true)
         {
             //produce email message
-            var emailMessage = new EmailMessage
+            var emailMessage = new EmailMessageIntegrationEvent
             {
                 Content = DateTime.Now.ToString("yyyyMMdd HH:mm:ss zzz"),
                 Subject = "Contoso Retail Daily News",

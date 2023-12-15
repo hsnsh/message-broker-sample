@@ -5,17 +5,17 @@ using Shared;
 
 namespace Kafka.Consumer.Consumers;
 
-public class EmailMessageConsumer : MessageConsumerBase<EmailMessage>
+public class EmailKafkaConsumer : KafkaConsumerBase<EmailMessageIntegrationEvent>
 {
-    public EmailMessageConsumer() : base("emailmessage-topic")
+    public EmailKafkaConsumer() : base("emailmessage-topic")
     {
     }
 
-    public EmailMessageConsumer(string? consumerSuffix = "group") : base("emailmessage-topic", consumerSuffix)
+    public EmailKafkaConsumer(string? consumerSuffix = "group") : base("emailmessage-topic", consumerSuffix)
     {
     }
 
-    public override void OnMessageDelivered(EmailMessage message)
+    public void OnMessageDelivered(EmailMessageIntegrationEvent message)
     {
         ConsoleWriter.Info($"To: {message.To} \nContent: {message.Content} \nSubject: {message.Subject}");
         //todo email send business logic
