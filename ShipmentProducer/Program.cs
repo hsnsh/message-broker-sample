@@ -52,7 +52,7 @@ internal static class Program
 
         while (true)
         {
-            _eventBus.Publish(new OrderStartedIntegrationEvent() { OrderId = Guid.NewGuid() });
+            _eventBus.Publish(new OrderStartedIntegrationEvent(Guid.NewGuid(),DateTime.UtcNow, Guid.NewGuid()));
 
             var result = Console.ReadLine();
             if (!string.IsNullOrWhiteSpace(result) && result.ToLower().Equals("q")) break;

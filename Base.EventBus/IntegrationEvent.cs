@@ -12,10 +12,10 @@ public interface IIntegrationEvent
 public abstract class BaseIntegrationEvent : IIntegrationEvent
 {
     [JsonInclude]
-    public Guid Id { get; }
+    public Guid Id { get; protected set; }
 
     [JsonInclude]
-    public DateTime CreationTime { get; }
+    public DateTime CreationTime { get; protected set; }
 
     [Newtonsoft.Json.JsonConstructor]
     protected BaseIntegrationEvent(Guid id, DateTime creationTime)
