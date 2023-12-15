@@ -2,19 +2,7 @@ using Base.EventBus;
 
 namespace Shared;
 
-public sealed class OrderStartedIntegrationEvent : BaseIntegrationEvent
+public record OrderStartedIntegrationEvent(Guid Id, DateTime CreationTime, Guid OrderId) : IntegrationEvent(Id, CreationTime)
 {
-    public Guid OrderId { get; }
-
-    // public OrderStartedIntegrationEvent(Guid orderId) : this(Guid.NewGuid(), DateTime.UtcNow, orderId)
-    // {
-    // }
-
-    [Newtonsoft.Json.JsonConstructor] // Json Deserialize Constructor
-    public OrderStartedIntegrationEvent(Guid id, DateTime creationTime, Guid orderId) : base(id, creationTime)
-    {
-        Id = id;
-        CreationTime = creationTime;
-        OrderId = orderId;
-    }
+    public Guid OrderId { get; } = OrderId;
 }

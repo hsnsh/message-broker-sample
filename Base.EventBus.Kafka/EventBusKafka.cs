@@ -34,7 +34,7 @@ public class EventBusKafka : IEventBus, IDisposable
         _subsManager.OnEventRemoved += SubsManager_OnEventRemoved;
     }
 
-    public async Task Publish(IIntegrationEvent @event)
+    public async Task Publish(IntegrationEvent @event)
     {
         var eventName = @event.GetType().Name;
         eventName = TrimEventName(eventName);
@@ -82,7 +82,7 @@ public class EventBusKafka : IEventBus, IDisposable
         }
     }
 
-    public void Subscribe<T, TH>() where T : IIntegrationEvent where TH : IIntegrationEventHandler<T>
+    public void Subscribe<T, TH>() where T : IntegrationEvent where TH : IIntegrationEventHandler<T>
     {
         var eventName = typeof(T).Name;
         eventName = TrimEventName(eventName);
@@ -111,7 +111,7 @@ public class EventBusKafka : IEventBus, IDisposable
         StartBasicConsume<T>(eventName);
     }
 
-    public void Unsubscribe<T, TH>() where T : IIntegrationEvent where TH : IIntegrationEventHandler<T>
+    public void Unsubscribe<T, TH>() where T : IntegrationEvent where TH : IIntegrationEventHandler<T>
     {
         var eventName = _subsManager.GetEventKey<T>();
         eventName = TrimEventName(eventName);
@@ -151,21 +151,19 @@ public class EventBusKafka : IEventBus, IDisposable
         // }
     }
 
-    private void StartBasicConsume<T>(string eventName) where T : IIntegrationEvent
+    private void StartBasicConsume<T>(string eventName) where T : IntegrationEvent
     {
         _logger.LogTrace("Starting MessageBroker basic consume");
 
-        var consumer = new KafkaConsumerBase<T>(_bootstrapServer, _eventBusConfig.SubscriberClientAppName, eventName);
+        var consumer = new KafkaConsumerBase<T>(_bootstrapServer, _eventBusConfig.SubscriberClientAppName, eventName, _logger);
         consumer.OnMessageDelivered += OnMessageDelivered;
         consumer.StartConsuming();
     }
 
-    private async void OnMessageDelivered([CanBeNull] object sender, IIntegrationEvent message)
+    private async void OnMessageDelivered([CanBeNull] object sender, IntegrationEvent message)
     {
         var eventName = message.GetType().Name;
         eventName = TrimEventName(eventName);
-
-        _logger.LogTrace("Processing MessageBroker event: {EventName}", eventName);
 
         if (_subsManager.HasSubscriptionsForEvent(eventName))
         {
@@ -176,7 +174,11 @@ public class EventBusKafka : IEventBus, IDisposable
                 foreach (var subscription in subscriptions)
                 {
                     var handler = scope.ServiceProvider.GetService(subscription.HandlerType);
-                    if (handler == null) continue;
+                    if (handler == null)
+                    {
+                        _logger.LogWarning("{ConsumerGroupId} consumed message [ {Topic} ] => No event handler for event", _eventBusConfig.SubscriberClientAppName, eventName);
+                        continue;
+                    }
 
                     var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(message.GetType());
                     await (Task)concreteType.GetMethod("Handle").Invoke(handler, new[] { message });
@@ -185,7 +187,7 @@ public class EventBusKafka : IEventBus, IDisposable
         }
         else
         {
-            _logger.LogWarning("No subscription for MessageBroker event: {EventName}", eventName);
+            _logger.LogWarning("{ConsumerGroupId} consumed message [ {Topic} ] => No subscription for event", _eventBusConfig.SubscriberClientAppName, eventName);
         }
     }
 

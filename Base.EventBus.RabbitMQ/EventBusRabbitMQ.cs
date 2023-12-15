@@ -37,7 +37,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         _subsManager.OnEventRemoved += SubsManager_OnEventRemoved;
     }
 
-    public async Task  Publish(IIntegrationEvent @event)
+    public async Task  Publish(IntegrationEvent @event)
     {
         if (!_persistentConnection.IsConnected)
         {
@@ -81,7 +81,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         }
     }
 
-    public void Subscribe<T, TH>() where T : IIntegrationEvent where TH : IIntegrationEventHandler<T>
+    public void Subscribe<T, TH>() where T : IntegrationEvent where TH : IIntegrationEventHandler<T>
     {
         var eventName = typeof(T).Name;
         eventName = TrimEventName(eventName);
@@ -110,7 +110,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         StartBasicConsume(eventName);
     }
 
-    public void Unsubscribe<T, TH>() where T : IIntegrationEvent where TH : IIntegrationEventHandler<T>
+    public void Unsubscribe<T, TH>() where T : IntegrationEvent where TH : IIntegrationEventHandler<T>
     {
         var eventName = _subsManager.GetEventKey<T>();
         eventName = TrimEventName(eventName);

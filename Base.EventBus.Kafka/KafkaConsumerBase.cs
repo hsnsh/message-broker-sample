@@ -1,18 +1,20 @@
 ﻿using Base.Core;
 using Confluent.Kafka;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace Base.EventBus.Kafka;
 
-public class KafkaConsumerBase<TEvent> where TEvent : IIntegrationEvent
+public class KafkaConsumerBase<TEvent> where TEvent : IntegrationEvent
 {
-    public event EventHandler<IIntegrationEvent> OnMessageDelivered;
+    public event EventHandler<IntegrationEvent> OnMessageDelivered;
 
     private readonly ConsumerConfig _consumerConfig;
     private readonly string _subscribeTopicName;
+    private readonly ILogger _logger;
     private bool KeepConsuming { get; set; }
 
-    public KafkaConsumerBase(string bootstrapServer, string consumerGroupId, string subscribeTopicName)
+    public KafkaConsumerBase(string bootstrapServer, string consumerGroupId, string subscribeTopicName, ILogger logger)
     {
         _subscribeTopicName = subscribeTopicName;
         _consumerConfig = new ConsumerConfig
@@ -22,6 +24,7 @@ public class KafkaConsumerBase<TEvent> where TEvent : IIntegrationEvent
             AutoOffsetReset = AutoOffsetReset.Earliest
         };
         KeepConsuming = true;
+        _logger = logger;
     }
 
     public void StartConsuming()
@@ -36,11 +39,12 @@ public class KafkaConsumerBase<TEvent> where TEvent : IIntegrationEvent
         {
             try
             {
-                ConsoleWriter.Info($"Wait consume...({_subscribeTopicName})");
+                _logger.LogInformation("{ConsumerGroupId} wait consume [ {Topic} ] ...", _consumerConfig.GroupId, _subscribeTopicName);
                 var consumedTextMessage = consumer.Consume();
-                ConsoleWriter.Info($"Topic: '{consumedTextMessage.Topic}'. Consumed message '{consumedTextMessage.Value}'");
 
+                _logger.LogInformation("{ConsumerGroupId} consumed message [ {Topic} ] => {Value}", _consumerConfig.GroupId, consumedTextMessage.Topic, consumedTextMessage.Value);
                 var message = JsonConvert.DeserializeObject<TEvent>(consumedTextMessage.Value);
+                _logger.LogInformation("{ConsumerGroupId} consumed message [ {Topic} ] => Successfully converted", _consumerConfig.GroupId, consumedTextMessage.Topic);
 
                 OnMessageDelivered(this, message);
             }
