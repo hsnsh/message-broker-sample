@@ -1,7 +1,6 @@
 using Hosting;
-using OrderAPI.EventHandlers;
 
-namespace OrderAPI;
+namespace ShipmentAPI;
 
 public sealed class Startup
 {
@@ -47,7 +46,7 @@ public sealed class Startup
             else
             {
                 endpoints.MapControllers();
-                endpoints.MapGet("/", () => $"eShop Order Service | {WebHostEnvironment.EnvironmentName}:{Configuration.GetValue<string>("TestSettings")} | v1.0.0");
+                endpoints.MapGet("/", () => $"eShop Shipment Service | {WebHostEnvironment.EnvironmentName}:{Configuration.GetValue<string>("TestSettings")} | v1.0.0");
             }
         });
 
@@ -56,8 +55,8 @@ public sealed class Startup
 
     private void AddEventBus(IServiceCollection services)
     {
-        services.AddKafkaEventBus(Configuration)
-            .AddTransient<OrderStartedIntegrationEventHandler>();
+        // services.AddKafkaEventBus(Configuration)
+        //     .AddTransient<OrderStartedIntegrationEventHandler>();
     }
 
     private void UseEventBus(IApplicationBuilder app)
