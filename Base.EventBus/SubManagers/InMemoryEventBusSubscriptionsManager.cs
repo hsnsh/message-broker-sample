@@ -20,13 +20,21 @@ public class InMemoryEventBusSubscriptionsManager : IEventBusSubscriptionsManage
 
     public void AddSubscription<T, TH>() where T : IntegrationEvent where TH : IIntegrationEventHandler<T>
     {
-        var eventName = GetEventKey<T>();
+        AddSubscription(typeof(T), typeof(TH));
+    }
 
-        DoAddSubscription(typeof(TH), eventName);
+    public void AddSubscription(Type eventType, Type eventHandlerType)
+    {
+        if (!eventType.IsAssignableTo(typeof(IntegrationEvent))) throw new TypeAccessException();
+        if (!eventHandlerType.IsAssignableTo(typeof(IIntegrationEventHandler))) throw new TypeAccessException();
+        
+        var eventName = GetEventKey(eventType);
 
-        if (!_eventTypes.Contains(typeof(T)))
+        DoAddSubscription(eventHandlerType, eventName);
+
+        if (!_eventTypes.Contains(eventType))
         {
-            _eventTypes.Add(typeof(T));
+            _eventTypes.Add(eventType);
         }
     }
 
@@ -55,9 +63,16 @@ public class InMemoryEventBusSubscriptionsManager : IEventBusSubscriptionsManage
 
     public Type GetEventTypeByName(string eventName) => _eventTypes.SingleOrDefault(t => t.Name == eventName);
 
-    public string GetEventKey<T>()
+    public string GetEventKey<T>()  where T : IntegrationEvent
     {
-        var eventName = typeof(T).Name;
+        return GetEventKey(typeof(T));
+    }
+
+    public string GetEventKey(Type eventType)
+    {
+        if (!eventType.IsAssignableTo(typeof(IntegrationEvent))) throw new TypeAccessException();
+        
+        var eventName = eventType.Name;
         return eventNameGetter(eventName);
     }
 

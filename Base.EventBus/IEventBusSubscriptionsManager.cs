@@ -8,6 +8,8 @@ public interface IEventBusSubscriptionsManager
 
     void AddSubscription<T, TH>() where T : IntegrationEvent where TH : IIntegrationEventHandler<T>;
 
+    void AddSubscription(Type eventType, Type eventHandlerType);
+    
     void RemoveSubscription<T, TH>() where TH : IIntegrationEventHandler<T> where T : IntegrationEvent;
 
     bool HasSubscriptionsForEvent<T>() where T : IntegrationEvent;
@@ -18,5 +20,7 @@ public interface IEventBusSubscriptionsManager
 
     Type GetEventTypeByName(string eventName);
 
-    string GetEventKey<T>();
+    string GetEventKey<T>() where T : IntegrationEvent;
+    
+    string GetEventKey(Type eventType);
 }

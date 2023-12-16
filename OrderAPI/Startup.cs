@@ -1,7 +1,4 @@
-using Base.EventBus;
 using Hosting;
-using OrderAPI.EventHandlers;
-using Shared;
 
 namespace OrderAPI;
 
@@ -18,11 +15,12 @@ public sealed class Startup
 
     public void ConfigureServices(IServiceCollection services)
     {
-        services.AddControllers();
+        services.ConfigureMicroserviceHost();
+
+        services.AddKafkaEventBus(Configuration);
+
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
-
-        AddEventBus(services);
     }
 
     public void Configure(IApplicationBuilder app)
@@ -53,21 +51,7 @@ public sealed class Startup
             }
         });
 
-        UseEventBus(app);
-    }
-
-    private void AddEventBus(IServiceCollection services)
-    {
-        services.AddKafkaEventBus(Configuration)
-            .AddTransient<OrderStartedIntegrationEventHandler>()
-            .AddTransient<OrderStatusUpdatedIntegrationEventHandler>();
-    }
-
-    private void UseEventBus(IApplicationBuilder app)
-    {
-        var eventBus = app.ApplicationServices.GetRequiredService<IEventBus>();
-
-        eventBus.Subscribe<OrderStartedIntegrationEvent, OrderStartedIntegrationEventHandler>();
-        eventBus.Subscribe<OrderStatusUpdatedIntegrationEvent, OrderStatusUpdatedIntegrationEventHandler>();
+        // Subscribe all event handlers
+        app.UseEventBus();
     }
 }

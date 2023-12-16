@@ -1,5 +1,6 @@
 using Base.EventBus;
 using Base.EventBus.Kafka;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -9,6 +10,13 @@ namespace Hosting;
 
 public static class MicroserviceHostExtensions
 {
+    public static IServiceCollection ConfigureMicroserviceHost(this IServiceCollection services)
+    {
+        services.AddControllers();
+
+        return services;
+    }
+
     public static IServiceCollection AddKafkaEventBus(this IServiceCollection services, IConfiguration configuration)
     {
         // Add our Config object so it can be injected
@@ -32,6 +40,9 @@ public static class MicroserviceHostExtensions
 
             return new EventBusKafka(sp, loggerFactory, config, $"{connectionSettings.Value.HostName}:{connectionSettings.Value.Port}");
         });
+
+        // Add All Event Handlers
+        services.AddEventHandlers();
 
         return services;
     }
@@ -74,7 +85,41 @@ public static class MicroserviceHostExtensions
     //
     //         return new EventBusRabbitMQ(sp, rabbitMqPersistentConnection, config, logger);
     //     });
-    //
+
+    //     // Add All Event Handlers
+    //     services.AddEventHandlers();
+
     //     return services;
     // }
+
+    private static void AddEventHandlers(this IServiceCollection services)
+    {
+        var refType = typeof(IIntegrationEventHandler);
+        var types = AppDomain.CurrentDomain.GetAssemblies()
+            .SelectMany(s => s.GetTypes())
+            .Where(p => refType.IsAssignableFrom(p) && p is { IsInterface: false, IsAbstract: false });
+
+        foreach (var type in types.ToList())
+        {
+            services.AddTransient(type);
+        }
+    }
+
+    public static void UseEventBus(this IApplicationBuilder app)
+    {
+        var refType = typeof(IIntegrationEventHandler);
+        var eventHandlerTypes = AppDomain.CurrentDomain.GetAssemblies()
+            .SelectMany(s => s.GetTypes())
+            .Where(p => refType.IsAssignableFrom(p) && p is { IsInterface: false, IsAbstract: false }).ToList();
+
+        if (eventHandlerTypes is not { Count: > 0 }) return;
+        var eventBus = app.ApplicationServices.GetRequiredService<IEventBus>();
+
+        foreach (var eventHandlerType in eventHandlerTypes)
+        {
+            var eventType = eventHandlerType.GetInterfaces().First(x => x.IsGenericType).GenericTypeArguments[0];
+
+            eventBus.Subscribe(eventType, eventHandlerType);
+        }
+    }
 }

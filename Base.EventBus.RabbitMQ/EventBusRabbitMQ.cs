@@ -37,7 +37,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         _subsManager.OnEventRemoved += SubsManager_OnEventRemoved;
     }
 
-    public async Task  Publish(IntegrationEvent @event)
+    public async Task Publish(IntegrationEvent @event)
     {
         if (!_persistentConnection.IsConnected)
         {
@@ -83,7 +83,15 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
 
     public void Subscribe<T, TH>() where T : IntegrationEvent where TH : IIntegrationEventHandler<T>
     {
-        var eventName = typeof(T).Name;
+        Subscribe(typeof(T), typeof(TH));
+    }
+
+    public void Subscribe(Type eventType, Type eventHandlerType)
+    {
+        if (!eventType.IsAssignableTo(typeof(IntegrationEvent))) throw new TypeAccessException();
+        if (!eventHandlerType.IsAssignableTo(typeof(IIntegrationEventHandler))) throw new TypeAccessException();
+
+        var eventName = eventType.Name;
         eventName = TrimEventName(eventName);
 
         if (!_subsManager.HasSubscriptionsForEvent(eventName))
@@ -104,9 +112,9 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
                 routingKey: eventName);
         }
 
-        _logger.LogInformation("Subscribing to event {EventName} with {EventHandler}", eventName, typeof(TH).Name);
+        _logger.LogInformation("Subscribing to event {EventName} with {EventHandler}", eventName, eventHandlerType.Name);
 
-        _subsManager.AddSubscription<T, TH>();
+        _subsManager.AddSubscription(eventType, eventHandlerType);
         StartBasicConsume(eventName);
     }
 

@@ -42,18 +42,26 @@ public class EventBusKafka : IEventBus, IDisposable
 
     public void Subscribe<T, TH>() where T : IntegrationEvent where TH : IIntegrationEventHandler<T>
     {
-        var eventName = typeof(T).Name;
+        Subscribe(typeof(T), typeof(TH));
+    }
+
+    public void Subscribe(Type eventType, Type eventHandlerType)
+    {
+        if (!eventType.IsAssignableTo(typeof(IntegrationEvent))) throw new TypeAccessException();
+        if (!eventHandlerType.IsAssignableTo(typeof(IIntegrationEventHandler))) throw new TypeAccessException();
+
+        var eventName = eventType.Name;
         eventName = TrimEventName(eventName);
 
-        _logger.LogInformation("Subscribing to event {EventName} with {EventHandler}", eventName, typeof(TH).Name);
+        _logger.LogInformation("Subscribing to event {EventName} with {EventHandler}", eventName, eventHandlerType.Name);
 
-        _subsManager.AddSubscription<T, TH>();
+        _subsManager.AddSubscription(eventType, eventHandlerType);
 
         consumerTasks.Add(Task.Run(async () =>
         {
             var kafkaConsumer = new KafkaConsumer(_bootstrapServer, _eventBusConfig.SubscriberClientAppName, _logger);
             kafkaConsumer.OnMessageReceived += OnMessageReceived;
-            kafkaConsumer.StartReceivingMessages<T>(eventName, _tokenSource.Token);
+            kafkaConsumer.StartReceivingMessages(eventType, eventName, _tokenSource.Token);
         }));
     }
 
@@ -74,19 +82,17 @@ public class EventBusKafka : IEventBus, IDisposable
         _tokenSource.Cancel();
         _tokenSource.Dispose();
 
-        // Wait all tasks to finish their jobs;
-        Console.WriteLine("Waiting all tasks to finishing their jobs");
         consumerTasks.RemoveAll(x => x.IsCompleted);
         if (consumerTasks.Count > 0)
         {
+            // Waiting all tasks to finishing their jobs
             Task.WaitAll(consumerTasks.ToArray(), 20000);
-            Console.WriteLine("all tasks to finished their jobs");
         }
 
         _subsManager.Clear();
     }
 
-    private async void OnMessageReceived(object? sender, IntegrationEvent message)
+    private async void OnMessageReceived(object? sender, object message)
     {
         var eventName = message.GetType().Name;
         eventName = TrimEventName(eventName);

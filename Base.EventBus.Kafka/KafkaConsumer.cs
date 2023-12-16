@@ -12,7 +12,7 @@ public sealed class KafkaConsumer
     private readonly JsonSerializerSettings _options = DefaultJsonOptions.Get();
     private bool KeepConsuming { get; set; }
 
-    public event EventHandler<IntegrationEvent> OnMessageReceived;
+    public event EventHandler<object> OnMessageReceived;
 
     public KafkaConsumer(string bootstrapServer, string consumerGroupId, ILogger logger)
     {
@@ -33,6 +33,13 @@ public sealed class KafkaConsumer
 
     public void StartReceivingMessages<TEvent>(string topicName, CancellationToken stoppingToken) where TEvent : IntegrationEvent
     {
+        StartReceivingMessages(typeof(TEvent), topicName, stoppingToken);
+    }
+
+    public void StartReceivingMessages(Type eventType, string topicName, CancellationToken stoppingToken)
+    {
+        if (!eventType.IsAssignableTo(typeof(IntegrationEvent))) throw new TypeAccessException();
+
         using var consumer = new ConsumerBuilder<long, string>(_consumerConfig)
             .SetKeyDeserializer(Deserializers.Int64)
             .SetValueDeserializer(Deserializers.Utf8)
@@ -68,7 +75,7 @@ public sealed class KafkaConsumer
                     consumer.Commit(result);
                     consumer.StoreOffset(result);
 
-                    var @event = JsonConvert.DeserializeObject<TEvent>(message);
+                    var @event = JsonConvert.DeserializeObject(message,eventType);
 
                     OnMessageReceived(this, @event);
                     // OnMessageReceived.Invoke(this, @event);
