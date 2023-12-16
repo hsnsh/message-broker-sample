@@ -64,8 +64,9 @@ public sealed class Startup
 
     private void UseEventBus(IApplicationBuilder app)
     {
-        var eventBus = app.ApplicationServices.GetRequiredService<IEventBus>();
+        // var eventBus = app.ApplicationServices.GetRequiredService<IEventBus>();
 
-        eventBus.Subscribe<OrderStartedIntegrationEvent, OrderStartedIntegrationEventHandler>();
+        // eventBus.Subscribe<OrderStartedIntegrationEvent, OrderStartedIntegrationEventHandler>();
+        // eventBus.Subscribe<OrderStatusUpdatedIntegrationEvent, OrderStatusUpdatedIntegrationEventHandler>();
     }
 }
