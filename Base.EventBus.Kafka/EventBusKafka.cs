@@ -16,7 +16,6 @@ public class EventBusKafka : IEventBus, IDisposable
 
     private readonly IEventBusSubscriptionsManager _subsManager;
     private readonly JsonSerializerSettings _options = DefaultJsonOptions.Get();
-    private readonly CancellationTokenSource _tokenSource;
 
     public EventBusKafka(IServiceProvider serviceProvider, ILoggerFactory loggerFactory, EventBusConfig eventBusConfig, string bootstrapServer)
     {
@@ -46,9 +45,12 @@ public class EventBusKafka : IEventBus, IDisposable
 
         _subsManager.AddSubscription<T, TH>();
 
-        // var kafkaConsumer = new KafkaConsumer(_bootstrapServer, _eventBusConfig.SubscriberClientAppName, _logger);
-        // kafkaConsumer.OnMessageReceived += OnMessageReceived;
-        // kafkaConsumer.StartReceivingMessages<T>(eventName, _tokenSource.Token);
+        Task.Run(async () =>
+        {
+            var kafkaConsumer = new KafkaConsumer(_bootstrapServer, _eventBusConfig.SubscriberClientAppName, _logger);
+            kafkaConsumer.OnMessageReceived += OnMessageReceived;
+            kafkaConsumer.StartReceivingMessages<T>(eventName);
+        });
     }
 
     public void Unsubscribe<T, TH>() where T : IntegrationEvent where TH : IIntegrationEventHandler<T>
@@ -63,7 +65,7 @@ public class EventBusKafka : IEventBus, IDisposable
 
     public void Dispose()
     {
-        _logger.LogError("ÇIKIYORUMMMMM");
+        _logger.LogInformation("Message Broker Bridge shutting down...");
         _subsManager.Clear();
     }
 

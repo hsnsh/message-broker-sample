@@ -31,7 +31,7 @@ public sealed class KafkaConsumer
         KeepConsuming = true;
     }
 
-    public void StartReceivingMessages<TEvent>(string topicName, CancellationToken cancellationToken) where TEvent : IntegrationEvent
+    public void StartReceivingMessages<TEvent>(string topicName) where TEvent : IntegrationEvent
     {
         using var consumer = new ConsumerBuilder<long, string>(_consumerConfig)
             .SetKeyDeserializer(Deserializers.Int64)
@@ -49,25 +49,32 @@ public sealed class KafkaConsumer
             consumer.Subscribe(topicName);
             _logger.LogInformation("Kafka Consumer [ {TopicName} ] loop started...", topicName);
 
-            while (KeepConsuming && !cancellationToken.IsCancellationRequested)
+            while (KeepConsuming)
             {
-                _logger.LogInformation("Kafka Consumer [ {TopicName} ] RE-LOOP...", topicName);
+                try
+                {
+                    var result = consumer.Consume(10000);
+                    var message = result?.Message?.Value;
+                    if (message == null)
+                    {
+                        _logger.LogDebug("Kafka Consumer [ {TopicName} ] loop [ {Time} ]", topicName, DateTime.Now.ToString());
+                        continue;
+                    }
 
-                // var result = consumer.Consume(1000);
-                // var message = result?.Message?.Value;
-                // if (message == null)
-                // {
-                //     continue;
-                // }
-                //
-                // _logger.LogInformation("{ConsumerGroupId} Received: {Key}:{Message} from partition: {Partition}", _consumerConfig.GroupId, result.Message.Key, message, result.Partition.Value);
-                //
-                // consumer.Commit(result);
-                // consumer.StoreOffset(result);
-                //
-                // var @event = JsonConvert.DeserializeObject<TEvent>(message);
-                //
-                // OnMessageReceived(this, @event);
+                    _logger.LogInformation("{ConsumerGroupId} Received: {Key}:{Message} from partition: {Partition}", _consumerConfig.GroupId, result.Message.Key, message, result.Partition.Value);
+
+                    consumer.Commit(result);
+                    consumer.StoreOffset(result);
+
+                    var @event = JsonConvert.DeserializeObject<TEvent>(message);
+
+                    OnMessageReceived(this, @event);
+                }
+                catch (ConsumeException ce)
+                {
+                    if (ce.Error.IsFatal) throw ce;
+                    _logger.LogWarning("Kafka Consumer [ {TopicName} ] : {Time} | {Error})", topicName, DateTime.Now.ToString(), ce.Message);
+                }
 
                 Thread.Sleep(TimeSpan.FromSeconds(5));
             }
@@ -75,7 +82,7 @@ public sealed class KafkaConsumer
         catch (KafkaException e)
         {
             _logger.LogError("Consume error: {Message}", e.Message);
-            _logger.LogInformation("Exiting Kafka Consumer...");
+            _logger.LogInformation("Kafka Consumer [ {TopicName} ] loop stopped...", topicName);
         }
         finally
         {
