@@ -16,6 +16,8 @@ public class EventBusKafka : IEventBus, IDisposable
 
     private readonly IEventBusSubscriptionsManager _subsManager;
     private readonly JsonSerializerSettings _options = DefaultJsonOptions.Get();
+    private readonly CancellationTokenSource _tokenSource;
+    private readonly List<Task> consumerTasks;
 
     public EventBusKafka(IServiceProvider serviceProvider, ILoggerFactory loggerFactory, EventBusConfig eventBusConfig, string bootstrapServer)
     {
@@ -25,6 +27,8 @@ public class EventBusKafka : IEventBus, IDisposable
         _bootstrapServer = bootstrapServer ?? throw new ArgumentNullException(nameof(bootstrapServer));
 
         _subsManager = new InMemoryEventBusSubscriptionsManager(TrimEventName);
+        _tokenSource = new CancellationTokenSource();
+        consumerTasks = new List<Task>();
     }
 
     public async Task Publish(IntegrationEvent @event)
@@ -45,12 +49,12 @@ public class EventBusKafka : IEventBus, IDisposable
 
         _subsManager.AddSubscription<T, TH>();
 
-        Task.Run(async () =>
+        consumerTasks.Add(Task.Run(async () =>
         {
             var kafkaConsumer = new KafkaConsumer(_bootstrapServer, _eventBusConfig.SubscriberClientAppName, _logger);
             kafkaConsumer.OnMessageReceived += OnMessageReceived;
-            kafkaConsumer.StartReceivingMessages<T>(eventName);
-        });
+            kafkaConsumer.StartReceivingMessages<T>(eventName, _tokenSource.Token);
+        }));
     }
 
     public void Unsubscribe<T, TH>() where T : IntegrationEvent where TH : IIntegrationEventHandler<T>
@@ -66,6 +70,19 @@ public class EventBusKafka : IEventBus, IDisposable
     public void Dispose()
     {
         _logger.LogInformation("Message Broker Bridge shutting down...");
+
+        _tokenSource.Cancel();
+        _tokenSource.Dispose();
+
+        // Wait all tasks to finish their jobs;
+        Console.WriteLine("Waiting all tasks to finishing their jobs");
+        consumerTasks.RemoveAll(x => x.IsCompleted);
+        if (consumerTasks.Count > 0)
+        {
+            Task.WaitAll(consumerTasks.ToArray(), 20000);
+            Console.WriteLine("all tasks to finished their jobs");
+        }
+
         _subsManager.Clear();
     }
 

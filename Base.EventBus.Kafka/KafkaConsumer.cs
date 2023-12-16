@@ -31,7 +31,7 @@ public sealed class KafkaConsumer
         KeepConsuming = true;
     }
 
-    public void StartReceivingMessages<TEvent>(string topicName) where TEvent : IntegrationEvent
+    public void StartReceivingMessages<TEvent>(string topicName, CancellationToken stoppingToken) where TEvent : IntegrationEvent
     {
         using var consumer = new ConsumerBuilder<long, string>(_consumerConfig)
             .SetKeyDeserializer(Deserializers.Int64)
@@ -49,11 +49,13 @@ public sealed class KafkaConsumer
             consumer.Subscribe(topicName);
             _logger.LogInformation("Kafka Consumer [ {TopicName} ] loop started...", topicName);
 
-            while (KeepConsuming)
+            while (KeepConsuming && !stoppingToken.IsCancellationRequested)
             {
                 try
                 {
-                    var result = consumer.Consume(10000);
+                    // var result = consumer.Consume(stoppingToken);
+                    var result = consumer.Consume(TimeSpan.FromMilliseconds(_consumerConfig.MaxPollIntervalMs - 1000 ?? 250000));
+                    // var result = consumer.Consume(TimeSpan.FromMilliseconds(1000));
                     var message = result?.Message?.Value;
                     if (message == null)
                     {
@@ -69,6 +71,7 @@ public sealed class KafkaConsumer
                     var @event = JsonConvert.DeserializeObject<TEvent>(message);
 
                     OnMessageReceived(this, @event);
+                    // OnMessageReceived.Invoke(this, @event);
                 }
                 catch (ConsumeException ce)
                 {
@@ -76,7 +79,8 @@ public sealed class KafkaConsumer
                     _logger.LogWarning("Kafka Consumer [ {TopicName} ] : {Time} | {Error})", topicName, DateTime.Now.ToString(), ce.Message);
                 }
 
-                Thread.Sleep(TimeSpan.FromSeconds(5));
+                // loop wait period
+                Thread.Sleep(TimeSpan.FromMilliseconds(200));
             }
         }
         catch (KafkaException e)
@@ -87,6 +91,9 @@ public sealed class KafkaConsumer
         finally
         {
             consumer.Close();
+
+            // Wait last consume message handling threshold;
+            Thread.Sleep(TimeSpan.FromMilliseconds(5000));
         }
     }
 }
