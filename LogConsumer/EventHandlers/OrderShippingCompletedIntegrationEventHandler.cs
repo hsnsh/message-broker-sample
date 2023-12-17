@@ -19,7 +19,7 @@ public sealed class OrderShippingCompletedIntegrationEventHandler : IIntegration
         _logger.LogInformation("Handling Integration Event: {@IntegrationEvent} at {AppName}", @event, space);
 
         // Simulate a work time
-        await Task.Delay(10000);
+        await Task.Delay(200);
 
         await Task.CompletedTask;
     }

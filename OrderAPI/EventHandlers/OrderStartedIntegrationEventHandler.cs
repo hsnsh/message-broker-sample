@@ -20,7 +20,7 @@ public sealed class OrderStartedIntegrationEventHandler : IIntegrationEventHandl
         _logger.LogInformation("Handling Integration Event: {@IntegrationEvent} at {AppName}", @event, space);
 
         // Simulate a work time
-        await Task.Delay(10000);
+        await Task.Delay(5000);
 
         _eventBus.Publish(new OrderShippingStartedIntegrationEvent(Guid.NewGuid(), DateTime.UtcNow, @event.OrderId));
 

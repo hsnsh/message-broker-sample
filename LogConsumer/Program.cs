@@ -59,6 +59,12 @@ internal static class Program
         _eventBus.Subscribe<OrderShippingStartedIntegrationEvent, OrderShippingStartedIntegrationEventHandler>();
         _eventBus.Subscribe<ShipmentStartedIntegrationEvent, ShipmentStartedIntegrationEventHandler>();
         _eventBus.Subscribe<OrderShippingCompletedIntegrationEvent, OrderShippingCompletedIntegrationEventHandler>();
+        
+        while (true)
+        {
+            var result = Console.ReadLine();
+            if (!string.IsNullOrWhiteSpace(result) && result.ToLower().Equals("q")) break;
+        }
     }
 
     private static IConfiguration GetConfiguration() =>
