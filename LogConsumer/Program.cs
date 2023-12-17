@@ -20,8 +20,6 @@ internal static class Program
 
         var services = new ServiceCollection();
 
-        services.AddTransient<OrderStartedIntegrationEventHandler>();
-
         services.AddSingleton<ILoggerFactory>(sp =>
         {
             return LoggerFactory.Create(static builder => builder.AddConsole());
@@ -47,6 +45,8 @@ internal static class Program
 
             return new EventBusKafka(sp, loggerFactory, config, $"{connectionSettings.Value.HostName}:{connectionSettings.Value.Port}");
         });
+
+        services.AddTransient<OrderStartedIntegrationEventHandler>();
 
         var sp = services.BuildServiceProvider();
 
