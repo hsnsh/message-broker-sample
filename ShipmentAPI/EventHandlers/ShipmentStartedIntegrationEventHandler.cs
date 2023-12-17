@@ -6,10 +6,10 @@ namespace ShipmentAPI.EventHandlers;
 public sealed class ShipmentStartedIntegrationEventHandler : IIntegrationEventHandler<ShipmentStartedIntegrationEvent>
 {
     private readonly ILogger<ShipmentStartedIntegrationEventHandler> _logger;
-
-    public ShipmentStartedIntegrationEventHandler(ILoggerFactory loggerFactory)
+    private readonly IEventBus _eventBus;
+    public ShipmentStartedIntegrationEventHandler(ILoggerFactory loggerFactory, IEventBus eventBus)
     {
-        // _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _eventBus = eventBus;
         _logger = loggerFactory.CreateLogger<ShipmentStartedIntegrationEventHandler>() ?? throw new ArgumentNullException(nameof(loggerFactory));
     }
 
@@ -21,6 +21,8 @@ public sealed class ShipmentStartedIntegrationEventHandler : IIntegrationEventHa
         // Simulate a work time
         await Task.Delay(10000);
 
+        _eventBus.Publish(new OrderShippingCompletedIntegrationEvent(Guid.NewGuid(), DateTime.UtcNow, @event.OrderId, @event.ShipmentId));
+        
         await Task.CompletedTask;
     }
 }
