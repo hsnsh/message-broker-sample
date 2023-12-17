@@ -47,18 +47,18 @@ internal static class Program
         });
 
         services.AddTransient<OrderStartedIntegrationEventHandler>();
-        services.AddTransient<OrderStatusShippedIntegrationEventHandler>();
+        services.AddTransient<OrderShippingStartedIntegrationEventHandler>();
         services.AddTransient<ShipmentStartedIntegrationEventHandler>();
-        services.AddTransient<ShipmentCompletedIntegrationEventHandler>();
+        services.AddTransient<OrderShippingCompletedIntegrationEventHandler>();
 
         var sp = services.BuildServiceProvider();
 
         IEventBus _eventBus = sp.GetRequiredService<IEventBus>();
 
         _eventBus.Subscribe<OrderStartedIntegrationEvent, OrderStartedIntegrationEventHandler>();
-        _eventBus.Subscribe<OrderShippingStartedIntegrationEvent, OrderStatusShippedIntegrationEventHandler>();
+        _eventBus.Subscribe<OrderShippingStartedIntegrationEvent, OrderShippingStartedIntegrationEventHandler>();
         _eventBus.Subscribe<ShipmentStartedIntegrationEvent, ShipmentStartedIntegrationEventHandler>();
-        _eventBus.Subscribe<OrderShippingCompletedIntegrationEvent, ShipmentCompletedIntegrationEventHandler>();
+        _eventBus.Subscribe<OrderShippingCompletedIntegrationEvent, OrderShippingCompletedIntegrationEventHandler>();
     }
 
     private static IConfiguration GetConfiguration() =>
