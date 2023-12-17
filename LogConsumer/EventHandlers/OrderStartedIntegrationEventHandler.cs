@@ -10,7 +10,6 @@ public sealed class OrderStartedIntegrationEventHandler : IIntegrationEventHandl
 
     public OrderStartedIntegrationEventHandler(ILoggerFactory loggerFactory)
     {
-        // _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _logger = loggerFactory.CreateLogger<OrderStartedIntegrationEventHandler>() ?? throw new ArgumentNullException(nameof(loggerFactory));
     }
 
