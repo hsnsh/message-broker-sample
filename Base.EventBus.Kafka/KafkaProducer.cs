@@ -36,16 +36,38 @@ public sealed class KafkaProducer
 
     public async Task StartSendingMessages<TEvent>(string topicName, TEvent @event) where TEvent : IntegrationEvent
     {
+        Thread.Sleep(5000);
+        
         using var producer = new ProducerBuilder<long, string>(_producerConfig)
             .SetKeySerializer(Serializers.Int64)
             .SetValueSerializer(Serializers.Utf8)
-            .SetLogHandler((_, message) => _logger.LogInformation("Facility: {Facility}-{Level} Message: {Message}", message.Facility, message.Level, message.Message))
+            .SetLogHandler((_, message) =>
+            {
+                switch (message.Level)
+                {
+                    case SyslogLevel.Emergency | SyslogLevel.Alert | SyslogLevel.Critical | SyslogLevel.Error:
+                    {
+                        _logger.LogError("Kafka Producer [ {TopicName} ] => {Facility}: Message: {Message}", topicName, message.Facility, message.Message);
+                        break;
+                    }
+                    case SyslogLevel.Warning | SyslogLevel.Notice | SyslogLevel.Debug:
+                    {
+                        _logger.LogDebug("Kafka Producer [ {TopicName} ] => {Facility}: Message: {Message}", topicName, message.Facility, message.Message);
+                        break;
+                    }
+                    default:
+                    {
+                        _logger.LogInformation("Kafka Producer [ {TopicName} ] => {Facility}: Message: {Message}", topicName, message.Facility, message.Message);
+                        break;
+                    }
+                }
+            })
             .SetErrorHandler((_, e) => _logger.LogError("Error: {Reason}. Is Fatal: {IsFatal}", e.Reason, e.IsFatal))
             .Build();
 
         try
         {
-            _logger.LogInformation("Kafka Producer [ {TopicName} ] => EventId [ {EventId} ] started", topicName, @event.Id.ToString());
+            _logger.LogInformation("Kafka Producer [ {TopicName} ] => EventId [ {EventId} ] STARTED", topicName, @event.Id.ToString());
 
             var message = JsonConvert.SerializeObject(@event, _options);
 
@@ -57,24 +79,23 @@ public sealed class KafkaProducer
                 });
 
             producer.Flush(new TimeSpan(0, 0, 10));
-            _logger.LogInformation("Message sent (value: \'{Message}\'). Delivery status: {DeliveryReportStatus}", message, deliveryReport.Status);
-
             if (deliveryReport.Status != PersistenceStatus.Persisted)
             {
                 // delivery might have failed after retries. This message requires manual processing.
                 _logger.LogError("Message not ack\'d by all brokers (value: \'{Message}\'). Delivery status: {DeliveryReportStatus}", message, deliveryReport.Status);
             }
+            else
+            {
+                _logger.LogInformation("Message sent (value: \'{Message}\'). Delivery status: {DeliveryReportStatus}", message, deliveryReport.Status);
+            }
 
             Thread.Sleep(TimeSpan.FromSeconds(2));
+            _logger.LogInformation("Kafka Producer [ {TopicName} ] => EventId [ {EventId} ] COMPLETED", topicName, @event.Id.ToString());
         }
         catch (ProduceException<long, string> e)
         {
             // Log this message for manual processing.
-            _logger.LogError("Permanent error: {Message} for message (value: \'{DeliveryResultValue}\')", e.Message, e.DeliveryResult.Value);
-        }
-        finally
-        {
-            _logger.LogInformation("Kafka Producer [ {TopicName} ] => EventId [ {EventId} ] completed", topicName, @event.Id.ToString());
+            _logger.LogError("Kafka Producer [ {TopicName} ] => EventId [ {EventId} ] Error: {ProduceError} for message (value: \'{DeliveryResultValue}\')", topicName, @event.Id.ToString(), e.Message, e.DeliveryResult.Value);
         }
     }
 }

@@ -13,15 +13,12 @@ internal static class Program
     public static async Task Main(string[] args)
     {
         var configuration = GetConfiguration();
-
-        using var loggerFactory = LoggerFactory.Create(static builder => builder.AddConsole());
-        ILogger logger = loggerFactory.CreateLogger("Program");
-
+        
         var services = new ServiceCollection();
 
         services.AddSingleton<ILoggerFactory>(sp =>
         {
-            return LoggerFactory.Create(static builder => builder.AddConsole());
+            return LoggerFactory.Create(static builder => builder.SetMinimumLevel(LogLevel.Information).AddConsole());
         });
 
         // Add our Config object so it can be injected
