@@ -10,8 +10,8 @@ public class RabbitMQConnectionSettings
 
 public class RabbitMQEventBusSettings
 {
-    public string ClientName { get; set; } = "eShop_ClientName";
-    public string ExchangeName { get; set; } = "eShop";
+    public string ClientName { get; set; } = "HsnSoft_ClientName";
+    public string ExchangeName { get; set; } = "HsnSoft";
     public int ConnectionRetryCount { get; set; } = 5;
     public string EventNamePrefix { get; set; } = "";
     public string EventNameSuffix { get; set; } = "IntegrationEvent";

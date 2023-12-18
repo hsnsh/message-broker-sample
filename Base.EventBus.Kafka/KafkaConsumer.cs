@@ -12,16 +12,16 @@ public sealed class KafkaConsumer
 
     public event EventHandler<object> OnMessageReceived;
 
-    public KafkaConsumer(string bootstrapServer, string ConsumerIdentifier, ILogger logger)
+    public KafkaConsumer(EventBusConfig eventBusConfig, ILogger logger)
     {
         _logger = logger;
         _consumerConfig = new ConsumerConfig
         {
-            BootstrapServers = bootstrapServer ?? throw new ArgumentNullException(nameof(bootstrapServer)),
+            BootstrapServers = eventBusConfig.EventBusConnectionString,
             EnableAutoCommit = false,
             EnableAutoOffsetStore = false,
             MaxPollIntervalMs = 300000,
-            GroupId = ConsumerIdentifier ?? throw new ArgumentNullException(nameof(ConsumerIdentifier)),
+            GroupId = eventBusConfig.SubscriberClientAppName,
 
             // Read messages from start if no commit exists.
             AutoOffsetReset = AutoOffsetReset.Earliest
@@ -61,7 +61,7 @@ public sealed class KafkaConsumer
                         break;
                     }
                 }
-            }) .SetErrorHandler((_, e) =>
+            }).SetErrorHandler((_, e) =>
             {
                 _logger.LogError("Error: {Reason}. Is Fatal: {IsFatal}", e.Reason, e.IsFatal);
                 KeepConsuming = !e.IsFatal;

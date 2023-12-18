@@ -10,19 +10,17 @@ public class EventBusKafka : IEventBus, IDisposable
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<EventBusKafka> _logger;
     private readonly EventBusConfig _eventBusConfig;
-    private readonly string _bootstrapServer;
 
     private readonly IEventBusSubscriptionsManager _subsManager;
     private readonly CancellationTokenSource _tokenSource;
     private readonly List<Task> _consumerTasks;
     private readonly List<Task> _messageProcessorTasks;
 
-    public EventBusKafka(IServiceProvider serviceProvider, ILoggerFactory loggerFactory, EventBusConfig eventBusConfig, string bootstrapServer)
+    public EventBusKafka(IServiceProvider serviceProvider, ILoggerFactory loggerFactory, EventBusConfig eventBusConfig)
     {
         _serviceProvider = serviceProvider;
         _logger = loggerFactory.CreateLogger<EventBusKafka>() ?? throw new ArgumentNullException(nameof(loggerFactory));
         _eventBusConfig = eventBusConfig;
-        _bootstrapServer = bootstrapServer ?? throw new ArgumentNullException(nameof(bootstrapServer));
 
         _subsManager = new InMemoryEventBusSubscriptionsManager(TrimEventName);
         _tokenSource = new CancellationTokenSource();
@@ -35,7 +33,7 @@ public class EventBusKafka : IEventBus, IDisposable
         var eventName = @event.GetType().Name;
         eventName = TrimEventName(eventName);
 
-        var kafkaProducer = new KafkaProducer(_bootstrapServer, _logger);
+        var kafkaProducer = new KafkaProducer(_eventBusConfig, _logger);
         await kafkaProducer.StartSendingMessages(eventName, @event);
     }
 
@@ -58,7 +56,7 @@ public class EventBusKafka : IEventBus, IDisposable
 
         _consumerTasks.Add(Task.Run(() =>
         {
-            var kafkaConsumer = new KafkaConsumer(_bootstrapServer, _eventBusConfig.SubscriberClientAppName, _logger);
+            var kafkaConsumer = new KafkaConsumer(_eventBusConfig, _logger);
             kafkaConsumer.OnMessageReceived += OnMessageReceived;
             kafkaConsumer.StartReceivingMessages(eventType, eventName, _tokenSource.Token);
         }));

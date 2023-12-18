@@ -60,7 +60,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         {
             _logger.LogTrace("Declaring RabbitMQ exchange to publish event: {Event}", @event);
 
-            channel.ExchangeDeclare(exchange: _eventBusConfig.DefaultTopicName, type: "direct"); //Ensure exchange exists while publishing
+            channel.ExchangeDeclare(exchange: _eventBusConfig.ExchangeName, type: "direct"); //Ensure exchange exists while publishing
 
             var body = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(@event, @event.GetType(), new JsonSerializerOptions { WriteIndented = true });
 
@@ -72,7 +72,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
                 _logger.LogTrace("Publishing event to RabbitMQ: {Event}", @event);
 
                 channel.BasicPublish(
-                    exchange: _eventBusConfig.DefaultTopicName,
+                    exchange: _eventBusConfig.ExchangeName,
                     routingKey: eventName,
                     mandatory: true,
                     basicProperties: properties,
@@ -108,7 +108,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
                 arguments: null);
 
             _consumerChannel.QueueBind(queue: GetConsumerQueueName(eventName),
-                exchange: _eventBusConfig.DefaultTopicName,
+                exchange: _eventBusConfig.ExchangeName,
                 routingKey: eventName);
         }
 
@@ -148,7 +148,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         using (var channel = _persistentConnection.CreateModel())
         {
             channel.QueueUnbind(queue: GetConsumerQueueName(eventName),
-                exchange: _eventBusConfig.DefaultTopicName,
+                exchange: _eventBusConfig.ExchangeName,
                 routingKey: TrimEventName(eventName));
 
             if (_subsManager.IsEmpty)
@@ -167,7 +167,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
 
         var channel = _persistentConnection.CreateModel();
 
-        channel.ExchangeDeclare(exchange: _eventBusConfig.DefaultTopicName, type: "direct");
+        channel.ExchangeDeclare(exchange: _eventBusConfig.ExchangeName, type: "direct");
 
         return channel;
     }
