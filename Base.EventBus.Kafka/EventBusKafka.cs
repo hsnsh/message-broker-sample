@@ -18,6 +18,7 @@ public class EventBusKafka : IEventBus, IDisposable
     private readonly JsonSerializerSettings _options = DefaultJsonOptions.Get();
     private readonly CancellationTokenSource _tokenSource;
     private readonly List<Task> consumerTasks;
+    private readonly List<Task> messageProcessorTasks;
 
     public EventBusKafka(IServiceProvider serviceProvider, ILoggerFactory loggerFactory, EventBusConfig eventBusConfig, string bootstrapServer)
     {
@@ -29,6 +30,7 @@ public class EventBusKafka : IEventBus, IDisposable
         _subsManager = new InMemoryEventBusSubscriptionsManager(TrimEventName);
         _tokenSource = new CancellationTokenSource();
         consumerTasks = new List<Task>();
+        messageProcessorTasks = new List<Task>();
     }
 
     public async Task Publish(IntegrationEvent @event)
@@ -85,40 +87,56 @@ public class EventBusKafka : IEventBus, IDisposable
         consumerTasks.RemoveAll(x => x.IsCompleted);
         if (consumerTasks.Count > 0)
         {
-            // Waiting all tasks to finishing their jobs
-            Task.WaitAll(consumerTasks.ToArray(), 20000);
+            _logger.LogInformation("Consumer Task Count [ {ConsumerTasksCount} ]", consumerTasks.Count);
+
+            // Waiting all tasks to finishing their jobs until finish
+            Task.WaitAll(consumerTasks.ToArray());
+        }
+
+        messageProcessorTasks.RemoveAll(x => x.IsCompleted);
+        if (messageProcessorTasks.Count > 0)
+        {
+            _logger.LogInformation("Message Processor Task Count [ {processorTasks} ]", messageProcessorTasks.Count);
+
+            // Waiting all tasks to finishing their jobs, but if task processing more time 30 seconds continue
+            Task.WaitAll(messageProcessorTasks.ToArray(), 30000);
         }
 
         _subsManager.Clear();
+        
+        _logger.LogInformation("Message Broker Bridge terminated");
     }
 
-    private async void OnMessageReceived(object? sender, object message)
+    private void OnMessageReceived(object? sender, object message)
     {
-        var eventName = message.GetType().Name;
-        eventName = TrimEventName(eventName);
-
-        if (_subsManager.HasSubscriptionsForEvent(eventName))
+        messageProcessorTasks.Add(Task.Run(async () =>
         {
-            var subscriptions = _subsManager.GetHandlersForEvent(eventName);
+            var eventName = message.GetType().Name;
+            eventName = TrimEventName(eventName);
 
-            using var scope = _serviceProvider.CreateScope();
-            foreach (var subscription in subscriptions)
+            if (_subsManager.HasSubscriptionsForEvent(eventName))
             {
-                var handler = scope.ServiceProvider.GetService(subscription.HandlerType);
-                if (handler == null)
-                {
-                    _logger.LogWarning("{ConsumerGroupId} consumed message [ {Topic} ] => No event handler for event", _eventBusConfig.SubscriberClientAppName, eventName);
-                    continue;
-                }
+                var subscriptions = _subsManager.GetHandlersForEvent(eventName);
 
-                var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(message.GetType());
-                await (Task)concreteType.GetMethod("Handle")?.Invoke(handler, new object[] { message })!;
+                using var scope = _serviceProvider.CreateScope();
+                foreach (var subscription in subscriptions)
+                {
+                    var handler = scope.ServiceProvider.GetService(subscription.HandlerType);
+                    if (handler == null)
+                    {
+                        _logger.LogWarning("{ConsumerGroupId} consumed message [ {Topic} ] => No event handler for event", _eventBusConfig.SubscriberClientAppName, eventName);
+                        continue;
+                    }
+
+                    var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(message.GetType());
+                    await (Task)concreteType.GetMethod("Handle")?.Invoke(handler, new object[] { message })!;
+                }
             }
-        }
-        else
-        {
-            _logger.LogWarning("{ConsumerGroupId} consumed message [ {Topic} ] => No subscription for event", _eventBusConfig.SubscriberClientAppName, eventName);
-        }
+            else
+            {
+                _logger.LogWarning("{ConsumerGroupId} consumed message [ {Topic} ] => No subscription for event", _eventBusConfig.SubscriberClientAppName, eventName);
+            }
+        }));
     }
 
     private string TrimEventName(string eventName)

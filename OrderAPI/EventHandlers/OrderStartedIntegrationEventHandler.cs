@@ -16,13 +16,17 @@ public sealed class OrderStartedIntegrationEventHandler : IIntegrationEventHandl
 
     public async Task Handle(OrderStartedIntegrationEvent @event)
     {
-        var space = typeof(OrderStartedIntegrationEventHandler).Namespace;
-        _logger.LogInformation("Handling Integration Event: {@IntegrationEvent} at {AppName}", @event, space);
-
-        // Simulate a work time
-        await Task.Delay(5000);
-
-        _eventBus.Publish(new OrderShippingStartedIntegrationEvent(Guid.NewGuid(), DateTime.UtcNow, @event.OrderId));
+        _logger.LogInformation("START EVENT HANDLING");
+        await Task.Delay(20000);
+        _logger.LogInformation("COMPLETED EVENT HANDLING");
+        
+        // var space = typeof(OrderStartedIntegrationEventHandler).Namespace;
+        // _logger.LogInformation("Handling Integration Event: {@IntegrationEvent} at {AppName}", @event, space);
+        //
+        // // Simulate a work time
+        // await Task.Delay(5000);
+        //
+        // _eventBus.Publish(new OrderShippingStartedIntegrationEvent(Guid.NewGuid(), DateTime.UtcNow, @event.OrderId));
 
         await Task.CompletedTask;
     }

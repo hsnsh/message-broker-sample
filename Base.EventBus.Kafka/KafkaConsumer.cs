@@ -54,15 +54,15 @@ public sealed class KafkaConsumer
         try
         {
             consumer.Subscribe(topicName);
-            _logger.LogInformation("Kafka Consumer [ {TopicName} ] loop started...", topicName);
+            _logger.LogInformation("Kafka Consumer [ {TopicName} ] subscribed", topicName);
 
             while (KeepConsuming && !stoppingToken.IsCancellationRequested)
             {
                 try
                 {
-                    // var result = consumer.Consume(stoppingToken);
-                    var result = consumer.Consume(TimeSpan.FromMilliseconds(_consumerConfig.MaxPollIntervalMs - 1000 ?? 250000));
-                    // var result = consumer.Consume(TimeSpan.FromMilliseconds(1000));
+                    var result = consumer.Consume(stoppingToken);
+                    // var result = consumer.Consume(TimeSpan.FromMilliseconds(_consumerConfig.MaxPollIntervalMs - 1000 ?? 250000));
+                    // var result = consumer.Consume(TimeSpan.FromMilliseconds(10000));
                     var message = result?.Message?.Value;
                     if (message == null)
                     {
@@ -75,32 +75,33 @@ public sealed class KafkaConsumer
                     consumer.Commit(result);
                     consumer.StoreOffset(result);
 
-                    var @event = JsonConvert.DeserializeObject(message,eventType);
+                    var @event = JsonConvert.DeserializeObject(message, eventType);
 
-                    OnMessageReceived(this, @event);
-                    // OnMessageReceived.Invoke(this, @event);
+                    // OnMessageReceived(this, @event);
+                    OnMessageReceived.Invoke(this, @event);
                 }
                 catch (ConsumeException ce)
                 {
                     if (ce.Error.IsFatal) throw ce;
-                    _logger.LogWarning("Kafka Consumer [ {TopicName} ] : {Time} | {Error})", topicName, DateTime.Now.ToString(), ce.Message);
+                    _logger.LogWarning("Kafka Consumer [ {TopicName} ] : {Time} | {ConsumeError})", topicName, DateTime.Now.ToString(), ce.Message);
                 }
 
                 // loop wait period
                 Thread.Sleep(TimeSpan.FromMilliseconds(200));
             }
         }
-        catch (KafkaException e)
+        catch (OperationCanceledException oe)
         {
-            _logger.LogError("Consume error: {Message}", e.Message);
-            _logger.LogInformation("Kafka Consumer [ {TopicName} ] loop stopped...", topicName);
+            _logger.LogWarning("Kafka Consumer [ {TopicName} ] closing... : {CancelledMessage}", topicName, oe.Message);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError("Kafka Consumer [ {TopicName} ] FatalError: {FatalError}", topicName, e.Message);
         }
         finally
         {
             consumer.Close();
-
-            // Wait last consume message handling threshold;
-            Thread.Sleep(TimeSpan.FromMilliseconds(5000));
+            _logger.LogInformation("Kafka Consumer [ {TopicName} ] closed", topicName);
         }
     }
 }
