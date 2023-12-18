@@ -30,7 +30,7 @@ public class EventBusKafka : IEventBus, IDisposable
         _messageProcessorTasks = new List<Task>();
     }
 
-    public async Task Publish(IntegrationEvent @event)
+    public async Task PublishAsync(IntegrationEvent @event)
     {
         var eventName = @event.GetType().Name;
         eventName = TrimEventName(eventName);
@@ -125,8 +125,10 @@ public class EventBusKafka : IEventBus, IDisposable
                         continue;
                     }
 
+                    _logger.LogWarning("{ConsumerGroupId} consumed message [ {Topic} ] => EventId [ {EventId} ] started", _eventBusConfig.SubscriberClientAppName, eventName, (message as IntegrationEvent).Id.ToString());
                     var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(message.GetType());
                     await (Task)concreteType.GetMethod("Handle")?.Invoke(handler, new[] { message })!;
+                    _logger.LogWarning("{ConsumerGroupId} consumed message [ {Topic} ] => EventId [ {EventId} ] completed", _eventBusConfig.SubscriberClientAppName, eventName, (message as IntegrationEvent).Id.ToString());
                 }
             }
             else

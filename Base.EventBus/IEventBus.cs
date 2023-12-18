@@ -2,7 +2,7 @@ namespace Base.EventBus;
 
 public interface IEventBus
 {
-    Task Publish(IntegrationEvent @event);
+    Task PublishAsync(IntegrationEvent @event);
 
     void Subscribe<TEvent, THandler>()
         where TEvent : IntegrationEvent

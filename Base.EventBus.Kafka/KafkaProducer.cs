@@ -45,7 +45,7 @@ public sealed class KafkaProducer
 
         try
         {
-            _logger.LogInformation("Kafka Producer loop started...");
+            _logger.LogInformation("Kafka Producer [ {TopicName} ] => EventId [ {EventId} ] started", topicName, @event.Id.ToString());
 
             var message = JsonConvert.SerializeObject(@event, _options);
 
@@ -71,7 +71,10 @@ public sealed class KafkaProducer
         {
             // Log this message for manual processing.
             _logger.LogError("Permanent error: {Message} for message (value: \'{DeliveryResultValue}\')", e.Message, e.DeliveryResult.Value);
-            _logger.LogInformation("Exiting Kafka Producer...");
+        }
+        finally
+        {
+            _logger.LogInformation("Kafka Producer [ {TopicName} ] => EventId [ {EventId} ] completed", topicName, @event.Id.ToString());
         }
     }
 }

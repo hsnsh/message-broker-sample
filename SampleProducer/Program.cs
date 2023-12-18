@@ -10,7 +10,7 @@ namespace ShipmentProducer;
 
 internal static class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var configuration = GetConfiguration();
 
@@ -51,7 +51,7 @@ internal static class Program
 
         while (true)
         {
-            _eventBus.Publish(new OrderStartedIntegrationEvent(Guid.NewGuid(),DateTime.UtcNow, Guid.NewGuid()));
+            await _eventBus.PublishAsync(new OrderStartedIntegrationEvent(Guid.NewGuid(), DateTime.UtcNow, Guid.NewGuid()));
 
             var result = Console.ReadLine();
             if (!string.IsNullOrWhiteSpace(result) && result.ToLower().Equals("q")) break;

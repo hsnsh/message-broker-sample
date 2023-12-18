@@ -22,7 +22,7 @@ public sealed class OrderShippingStartedIntegrationEventHandler : IIntegrationEv
         // Simulate a work time
         await Task.Delay(5000);
 
-        _eventBus.Publish(new ShipmentStartedIntegrationEvent(Guid.NewGuid(), DateTime.UtcNow, @event.OrderId, Guid.NewGuid()));
+       await _eventBus.PublishAsync(new ShipmentStartedIntegrationEvent(Guid.NewGuid(), DateTime.UtcNow, @event.OrderId, Guid.NewGuid()));
 
         await Task.CompletedTask;
     }
