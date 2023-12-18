@@ -12,16 +12,16 @@ public sealed class KafkaConsumer
 
     public event EventHandler<object> OnMessageReceived;
 
-    public KafkaConsumer(EventBusConfig eventBusConfig, ILogger logger)
+    public KafkaConsumer(KafkaConnectionSettings connectionSettings, EventBusConfig eventBusConfig, ILogger logger)
     {
         _logger = logger;
         _consumerConfig = new ConsumerConfig
         {
-            BootstrapServers = eventBusConfig.EventBusConnectionString,
+            BootstrapServers = $"{connectionSettings.HostName}:{connectionSettings.Port}",
             EnableAutoCommit = false,
             EnableAutoOffsetStore = false,
             MaxPollIntervalMs = 300000,
-            GroupId = eventBusConfig.SubscriberClientAppName,
+            GroupId = eventBusConfig.ConsumerName,
 
             // Read messages from start if no commit exists.
             AutoOffsetReset = AutoOffsetReset.Earliest

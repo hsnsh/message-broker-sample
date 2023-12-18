@@ -2,10 +2,10 @@
 using System.Text;
 using System.Text.Json;
 using Base.EventBus.SubManagers;
-using Base.RabbitMQ;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Polly;
 using RabbitMQ.Client;
@@ -24,13 +24,16 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
 
     private IModel _consumerChannel;
 
-    public EventBusRabbitMQ(IServiceProvider serviceProvider, IRabbitMQPersistentConnection persistentConnection,
-        EventBusConfig eventBusConfig,  ILoggerFactory loggerFactory)
+    public EventBusRabbitMQ(IServiceProvider serviceProvider)
     {
-        _serviceProvider = serviceProvider;
-        _persistentConnection = persistentConnection ?? throw new ArgumentNullException(nameof(persistentConnection));
-        _eventBusConfig = eventBusConfig ?? new EventBusConfig();
+        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+
+        _eventBusConfig = _serviceProvider.GetRequiredService<IOptions<EventBusConfig>>().Value;
+        _persistentConnection = _serviceProvider.GetRequiredService<IRabbitMQPersistentConnection>();
+
+        var loggerFactory = _serviceProvider.GetRequiredService<ILoggerFactory>();
         _logger = loggerFactory.CreateLogger<EventBusRabbitMQ>() ?? throw new ArgumentNullException(nameof(loggerFactory));
+
         _subsManager = new InMemoryEventBusSubscriptionsManager(TrimEventName);
 
         _consumerChannel = CreateConsumerChannel();
@@ -60,7 +63,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         {
             _logger.LogTrace("Declaring RabbitMQ exchange to publish event: {Event}", @event);
 
-            channel.ExchangeDeclare(exchange: _eventBusConfig.ExchangeName, type: "direct"); //Ensure exchange exists while publishing
+            channel.ExchangeDeclare(exchange: _eventBusConfig.ExchangeName2, type: "direct"); //Ensure exchange exists while publishing
 
             var body = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(@event, @event.GetType(), new JsonSerializerOptions { WriteIndented = true });
 
@@ -72,7 +75,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
                 _logger.LogTrace("Publishing event to RabbitMQ: {Event}", @event);
 
                 channel.BasicPublish(
-                    exchange: _eventBusConfig.ExchangeName,
+                    exchange: _eventBusConfig.ExchangeName2,
                     routingKey: eventName,
                     mandatory: true,
                     basicProperties: properties,
@@ -108,7 +111,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
                 arguments: null);
 
             _consumerChannel.QueueBind(queue: GetConsumerQueueName(eventName),
-                exchange: _eventBusConfig.ExchangeName,
+                exchange: _eventBusConfig.ExchangeName2,
                 routingKey: eventName);
         }
 
@@ -148,7 +151,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         using (var channel = _persistentConnection.CreateModel())
         {
             channel.QueueUnbind(queue: GetConsumerQueueName(eventName),
-                exchange: _eventBusConfig.ExchangeName,
+                exchange: _eventBusConfig.ExchangeName2,
                 routingKey: TrimEventName(eventName));
 
             if (_subsManager.IsEmpty)
@@ -167,7 +170,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
 
         var channel = _persistentConnection.CreateModel();
 
-        channel.ExchangeDeclare(exchange: _eventBusConfig.ExchangeName, type: "direct");
+        channel.ExchangeDeclare(exchange: _eventBusConfig.ExchangeName2, type: "direct");
 
         return channel;
     }
@@ -220,7 +223,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
 
     private string GetConsumerQueueName(string eventName)
     {
-        return $"{_eventBusConfig.SubscriberClientAppName}_{TrimEventName(eventName)}";
+        return $"{_eventBusConfig.ConsumerName}_{TrimEventName(eventName)}";
     }
 
     private string TrimEventName(string eventName)

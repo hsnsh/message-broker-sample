@@ -9,6 +9,7 @@ public class EventBusKafka : IEventBus, IDisposable
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<EventBusKafka> _logger;
+    private readonly KafkaConnectionSettings _kafkaConnectionSettings;
     private readonly EventBusConfig _eventBusConfig;
 
     private readonly IEventBusSubscriptionsManager _subsManager;
@@ -16,10 +17,12 @@ public class EventBusKafka : IEventBus, IDisposable
     private readonly List<Task> _consumerTasks;
     private readonly List<Task> _messageProcessorTasks;
 
-    public EventBusKafka(IServiceProvider serviceProvider, ILoggerFactory loggerFactory, EventBusConfig eventBusConfig)
+    public EventBusKafka(IServiceProvider serviceProvider, ILoggerFactory loggerFactory,
+        KafkaConnectionSettings kafkaConnectionSettings, EventBusConfig eventBusConfig)
     {
-        _serviceProvider = serviceProvider;
+        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         _logger = loggerFactory.CreateLogger<EventBusKafka>() ?? throw new ArgumentNullException(nameof(loggerFactory));
+        _kafkaConnectionSettings = kafkaConnectionSettings;
         _eventBusConfig = eventBusConfig;
 
         _subsManager = new InMemoryEventBusSubscriptionsManager(TrimEventName);
@@ -33,7 +36,7 @@ public class EventBusKafka : IEventBus, IDisposable
         var eventName = @event.GetType().Name;
         eventName = TrimEventName(eventName);
 
-        var kafkaProducer = new KafkaProducer(_eventBusConfig, _logger);
+        var kafkaProducer = new KafkaProducer(_kafkaConnectionSettings, _eventBusConfig, _logger);
         await kafkaProducer.StartSendingMessages(eventName, @event);
     }
 
@@ -56,7 +59,7 @@ public class EventBusKafka : IEventBus, IDisposable
 
         _consumerTasks.Add(Task.Run(() =>
         {
-            var kafkaConsumer = new KafkaConsumer(_eventBusConfig, _logger);
+            var kafkaConsumer = new KafkaConsumer(_kafkaConnectionSettings, _eventBusConfig, _logger);
             kafkaConsumer.OnMessageReceived += OnMessageReceived;
             kafkaConsumer.StartReceivingMessages(eventType, eventName, _tokenSource.Token);
         }));
@@ -119,19 +122,19 @@ public class EventBusKafka : IEventBus, IDisposable
                     var handler = scope.ServiceProvider.GetService(subscription.HandlerType);
                     if (handler == null)
                     {
-                        _logger.LogWarning("{ConsumerIdentifier} consumed message [ {Topic} ] => No event handler for event", _eventBusConfig.SubscriberClientAppName, eventName);
+                        _logger.LogWarning("{ConsumerName} consumed message [ {Topic} ] => No event handler for event", _eventBusConfig.ConsumerName, eventName);
                         continue;
                     }
 
-                    _logger.LogInformation("{ConsumerIdentifier} consumed message [ {Topic} ] => EventId [ {EventId} ] Started", _eventBusConfig.SubscriberClientAppName, eventName, (message as IntegrationEvent).Id.ToString());
+                    _logger.LogInformation("{ConsumerName} consumed message [ {Topic} ] => EventId [ {EventId} ] Started", _eventBusConfig.ConsumerName, eventName, (message as IntegrationEvent).Id.ToString());
                     var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(message.GetType());
                     await (Task)concreteType.GetMethod("Handle")?.Invoke(handler, new[] { message })!;
-                    _logger.LogInformation("{ConsumerIdentifier} consumed message [ {Topic} ] => EventId [ {EventId} ] Completed", _eventBusConfig.SubscriberClientAppName, eventName, (message as IntegrationEvent).Id.ToString());
+                    _logger.LogInformation("{ConsumerName} consumed message [ {Topic} ] => EventId [ {EventId} ] Completed", _eventBusConfig.ConsumerName, eventName, (message as IntegrationEvent).Id.ToString());
                 }
             }
             else
             {
-                _logger.LogWarning("{ConsumerIdentifier} consumed message [ {Topic} ] => No subscription for event", _eventBusConfig.SubscriberClientAppName, eventName);
+                _logger.LogWarning("{ConsumerName} consumed message [ {Topic} ] => No subscription for event", _eventBusConfig.ConsumerName, eventName);
             }
         }));
     }

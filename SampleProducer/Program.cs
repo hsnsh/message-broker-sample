@@ -19,7 +19,7 @@ internal static class Program
 
         services.AddSingleton<ILoggerFactory>(sp =>
         {
-            return LoggerFactory.Create(static builder => builder.SetMinimumLevel(LogLevel.Information).AddConsole());
+            return LoggerFactory.Create(static builder => builder.SetMinimumLevel(LogLevel.Trace).AddConsole());
         });
 
         // services.AddKafkaEventBus(configuration);
@@ -27,6 +27,9 @@ internal static class Program
 
         var sp = services.BuildServiceProvider();
 
+        // Subscribe all event handlers
+        sp.UseEventBus();
+        
         IEventBus _eventBus = sp.GetRequiredService<IEventBus>();
 
         while (true)

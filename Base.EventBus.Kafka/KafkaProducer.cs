@@ -12,12 +12,12 @@ public sealed class KafkaProducer
     private readonly ProducerConfig _producerConfig;
     private readonly JsonSerializerSettings _options = DefaultJsonOptions.Get();
 
-    public KafkaProducer(EventBusConfig eventBusConfig, ILogger logger)
+    public KafkaProducer(KafkaConnectionSettings connectionSettings, EventBusConfig eventBusConfig, ILogger logger)
     {
         _logger = logger;
         _producerConfig = new ProducerConfig
         {
-            BootstrapServers = eventBusConfig?.EventBusConnectionString ?? throw new ArgumentNullException(nameof(eventBusConfig.EventBusConnectionString)),
+            BootstrapServers = $"{connectionSettings.HostName}:{connectionSettings.Port}",
             EnableDeliveryReports = true,
             ClientId = Dns.GetHostName(),
             Debug = "msg",

@@ -26,6 +26,13 @@ internal static class Program
         // services.AddKafkaEventBus(configuration);
         services.AddRabbitMQEventBus(configuration);
 
+        var sp = services.BuildServiceProvider();
+
+        // Subscribe all event handlers
+        sp.UseEventBus();
+        
+        // IEventBus _eventBus = sp.GetRequiredService<IEventBus>();
+        
         while (true)
         {
             var result = Console.ReadLine();

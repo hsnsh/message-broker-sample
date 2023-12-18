@@ -1,7 +1,6 @@
 using Base.EventBus;
 using Base.EventBus.Kafka;
 using Base.EventBus.RabbitMQ;
-using Base.RabbitMQ;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,28 +22,19 @@ public static class MicroserviceHostExtensions
     public static IServiceCollection AddKafkaEventBus(this IServiceCollection services, IConfiguration configuration)
     {
         // Add our Config object so it can be injected
-        services.Configure<KafkaEventBusSettings>(configuration.GetSection("Kafka:EventBus"));
         services.Configure<KafkaConnectionSettings>(configuration.GetSection("Kafka:Connection"));
+        services.Configure<EventBusConfig>(configuration.GetSection("Kafka:EventBus"));
 
         services.AddSingleton<IEventBus, EventBusKafka>(sp =>
         {
             // var busSettings = new KafkaEventBusSettings();
             // var conf= sp.GetRequiredService<IConfiguration>();
             // conf.Bind("Kafka:EventBus", busSettings);
-            var busSettings = sp.GetRequiredService<IOptions<KafkaEventBusSettings>>();
             var connectionSettings = sp.GetRequiredService<IOptions<KafkaConnectionSettings>>();
-
-            EventBusConfig config = new()
-            {
-                EventBusConnectionString = $"{connectionSettings.Value.HostName}:{connectionSettings.Value.Port}",
-                SubscriberClientAppName = busSettings.Value.ConsumerIdentifier,
-                ConnectionRetryCount = busSettings.Value.ConnectionRetryCount,
-                EventNameSuffix = busSettings.Value.EventNameSuffix,
-            };
-
+            var busSettings = sp.GetRequiredService<IOptions<EventBusConfig>>();
             var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
 
-            return new EventBusKafka(sp, loggerFactory, config);
+            return new EventBusKafka(sp, loggerFactory, connectionSettings.Value, busSettings.Value);
         });
 
         // Add All Event Handlers
@@ -55,48 +45,13 @@ public static class MicroserviceHostExtensions
 
     public static IServiceCollection AddRabbitMQEventBus(this IServiceCollection services, IConfiguration configuration)
     {
-        // Add our Config object so it can be injected
-        services.Configure<RabbitMQEventBusSettings>(configuration.GetSection("RabbitMQ:EventBus"));
+        // Add configuration objects
+        services.Configure<EventBusConfig>(configuration.GetSection("RabbitMQ:EventBus"));
         services.Configure<RabbitMQConnectionSettings>(configuration.GetSection("RabbitMQ:Connection"));
 
-        services.AddSingleton<IRabbitMQPersistentConnection>(sp =>
-        {
-            var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
-
-            var busSettings = sp.GetRequiredService<IOptions<RabbitMQEventBusSettings>>();
-            var conSettings = sp.GetRequiredService<IOptions<RabbitMQConnectionSettings>>();
-
-            var factory = new ConnectionFactory()
-            {
-                HostName = conSettings.Value.HostName,
-                Port = conSettings.Value.Port,
-                UserName = conSettings.Value.UserName,
-                Password = conSettings.Value.Password,
-            };
-
-            return new RabbitMQPersistentConnection(factory, loggerFactory, busSettings.Value.ConnectionRetryCount);
-        });
-
-        services.AddSingleton<IEventBus, EventBusRabbitMQ>(sp =>
-        {
-            // var busSettings = new RabbitMQEventBusSettings();
-            // var conf= sp.GetRequiredService<IConfiguration>();
-            // conf.Bind("RabbitMQ:EventBus", busSettings);
-            var busSettings = sp.GetRequiredService<IOptions<RabbitMQEventBusSettings>>();
-
-            EventBusConfig config = new()
-            {
-                ExchangeName = busSettings.Value.ExchangeName,
-                SubscriberClientAppName = busSettings.Value.ClientName,
-                ConnectionRetryCount = busSettings.Value.ConnectionRetryCount,
-                EventNameSuffix = busSettings.Value.EventNameSuffix,
-            };
-
-            var rabbitMqPersistentConnection = sp.GetRequiredService<IRabbitMQPersistentConnection>();
-            var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
-
-            return new EventBusRabbitMQ(sp, rabbitMqPersistentConnection, config, loggerFactory);
-        });
+        // Add event bus instances
+        services.AddSingleton<IRabbitMQPersistentConnection>(sp => new RabbitMQPersistentConnection(sp));
+        services.AddSingleton<IEventBus, EventBusRabbitMQ>(sp => new EventBusRabbitMQ(sp));
 
         // Add All Event Handlers
         services.AddEventHandlers();
@@ -117,7 +72,7 @@ public static class MicroserviceHostExtensions
         }
     }
 
-    public static void UseEventBus(this IApplicationBuilder app)
+    public static void UseEventBus(this IServiceProvider sp)
     {
         var refType = typeof(IIntegrationEventHandler);
         var eventHandlerTypes = AppDomain.CurrentDomain.GetAssemblies()
@@ -125,7 +80,7 @@ public static class MicroserviceHostExtensions
             .Where(p => refType.IsAssignableFrom(p) && p is { IsInterface: false, IsAbstract: false }).ToList();
 
         if (eventHandlerTypes is not { Count: > 0 }) return;
-        var eventBus = app.ApplicationServices.GetRequiredService<IEventBus>();
+        var eventBus = sp.GetRequiredService<IEventBus>();
 
         foreach (var eventHandlerType in eventHandlerTypes)
         {

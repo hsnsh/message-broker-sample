@@ -1,11 +1,13 @@
 using System.Net.Sockets;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Polly;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
-using Microsoft.Extensions.Logging;
-using Polly;
 
-namespace Base.RabbitMQ;
+namespace Base.EventBus.RabbitMQ;
 
 public class RabbitMQPersistentConnection : IRabbitMQPersistentConnection
 {
@@ -17,11 +19,24 @@ public class RabbitMQPersistentConnection : IRabbitMQPersistentConnection
 
     object sync_root = new object();
 
-    public RabbitMQPersistentConnection(IConnectionFactory connectionFactory, ILoggerFactory loggerFactory, int retryCount = 5)
+    public RabbitMQPersistentConnection(IServiceProvider serviceProvider)
     {
-        _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
+        if (serviceProvider == null) throw new ArgumentNullException(nameof(serviceProvider));
+
+        var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
         _logger = loggerFactory.CreateLogger<RabbitMQPersistentConnection>() ?? throw new ArgumentNullException(nameof(loggerFactory));
-        _retryCount = retryCount;
+
+        var conSettings = serviceProvider.GetRequiredService<IOptions<RabbitMQConnectionSettings>>();
+        _connectionFactory = new ConnectionFactory()
+        {
+            HostName = conSettings.Value.HostName,
+            Port = conSettings.Value.Port,
+            UserName = conSettings.Value.UserName,
+            Password = conSettings.Value.Password,
+        };
+
+        var busSettings = serviceProvider.GetRequiredService<IOptions<EventBusConfig>>();
+        _retryCount = busSettings.Value.ConnectionRetryCount;
     }
 
     public bool IsConnected

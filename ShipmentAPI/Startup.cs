@@ -53,6 +53,6 @@ public sealed class Startup
         });
 
         // Subscribe all event handlers
-        app.UseEventBus();
+        app.ApplicationServices.UseEventBus();
     }
 }

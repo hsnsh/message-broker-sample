@@ -6,10 +6,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Base.EventBus\Base.EventBus.csproj" />
-      <ProjectReference Include="..\Base.Kafka\Base.Kafka.csproj" />
+        <PackageReference Include="Confluent.Kafka" Version="2.3.0" />
     </ItemGroup>
 
+    <ItemGroup>
+        <ProjectReference Include="..\Base.EventBus\Base.EventBus.csproj" />
+    </ItemGroup>
 
-    
 </Project>
