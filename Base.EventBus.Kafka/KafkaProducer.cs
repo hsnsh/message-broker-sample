@@ -45,17 +45,17 @@ public sealed class KafkaProducer
                 {
                     case SyslogLevel.Emergency | SyslogLevel.Alert | SyslogLevel.Critical | SyslogLevel.Error:
                     {
-                        _logger.LogError("Kafka Producer [ {TopicName} ] => {Facility}: Message: {Message}", topicName, message.Facility, message.Message);
+                        _logger.LogError("Kafka Producer [ {TopicName} ] => {Facility}, Message: {Message}", topicName, message.Facility, message.Message);
                         break;
                     }
                     case SyslogLevel.Warning | SyslogLevel.Notice | SyslogLevel.Debug:
                     {
-                        _logger.LogDebug("Kafka Producer [ {TopicName} ] => {Facility}: Message: {Message}", topicName, message.Facility, message.Message);
+                        _logger.LogDebug("Kafka Producer [ {TopicName} ] => {Facility}, Message: {Message}", topicName, message.Facility, message.Message);
                         break;
                     }
                     default:
                     {
-                        _logger.LogInformation("Kafka Producer [ {TopicName} ] => {Facility}: Message: {Message}", topicName, message.Facility, message.Message);
+                        _logger.LogInformation("Kafka Producer [ {TopicName} ] => {Facility}, Message: {Message}", topicName, message.Facility, message.Message);
                         break;
                     }
                 }

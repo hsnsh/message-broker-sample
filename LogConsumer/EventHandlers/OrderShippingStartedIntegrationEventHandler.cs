@@ -20,7 +20,7 @@ public sealed class OrderShippingStartedIntegrationEventHandler : IIntegrationEv
 
         // Simulate a work time
         await Task.Delay(200);
-        
+
         await Task.CompletedTask;
     }
 }

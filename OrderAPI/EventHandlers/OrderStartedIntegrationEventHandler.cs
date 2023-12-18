@@ -18,10 +18,10 @@ public sealed class OrderStartedIntegrationEventHandler : IIntegrationEventHandl
     {
         var space = typeof(OrderStartedIntegrationEventHandler).Namespace;
         _logger.LogInformation("Handling Integration Event: {@IntegrationEvent} at {AppName}", @event, space);
-        
+
         // Simulate a work time
-        await Task.Delay(20000);
-        
+        await Task.Delay(5000);
+
         await _eventBus.PublishAsync(new OrderShippingStartedIntegrationEvent(Guid.NewGuid(), DateTime.UtcNow, @event.OrderId));
 
         await Task.CompletedTask;

@@ -41,8 +41,27 @@ public sealed class KafkaConsumer
         using var consumer = new ConsumerBuilder<long, string>(_consumerConfig)
             .SetKeyDeserializer(Deserializers.Int64)
             .SetValueDeserializer(Deserializers.Utf8)
-            .SetLogHandler((_, message) => _logger.LogInformation("Facility: {Facility}-{Level} Message: {Message}", message.Facility, message.Level, message.Message))
-            .SetErrorHandler((_, e) =>
+            .SetLogHandler((_, message) =>
+            {
+                switch (message.Level)
+                {
+                    case SyslogLevel.Emergency | SyslogLevel.Alert | SyslogLevel.Critical | SyslogLevel.Error:
+                    {
+                        _logger.LogError("Kafka Consumer [ {TopicName} ] => {Facility}, Message: {Message}", topicName, message.Facility, message.Message);
+                        break;
+                    }
+                    case SyslogLevel.Warning | SyslogLevel.Notice | SyslogLevel.Debug:
+                    {
+                        _logger.LogDebug("Kafka Consumer [ {TopicName} ] => {Facility}, Message: {Message}", topicName, message.Facility, message.Message);
+                        break;
+                    }
+                    default:
+                    {
+                        _logger.LogInformation("Kafka Consumer [ {TopicName} ] => {Facility}, Message: {Message}", topicName, message.Facility, message.Message);
+                        break;
+                    }
+                }
+            }) .SetErrorHandler((_, e) =>
             {
                 _logger.LogError("Error: {Reason}. Is Fatal: {IsFatal}", e.Reason, e.IsFatal);
                 KeepConsuming = !e.IsFatal;
@@ -52,7 +71,7 @@ public sealed class KafkaConsumer
         try
         {
             consumer.Subscribe(topicName);
-            _logger.LogInformation("Kafka Consumer [ {TopicName} ] subscribed", topicName);
+            _logger.LogInformation("Kafka Consumer [ {TopicName} ] => Subscribed", topicName);
 
             while (KeepConsuming && !stoppingToken.IsCancellationRequested)
             {
@@ -63,11 +82,11 @@ public sealed class KafkaConsumer
                     var message = result?.Message?.Value;
                     if (message == null)
                     {
-                        _logger.LogDebug("Kafka Consumer [ {TopicName} ] loop [ {Time} ]", topicName, DateTime.UtcNow.ToString("yyyy-MM-dd hh:mm:ss zz"));
+                        _logger.LogDebug("Kafka Consumer [ {TopicName} ] => Loop [ {Time} ]", topicName, DateTime.UtcNow.ToString("yyyy-MM-dd hh:mm:ss zz"));
                         continue;
                     }
 
-                    _logger.LogInformation("{ConsumerGroupId} Received: {Key}:{Message} from partition: {Partition}", _consumerConfig.GroupId, result.Message.Key, message, result.Partition.Value);
+                    _logger.LogDebug("{ConsumerGroupId} Received: {Key}:{Message} from partition: {Partition}", _consumerConfig.GroupId, result.Message.Key, message, result.Partition.Value);
 
                     consumer.Commit(result);
                     consumer.StoreOffset(result);
@@ -79,7 +98,7 @@ public sealed class KafkaConsumer
                 catch (ConsumeException ce)
                 {
                     if (ce.Error.IsFatal) throw;
-                    _logger.LogWarning("Kafka Consumer [ {TopicName} ] : {Time} | {ConsumeError})", topicName, DateTime.UtcNow.ToString("yyyy-MM-dd hh:mm:ss zz"), ce.Message);
+                    _logger.LogWarning("Kafka Consumer [ {TopicName} ] => loop [ {Time} ] | Error: {ConsumeError}", topicName, DateTime.UtcNow.ToString("yyyy-MM-dd hh:mm:ss zz"), ce.Message);
                 }
 
                 // loop wait period
@@ -88,16 +107,16 @@ public sealed class KafkaConsumer
         }
         catch (OperationCanceledException oe)
         {
-            _logger.LogWarning("Kafka Consumer [ {TopicName} ] closing... : {CancelledMessage}", topicName, oe.Message);
+            _logger.LogWarning("Kafka Consumer [ {TopicName} ] => Closing... : {CancelledMessage}", topicName, oe.Message);
         }
         catch (Exception e)
         {
-            _logger.LogError("Kafka Consumer [ {TopicName} ] FatalError: {FatalError}", topicName, e.Message);
+            _logger.LogError("Kafka Consumer [ {TopicName} ] => FatalError : {FatalError}", topicName, e.Message);
         }
         finally
         {
             consumer.Close();
-            _logger.LogInformation("Kafka Consumer [ {TopicName} ] closed", topicName);
+            _logger.LogInformation("Kafka Consumer [ {TopicName} ] => Closed", topicName);
         }
     }
 }
