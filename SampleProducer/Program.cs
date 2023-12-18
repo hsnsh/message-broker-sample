@@ -1,5 +1,6 @@
 ﻿using Base.EventBus;
 using Base.EventBus.Kafka;
+using Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -13,7 +14,7 @@ internal static class Program
     public static async Task Main(string[] args)
     {
         var configuration = GetConfiguration();
-        
+
         var services = new ServiceCollection();
 
         services.AddSingleton<ILoggerFactory>(sp =>
@@ -21,26 +22,8 @@ internal static class Program
             return LoggerFactory.Create(static builder => builder.SetMinimumLevel(LogLevel.Information).AddConsole());
         });
 
-        // Add our Config object so it can be injected
-        services.Configure<KafkaEventBusSettings>(configuration.GetSection("Kafka:EventBus"));
-        services.Configure<KafkaConnectionSettings>(configuration.GetSection("Kafka:Connection"));
-        services.AddSingleton<IEventBus, EventBusKafka>(sp =>
-        {
-            // var busSettings = new KafkaEventBusSettings();
-            // var conf= sp.GetRequiredService<IConfiguration>();
-            // conf.Bind("Kafka:EventBus", busSettings);
-            var busSettings = sp.GetRequiredService<IOptions<KafkaEventBusSettings>>();
-            var connectionSettings = sp.GetRequiredService<IOptions<KafkaConnectionSettings>>();
-
-            EventBusConfig config = new()
-            {
-                SubscriberClientAppName = busSettings.Value.ConsumerGroupId, DefaultTopicName = string.Empty, ConnectionRetryCount = busSettings.Value.ConnectionRetryCount, EventNameSuffix = busSettings.Value.EventNameSuffix,
-            };
-
-            var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
-
-            return new EventBusKafka(sp, loggerFactory, config, $"{connectionSettings.Value.HostName}:{connectionSettings.Value.Port}");
-        });
+        // services.AddKafkaEventBus(configuration);
+        services.AddRabbitMQEventBus(configuration);
 
         var sp = services.BuildServiceProvider();
 
