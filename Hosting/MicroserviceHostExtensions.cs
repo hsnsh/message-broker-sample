@@ -1,12 +1,8 @@
 using Base.EventBus;
 using Base.EventBus.Kafka;
 using Base.EventBus.RabbitMQ;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using RabbitMQ.Client;
 
 namespace Hosting;
 
