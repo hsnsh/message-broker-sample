@@ -19,23 +19,10 @@ public static class MicroserviceHostExtensions
         return services;
     }
 
-    public static IServiceCollection AddKafkaEventBus(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddEventBus(this IServiceCollection services, IConfiguration configuration)
     {
-        // Add our Config object so it can be injected
-        services.Configure<KafkaConnectionSettings>(configuration.GetSection("Kafka:Connection"));
-        services.Configure<EventBusConfig>(configuration.GetSection("Kafka:EventBus"));
-
-        services.AddSingleton<IEventBus, EventBusKafka>(sp =>
-        {
-            // var busSettings = new KafkaEventBusSettings();
-            // var conf= sp.GetRequiredService<IConfiguration>();
-            // conf.Bind("Kafka:EventBus", busSettings);
-            var connectionSettings = sp.GetRequiredService<IOptions<KafkaConnectionSettings>>();
-            var busSettings = sp.GetRequiredService<IOptions<EventBusConfig>>();
-            var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
-
-            return new EventBusKafka(sp, loggerFactory, connectionSettings.Value, busSettings.Value);
-        });
+        services.AddKafkaEventBus(configuration);
+        // services.AddRabbitMQEventBus(configuration);
 
         // Add All Event Handlers
         services.AddEventHandlers();
@@ -43,20 +30,25 @@ public static class MicroserviceHostExtensions
         return services;
     }
 
-    public static IServiceCollection AddRabbitMQEventBus(this IServiceCollection services, IConfiguration configuration)
+    private static void AddKafkaEventBus(this IServiceCollection services, IConfiguration configuration)
     {
         // Add configuration objects
-        services.Configure<EventBusConfig>(configuration.GetSection("RabbitMQ:EventBus"));
+        services.Configure<KafkaConnectionSettings>(configuration.GetSection("Kafka:Connection"));
+        services.Configure<EventBusConfig>(configuration.GetSection("Kafka:EventBus"));
+
+        // Add event bus instances
+        services.AddSingleton<IEventBus, EventBusKafka>(sp => new EventBusKafka(sp));
+    }
+
+    private static void AddRabbitMQEventBus(this IServiceCollection services, IConfiguration configuration)
+    {
+        // Add configuration objects
         services.Configure<RabbitMQConnectionSettings>(configuration.GetSection("RabbitMQ:Connection"));
+        services.Configure<EventBusConfig>(configuration.GetSection("RabbitMQ:EventBus"));
 
         // Add event bus instances
         services.AddSingleton<IRabbitMQPersistentConnection>(sp => new RabbitMQPersistentConnection(sp));
         services.AddSingleton<IEventBus, EventBusRabbitMQ>(sp => new EventBusRabbitMQ(sp));
-
-        // Add All Event Handlers
-        services.AddEventHandlers();
-
-        return services;
     }
 
     private static void AddEventHandlers(this IServiceCollection services)

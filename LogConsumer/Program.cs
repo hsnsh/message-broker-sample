@@ -18,21 +18,19 @@ internal static class Program
 
         var services = new ServiceCollection();
 
-        services.AddSingleton<ILoggerFactory>(sp =>
-        {
-            return LoggerFactory.Create(static builder => builder.SetMinimumLevel(LogLevel.Information).AddConsole());
-        });
+        services.AddSingleton<ILoggerFactory>(sp => LoggerFactory.Create(static builder =>
+            builder.SetMinimumLevel(LogLevel.Information).AddConsole()));
 
-        // services.AddKafkaEventBus(configuration);
-        services.AddRabbitMQEventBus(configuration);
+        // Add event bus instance
+        services.AddEventBus(configuration);
 
         var sp = services.BuildServiceProvider();
 
         // Subscribe all event handlers
         sp.UseEventBus();
-        
+
         // IEventBus _eventBus = sp.GetRequiredService<IEventBus>();
-        
+
         while (true)
         {
             var result = Console.ReadLine();

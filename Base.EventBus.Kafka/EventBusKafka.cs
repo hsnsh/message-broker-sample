@@ -2,6 +2,7 @@
 using Base.EventBus.SubManagers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Base.EventBus.Kafka;
 
@@ -17,15 +18,18 @@ public class EventBusKafka : IEventBus, IDisposable
     private readonly List<Task> _consumerTasks;
     private readonly List<Task> _messageProcessorTasks;
 
-    public EventBusKafka(IServiceProvider serviceProvider, ILoggerFactory loggerFactory,
-        KafkaConnectionSettings kafkaConnectionSettings, EventBusConfig eventBusConfig)
+    public EventBusKafka(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+
+        var loggerFactory = _serviceProvider.GetRequiredService<ILoggerFactory>();
         _logger = loggerFactory.CreateLogger<EventBusKafka>() ?? throw new ArgumentNullException(nameof(loggerFactory));
-        _kafkaConnectionSettings = kafkaConnectionSettings;
-        _eventBusConfig = eventBusConfig;
+
+        _kafkaConnectionSettings = _serviceProvider.GetRequiredService<IOptions<KafkaConnectionSettings>>().Value;
+        _eventBusConfig = _serviceProvider.GetRequiredService<IOptions<EventBusConfig>>().Value;
 
         _subsManager = new InMemoryEventBusSubscriptionsManager(TrimEventName);
+
         _tokenSource = new CancellationTokenSource();
         _consumerTasks = new List<Task>();
         _messageProcessorTasks = new List<Task>();
