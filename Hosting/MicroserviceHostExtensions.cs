@@ -58,7 +58,7 @@ public static class MicroserviceHostExtensions
     
         services.AddSingleton<IRabbitMQPersistentConnection>(sp =>
         {
-            var logger = sp.GetRequiredService<ILogger<RabbitMQPersistentConnection>>();
+            var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
     
             var busSettings = sp.GetRequiredService<IOptions<RabbitMQEventBusSettings>>();
             var conSettings = sp.GetRequiredService<IOptions<RabbitMQConnectionSettings>>();
@@ -68,7 +68,7 @@ public static class MicroserviceHostExtensions
                 HostName = conSettings.Value.HostName, Port = conSettings.Value.Port, UserName = conSettings.Value.UserName, Password = conSettings.Value.Password,
             };
     
-            return new RabbitMQPersistentConnection(factory, logger, busSettings.Value.ConnectionRetryCount);
+            return new RabbitMQPersistentConnection(factory, loggerFactory, busSettings.Value.ConnectionRetryCount);
         });
     
         services.AddSingleton<IEventBus, EventBusRabbitMQ>(sp =>
@@ -84,9 +84,9 @@ public static class MicroserviceHostExtensions
             };
     
             var rabbitMqPersistentConnection = sp.GetRequiredService<IRabbitMQPersistentConnection>();
-            var logger = sp.GetRequiredService<ILogger<EventBusRabbitMQ>>();
+            var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
     
-            return new EventBusRabbitMQ(sp, rabbitMqPersistentConnection, config, logger);
+            return new EventBusRabbitMQ(sp, rabbitMqPersistentConnection, config, loggerFactory);
         });
 
         // Add All Event Handlers

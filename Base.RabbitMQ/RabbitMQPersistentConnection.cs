@@ -17,10 +17,10 @@ public class RabbitMQPersistentConnection : IRabbitMQPersistentConnection
 
     object sync_root = new object();
 
-    public RabbitMQPersistentConnection(IConnectionFactory connectionFactory, ILogger<RabbitMQPersistentConnection> logger, int retryCount = 5)
+    public RabbitMQPersistentConnection(IConnectionFactory connectionFactory, ILoggerFactory loggerFactory, int retryCount = 5)
     {
         _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = loggerFactory.CreateLogger<RabbitMQPersistentConnection>() ?? throw new ArgumentNullException(nameof(loggerFactory));
         _retryCount = retryCount;
     }
 

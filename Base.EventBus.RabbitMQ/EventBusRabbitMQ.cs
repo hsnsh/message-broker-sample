@@ -25,12 +25,12 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
     private IModel _consumerChannel;
 
     public EventBusRabbitMQ(IServiceProvider serviceProvider, IRabbitMQPersistentConnection persistentConnection,
-        EventBusConfig eventBusConfig, ILogger<EventBusRabbitMQ> logger)
+        EventBusConfig eventBusConfig,  ILoggerFactory loggerFactory)
     {
         _serviceProvider = serviceProvider;
         _persistentConnection = persistentConnection ?? throw new ArgumentNullException(nameof(persistentConnection));
         _eventBusConfig = eventBusConfig ?? new EventBusConfig();
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = loggerFactory.CreateLogger<EventBusRabbitMQ>() ?? throw new ArgumentNullException(nameof(loggerFactory));
         _subsManager = new InMemoryEventBusSubscriptionsManager(TrimEventName);
 
         _consumerChannel = CreateConsumerChannel();
@@ -101,13 +101,13 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
                 _persistentConnection.TryConnect();
             }
 
-            _consumerChannel.QueueDeclare(queue: GetSubName(eventName), //Ensure queue exists while consuming
+            _consumerChannel.QueueDeclare(queue: GetConsumerQueueName(eventName), //Ensure queue exists while consuming
                 durable: true,
                 exclusive: false,
                 autoDelete: false,
                 arguments: null);
 
-            _consumerChannel.QueueBind(queue: GetSubName(eventName),
+            _consumerChannel.QueueBind(queue: GetConsumerQueueName(eventName),
                 exchange: _eventBusConfig.DefaultTopicName,
                 routingKey: eventName);
         }
@@ -147,7 +147,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
 
         using (var channel = _persistentConnection.CreateModel())
         {
-            channel.QueueUnbind(queue: GetSubName(eventName),
+            channel.QueueUnbind(queue: GetConsumerQueueName(eventName),
                 exchange: _eventBusConfig.DefaultTopicName,
                 routingKey: TrimEventName(eventName));
 
@@ -182,7 +182,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
             consumer.Received += ConsumerReceived;
 
             _consumerChannel.BasicConsume(
-                queue: GetSubName(eventName),
+                queue: GetConsumerQueueName(eventName),
                 autoAck: false,
                 consumer: consumer);
         }
@@ -218,7 +218,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         _consumerChannel.BasicAck(eventArgs.DeliveryTag, multiple: false);
     }
 
-    private string GetSubName(string eventName)
+    private string GetConsumerQueueName(string eventName)
     {
         return $"{_eventBusConfig.SubscriberClientAppName}_{TrimEventName(eventName)}";
     }
@@ -227,12 +227,12 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
     {
         if (_eventBusConfig.DeleteEventPrefix && eventName.StartsWith(_eventBusConfig.EventNamePrefix))
         {
-            eventName = eventName.Substring(_eventBusConfig.EventNamePrefix.Length);
+            eventName = eventName[_eventBusConfig.EventNamePrefix.Length..];
         }
 
         if (_eventBusConfig.DeleteEventSuffix && eventName.EndsWith(_eventBusConfig.EventNameSuffix))
         {
-            eventName = eventName.Substring(0, eventName.Length - _eventBusConfig.EventNameSuffix.Length);
+            eventName = eventName[..^_eventBusConfig.EventNameSuffix.Length];
         }
 
         return eventName;
