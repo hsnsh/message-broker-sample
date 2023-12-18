@@ -1,4 +1,3 @@
-using Base.EventBus.Kafka.Converters;
 using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -9,7 +8,6 @@ public sealed class KafkaConsumer
 {
     private readonly ILogger _logger;
     private readonly ConsumerConfig _consumerConfig;
-    private readonly JsonSerializerSettings _options = DefaultJsonOptions.Get();
     private bool KeepConsuming { get; set; }
 
     public event EventHandler<object> OnMessageReceived;
@@ -62,11 +60,10 @@ public sealed class KafkaConsumer
                 {
                     var result = consumer.Consume(stoppingToken);
                     // var result = consumer.Consume(TimeSpan.FromMilliseconds(_consumerConfig.MaxPollIntervalMs - 1000 ?? 250000));
-                    // var result = consumer.Consume(TimeSpan.FromMilliseconds(10000));
                     var message = result?.Message?.Value;
                     if (message == null)
                     {
-                        _logger.LogDebug("Kafka Consumer [ {TopicName} ] loop [ {Time} ]", topicName, DateTime.Now.ToString());
+                        _logger.LogDebug("Kafka Consumer [ {TopicName} ] loop [ {Time} ]", topicName, DateTime.UtcNow.ToString("yyyy-MM-dd hh:mm:ss zz"));
                         continue;
                     }
 
@@ -77,13 +74,12 @@ public sealed class KafkaConsumer
 
                     var @event = JsonConvert.DeserializeObject(message, eventType);
 
-                    // OnMessageReceived(this, @event);
-                    OnMessageReceived.Invoke(this, @event);
+                    OnMessageReceived?.Invoke(this, @event);
                 }
                 catch (ConsumeException ce)
                 {
-                    if (ce.Error.IsFatal) throw ce;
-                    _logger.LogWarning("Kafka Consumer [ {TopicName} ] : {Time} | {ConsumeError})", topicName, DateTime.Now.ToString(), ce.Message);
+                    if (ce.Error.IsFatal) throw;
+                    _logger.LogWarning("Kafka Consumer [ {TopicName} ] : {Time} | {ConsumeError})", topicName, DateTime.UtcNow.ToString("yyyy-MM-dd hh:mm:ss zz"), ce.Message);
                 }
 
                 // loop wait period

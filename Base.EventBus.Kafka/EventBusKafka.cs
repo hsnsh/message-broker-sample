@@ -1,9 +1,7 @@
 ﻿#nullable enable
-using Base.EventBus.Kafka.Converters;
 using Base.EventBus.SubManagers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace Base.EventBus.Kafka;
 
@@ -15,10 +13,9 @@ public class EventBusKafka : IEventBus, IDisposable
     private readonly string _bootstrapServer;
 
     private readonly IEventBusSubscriptionsManager _subsManager;
-    private readonly JsonSerializerSettings _options = DefaultJsonOptions.Get();
     private readonly CancellationTokenSource _tokenSource;
-    private readonly List<Task> consumerTasks;
-    private readonly List<Task> messageProcessorTasks;
+    private readonly List<Task> _consumerTasks;
+    private readonly List<Task> _messageProcessorTasks;
 
     public EventBusKafka(IServiceProvider serviceProvider, ILoggerFactory loggerFactory, EventBusConfig eventBusConfig, string bootstrapServer)
     {
@@ -29,8 +26,8 @@ public class EventBusKafka : IEventBus, IDisposable
 
         _subsManager = new InMemoryEventBusSubscriptionsManager(TrimEventName);
         _tokenSource = new CancellationTokenSource();
-        consumerTasks = new List<Task>();
-        messageProcessorTasks = new List<Task>();
+        _consumerTasks = new List<Task>();
+        _messageProcessorTasks = new List<Task>();
     }
 
     public async Task Publish(IntegrationEvent @event)
@@ -59,7 +56,7 @@ public class EventBusKafka : IEventBus, IDisposable
 
         _subsManager.AddSubscription(eventType, eventHandlerType);
 
-        consumerTasks.Add(Task.Run(async () =>
+        _consumerTasks.Add(Task.Run(() =>
         {
             var kafkaConsumer = new KafkaConsumer(_bootstrapServer, _eventBusConfig.SubscriberClientAppName, _logger);
             kafkaConsumer.OnMessageReceived += OnMessageReceived;
@@ -84,32 +81,32 @@ public class EventBusKafka : IEventBus, IDisposable
         _tokenSource.Cancel();
         _tokenSource.Dispose();
 
-        consumerTasks.RemoveAll(x => x.IsCompleted);
-        if (consumerTasks.Count > 0)
+        _consumerTasks.RemoveAll(x => x.IsCompleted);
+        if (_consumerTasks.Count > 0)
         {
-            _logger.LogInformation("Consumer Task Count [ {ConsumerTasksCount} ]", consumerTasks.Count);
+            _logger.LogInformation("Consumer Task Count [ {ConsumerTasksCount} ]", _consumerTasks.Count);
 
             // Waiting all tasks to finishing their jobs until finish
-            Task.WaitAll(consumerTasks.ToArray());
+            Task.WaitAll(_consumerTasks.ToArray());
         }
 
-        messageProcessorTasks.RemoveAll(x => x.IsCompleted);
-        if (messageProcessorTasks.Count > 0)
+        _messageProcessorTasks.RemoveAll(x => x.IsCompleted);
+        if (_messageProcessorTasks.Count > 0)
         {
-            _logger.LogInformation("Message Processor Task Count [ {processorTasks} ]", messageProcessorTasks.Count);
+            _logger.LogInformation("Message Processor Task Count [ {ProcessorTasks} ]", _messageProcessorTasks.Count);
 
             // Waiting all tasks to finishing their jobs, but if task processing more time 30 seconds continue
-            Task.WaitAll(messageProcessorTasks.ToArray(), 30000);
+            Task.WaitAll(_messageProcessorTasks.ToArray(), 30000);
         }
 
         _subsManager.Clear();
-        
+
         _logger.LogInformation("Message Broker Bridge terminated");
     }
 
     private void OnMessageReceived(object? sender, object message)
     {
-        messageProcessorTasks.Add(Task.Run(async () =>
+        _messageProcessorTasks.Add(Task.Run(async () =>
         {
             var eventName = message.GetType().Name;
             eventName = TrimEventName(eventName);
@@ -129,7 +126,7 @@ public class EventBusKafka : IEventBus, IDisposable
                     }
 
                     var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(message.GetType());
-                    await (Task)concreteType.GetMethod("Handle")?.Invoke(handler, new object[] { message })!;
+                    await (Task)concreteType.GetMethod("Handle")?.Invoke(handler, new[] { message })!;
                 }
             }
             else
