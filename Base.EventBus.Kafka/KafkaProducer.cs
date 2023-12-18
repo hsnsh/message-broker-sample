@@ -36,8 +36,6 @@ public sealed class KafkaProducer
 
     public async Task StartSendingMessages<TEvent>(string topicName, TEvent @event) where TEvent : IntegrationEvent
     {
-        Thread.Sleep(5000);
-        
         using var producer = new ProducerBuilder<long, string>(_producerConfig)
             .SetKeySerializer(Serializers.Int64)
             .SetValueSerializer(Serializers.Utf8)
@@ -86,10 +84,10 @@ public sealed class KafkaProducer
             }
             else
             {
-                _logger.LogInformation("Message sent (value: \'{Message}\'). Delivery status: {DeliveryReportStatus}", message, deliveryReport.Status);
+                _logger.LogDebug("Message sent (value: \'{Message}\'). Delivery status: {DeliveryReportStatus}", message, deliveryReport.Status);
             }
 
-            Thread.Sleep(TimeSpan.FromSeconds(2));
+            Thread.Sleep(TimeSpan.FromMilliseconds(50));
             _logger.LogInformation("Kafka Producer [ {TopicName} ] => EventId [ {EventId} ] COMPLETED", topicName, @event.Id.ToString());
         }
         catch (ProduceException<long, string> e)
