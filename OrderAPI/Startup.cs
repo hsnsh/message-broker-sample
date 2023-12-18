@@ -17,7 +17,8 @@ public sealed class Startup
     {
         services.ConfigureMicroserviceHost();
 
-        services.AddKafkaEventBus(Configuration);
+        // services.AddKafkaEventBus(Configuration);
+        services.AddRabbitMQEventBus(Configuration);
 
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
