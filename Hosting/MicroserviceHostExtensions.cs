@@ -36,7 +36,7 @@ public static class MicroserviceHostExtensions
 
             EventBusConfig config = new()
             {
-                SubscriberClientAppName = busSettings.Value.ConsumerGroupId, DefaultTopicName = string.Empty, ConnectionRetryCount = busSettings.Value.ConnectionRetryCount, EventNameSuffix = busSettings.Value.EventNameSuffix,
+                SubscriberClientAppName = busSettings.Value.ConsumerIdentifier, DefaultTopicName = string.Empty, ConnectionRetryCount = busSettings.Value.ConnectionRetryCount, EventNameSuffix = busSettings.Value.EventNameSuffix,
             };
 
             var loggerFactory = sp.GetRequiredService<ILoggerFactory>();

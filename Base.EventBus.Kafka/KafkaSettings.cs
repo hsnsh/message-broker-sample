@@ -8,7 +8,7 @@ public class KafkaConnectionSettings
 
 public class KafkaEventBusSettings
 {
-    public string ConsumerGroupId { get; set; } = "HsnSoft_ClientName";
+    public string ConsumerIdentifier { get; set; } = "HsnSoft_ClientName";
     public int ConnectionRetryCount { get; set; } = 5;
     public string EventNamePrefix { get; set; } = "";
     public string EventNameSuffix { get; set; } = "IntegrationEvent";

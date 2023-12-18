@@ -121,19 +121,19 @@ public class EventBusKafka : IEventBus, IDisposable
                     var handler = scope.ServiceProvider.GetService(subscription.HandlerType);
                     if (handler == null)
                     {
-                        _logger.LogWarning("{ConsumerGroupId} consumed message [ {Topic} ] => No event handler for event", _eventBusConfig.SubscriberClientAppName, eventName);
+                        _logger.LogWarning("{ConsumerIdentifier} consumed message [ {Topic} ] => No event handler for event", _eventBusConfig.SubscriberClientAppName, eventName);
                         continue;
                     }
 
-                    _logger.LogInformation("{ConsumerGroupId} consumed message [ {Topic} ] => EventId [ {EventId} ] Started", _eventBusConfig.SubscriberClientAppName, eventName, (message as IntegrationEvent).Id.ToString());
+                    _logger.LogInformation("{ConsumerIdentifier} consumed message [ {Topic} ] => EventId [ {EventId} ] Started", _eventBusConfig.SubscriberClientAppName, eventName, (message as IntegrationEvent).Id.ToString());
                     var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(message.GetType());
                     await (Task)concreteType.GetMethod("Handle")?.Invoke(handler, new[] { message })!;
-                    _logger.LogInformation("{ConsumerGroupId} consumed message [ {Topic} ] => EventId [ {EventId} ] Completed", _eventBusConfig.SubscriberClientAppName, eventName, (message as IntegrationEvent).Id.ToString());
+                    _logger.LogInformation("{ConsumerIdentifier} consumed message [ {Topic} ] => EventId [ {EventId} ] Completed", _eventBusConfig.SubscriberClientAppName, eventName, (message as IntegrationEvent).Id.ToString());
                 }
             }
             else
             {
-                _logger.LogWarning("{ConsumerGroupId} consumed message [ {Topic} ] => No subscription for event", _eventBusConfig.SubscriberClientAppName, eventName);
+                _logger.LogWarning("{ConsumerIdentifier} consumed message [ {Topic} ] => No subscription for event", _eventBusConfig.SubscriberClientAppName, eventName);
             }
         }));
     }

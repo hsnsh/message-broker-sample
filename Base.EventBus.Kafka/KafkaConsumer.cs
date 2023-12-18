@@ -12,7 +12,7 @@ public sealed class KafkaConsumer
 
     public event EventHandler<object> OnMessageReceived;
 
-    public KafkaConsumer(string bootstrapServer, string consumerGroupId, ILogger logger)
+    public KafkaConsumer(string bootstrapServer, string ConsumerIdentifier, ILogger logger)
     {
         _logger = logger;
         _consumerConfig = new ConsumerConfig
@@ -21,7 +21,7 @@ public sealed class KafkaConsumer
             EnableAutoCommit = false,
             EnableAutoOffsetStore = false,
             MaxPollIntervalMs = 300000,
-            GroupId = consumerGroupId ?? throw new ArgumentNullException(nameof(consumerGroupId)),
+            GroupId = ConsumerIdentifier ?? throw new ArgumentNullException(nameof(ConsumerIdentifier)),
 
             // Read messages from start if no commit exists.
             AutoOffsetReset = AutoOffsetReset.Earliest
@@ -86,7 +86,7 @@ public sealed class KafkaConsumer
                         continue;
                     }
 
-                    _logger.LogDebug("{ConsumerGroupId} Received: {Key}:{Message} from partition: {Partition}", _consumerConfig.GroupId, result.Message.Key, message, result.Partition.Value);
+                    _logger.LogDebug("{ConsumerIdentifier} Received: {Key}:{Message} from partition: {Partition}", _consumerConfig.GroupId, result.Message.Key, message, result.Partition.Value);
 
                     consumer.Commit(result);
                     consumer.StoreOffset(result);
