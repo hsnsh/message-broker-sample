@@ -17,7 +17,7 @@ public sealed class OrderShippingCompletedIntegrationEventHandler : IIntegration
     public async Task Handle(OrderShippingCompletedIntegrationEvent @event)
     {
         var space = typeof(OrderShippingCompletedIntegrationEventHandler).Namespace;
-        _logger.LogInformation("Handling Integration Event: {@IntegrationEvent} at {AppName}", @event, space);
+        _logger.LogDebug("Handling Integration Event: {@IntegrationEvent} at {AppName}", @event, space);
 
         // Simulate a work time
         await Task.Delay(5000);

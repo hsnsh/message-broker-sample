@@ -102,7 +102,7 @@ public class RabbitMQPersistentConnection : IRabbitMQPersistentConnection
                 _connection.CallbackException += OnCallbackException;
                 _connection.ConnectionBlocked += OnConnectionBlocked;
 
-                _logger.LogInformation("RabbitMQ Client acquired a persistent connection to '{HostName}' and is subscribed to failure events", _connection.Endpoint.HostName);
+                _logger.LogInformation("RabbitMQ Client acquired a persistent connection to '{HostName}'", _connection.Endpoint.HostName);
 
                 return true;
             }

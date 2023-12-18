@@ -17,7 +17,7 @@ public sealed class OrderStartedIntegrationEventHandler : IIntegrationEventHandl
     public async Task Handle(OrderStartedIntegrationEvent @event)
     {
         var space = typeof(OrderStartedIntegrationEventHandler).Namespace;
-        _logger.LogInformation("Handling Integration Event: {@IntegrationEvent} at {AppName}", @event, space);
+        _logger.LogDebug("Handling Integration Event: {@IntegrationEvent} at {AppName}", @event, space);
 
         // Simulate a work time
         await Task.Delay(5000);
