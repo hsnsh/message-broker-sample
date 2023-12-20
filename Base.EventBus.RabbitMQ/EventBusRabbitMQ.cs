@@ -215,7 +215,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogWarning("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Consume ERROR : {ConsumeError}", _eventBusConfig.ClientInfo, eventName, ex.Message);
+            _logger.LogWarning("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Consume ERROR : {ConsumeError} | {Time}", _eventBusConfig.ClientInfo, eventName, ex.Message, DateTime.UtcNow.ToString("yyyy-MM-dd hh:mm:ss zz"));
         }
 
         // Even on exception we take the message off the queue.

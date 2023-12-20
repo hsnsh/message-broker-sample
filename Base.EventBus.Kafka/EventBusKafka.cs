@@ -57,7 +57,7 @@ public class EventBusKafka : IEventBus, IDisposable
         var eventName = eventType.Name;
         eventName = TrimEventName(eventName);
 
-        _logger.LogInformation("Subscribing to event {EventName} with {EventHandler}", eventName, eventHandlerType.Name);
+        _logger.LogInformation("Kafka | Subscribing to event {EventName} with {EventHandler}", eventName, eventHandlerType.Name);
 
         _subsManager.AddSubscription(eventType, eventHandlerType);
 
@@ -74,7 +74,7 @@ public class EventBusKafka : IEventBus, IDisposable
         var eventName = _subsManager.GetEventKey<T>();
         eventName = TrimEventName(eventName);
 
-        _logger.LogInformation("Unsubscribing from event {EventName}", eventName);
+        _logger.LogInformation("Kafka | Unsubscribing from event {EventName}", eventName);
 
         _subsManager.RemoveSubscription<T, TH>();
     }
@@ -126,19 +126,26 @@ public class EventBusKafka : IEventBus, IDisposable
                     var handler = scope.ServiceProvider.GetService(subscription.HandlerType);
                     if (handler == null)
                     {
-                        _logger.LogWarning("{ClientInfo} consumed message [ {Topic} ] => No event handler for event", _eventBusConfig.ClientInfo, eventName);
+                        _logger.LogWarning("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => No HANDLER for event", _eventBusConfig.ClientInfo, eventName);
                         continue;
                     }
 
-                    _logger.LogInformation("{ClientInfo} consumed message [ {Topic} ] => EventId [ {EventId} ] Started", _eventBusConfig.ClientInfo, eventName, ((message as IntegrationEvent)!).Id.ToString());
-                    var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(message.GetType());
-                    await (Task)concreteType.GetMethod("HandleAsync")?.Invoke(handler, new[] { message })!;
-                    _logger.LogInformation("{ClientInfo} consumed message [ {Topic} ] => EventId [ {EventId} ] Completed", _eventBusConfig.ClientInfo, eventName, ((message as IntegrationEvent)!).Id.ToString());
+                    try
+                    {
+                        _logger.LogInformation("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Handling STARTED : EventId [ {EventId} ]", _eventBusConfig.ClientInfo, eventName, ((message as IntegrationEvent)!).Id.ToString());
+                        var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(message.GetType());
+                        await (Task)concreteType.GetMethod("HandleAsync")?.Invoke(handler, new[] { message })!;
+                        _logger.LogInformation("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Handling COMPLETED : EventId [ {EventId} ]", _eventBusConfig.ClientInfo, eventName, ((message as IntegrationEvent)!).Id.ToString());
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Handling ERROR : {HandlingError}", _eventBusConfig.ClientInfo, eventName, ex.Message);
+                    }
                 }
             }
             else
             {
-                _logger.LogWarning("{ClientInfo} consumed message [ {Topic} ] => No subscription for event", _eventBusConfig.ClientInfo, eventName);
+                _logger.LogWarning("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => No SUBSCRIPTION for event", _eventBusConfig.ClientInfo, eventName);
             }
         }));
     }
