@@ -265,7 +265,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
 
                     _logger.LogInformation("{ConsumerName} consumed message [ {Topic} ] => EventId [ {EventId} ] Started", _eventBusConfig.ConsumerName, eventName, ((integrationEvent as IntegrationEvent)!).Id.ToString());
                     var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType!);
-                    await (Task)concreteType.GetMethod("Handle")!.Invoke(handler, new[] { integrationEvent })!;
+                    await (Task)concreteType.GetMethod("HandleAsync")?.Invoke(handler, new[] { integrationEvent })!;
                     _logger.LogInformation("{ConsumerName} consumed message [ {Topic} ] => EventId [ {EventId} ] Completed", _eventBusConfig.ConsumerName, eventName, ((integrationEvent as IntegrationEvent)!).Id.ToString());
                 }
             }

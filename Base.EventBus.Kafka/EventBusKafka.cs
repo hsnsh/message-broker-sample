@@ -132,7 +132,7 @@ public class EventBusKafka : IEventBus, IDisposable
 
                     _logger.LogInformation("{ConsumerName} consumed message [ {Topic} ] => EventId [ {EventId} ] Started", _eventBusConfig.ConsumerName, eventName, ((message as IntegrationEvent)!).Id.ToString());
                     var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(message.GetType());
-                    await (Task)concreteType.GetMethod("Handle")?.Invoke(handler, new[] { message })!;
+                    await (Task)concreteType.GetMethod("HandleAsync")?.Invoke(handler, new[] { message })!;
                     _logger.LogInformation("{ConsumerName} consumed message [ {Topic} ] => EventId [ {EventId} ] Completed", _eventBusConfig.ConsumerName, eventName, ((message as IntegrationEvent)!).Id.ToString());
                 }
             }
