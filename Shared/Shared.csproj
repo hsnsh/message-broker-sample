@@ -7,8 +7,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Base.EventBus.Kafka\Base.EventBus.Kafka.csproj" />
-      <ProjectReference Include="..\Base.EventBus.RabbitMQ\Base.EventBus.RabbitMQ.csproj" />
+        <PackageReference Include="HsnSoft.Base.EventBus.Kafka" Version="2024.6.19"/>
+        <PackageReference Include="HsnSoft.Base.EventBus.RabbitMQ" Version="2024.6.19"/>
+        <!--<ProjectReference Include="..\Base.EventBus.Kafka\Base.EventBus.Kafka.csproj"/>-->
+        <!--<ProjectReference Include="..\Base.EventBus.RabbitMQ\Base.EventBus.RabbitMQ.csproj"/>-->
     </ItemGroup>
 
 </Project>
