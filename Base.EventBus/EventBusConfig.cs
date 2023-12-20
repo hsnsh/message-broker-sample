@@ -12,7 +12,7 @@ public class EventBusConfig
 
     public bool DeleteEventSuffix => !string.IsNullOrEmpty(EventNameSuffix);
 
-    public string ConsumerName =>
+    public string ClientInfo =>
         (string.IsNullOrWhiteSpace(ExchangeName) ? string.Empty : $"{ExchangeName}_") +
         (string.IsNullOrWhiteSpace(ClientName) ? string.Empty : $"{ClientName}");
 }

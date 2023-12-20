@@ -126,19 +126,19 @@ public class EventBusKafka : IEventBus, IDisposable
                     var handler = scope.ServiceProvider.GetService(subscription.HandlerType);
                     if (handler == null)
                     {
-                        _logger.LogWarning("{ConsumerName} consumed message [ {Topic} ] => No event handler for event", _eventBusConfig.ConsumerName, eventName);
+                        _logger.LogWarning("{ClientInfo} consumed message [ {Topic} ] => No event handler for event", _eventBusConfig.ClientInfo, eventName);
                         continue;
                     }
 
-                    _logger.LogInformation("{ConsumerName} consumed message [ {Topic} ] => EventId [ {EventId} ] Started", _eventBusConfig.ConsumerName, eventName, ((message as IntegrationEvent)!).Id.ToString());
+                    _logger.LogInformation("{ClientInfo} consumed message [ {Topic} ] => EventId [ {EventId} ] Started", _eventBusConfig.ClientInfo, eventName, ((message as IntegrationEvent)!).Id.ToString());
                     var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(message.GetType());
                     await (Task)concreteType.GetMethod("HandleAsync")?.Invoke(handler, new[] { message })!;
-                    _logger.LogInformation("{ConsumerName} consumed message [ {Topic} ] => EventId [ {EventId} ] Completed", _eventBusConfig.ConsumerName, eventName, ((message as IntegrationEvent)!).Id.ToString());
+                    _logger.LogInformation("{ClientInfo} consumed message [ {Topic} ] => EventId [ {EventId} ] Completed", _eventBusConfig.ClientInfo, eventName, ((message as IntegrationEvent)!).Id.ToString());
                 }
             }
             else
             {
-                _logger.LogWarning("{ConsumerName} consumed message [ {Topic} ] => No subscription for event", _eventBusConfig.ConsumerName, eventName);
+                _logger.LogWarning("{ClientInfo} consumed message [ {Topic} ] => No subscription for event", _eventBusConfig.ClientInfo, eventName);
             }
         }));
     }

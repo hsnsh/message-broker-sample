@@ -21,7 +21,7 @@ public sealed class KafkaConsumer
             EnableAutoCommit = false,
             EnableAutoOffsetStore = false,
             MaxPollIntervalMs = 300000,
-            GroupId = eventBusConfig.ConsumerName,
+            GroupId = eventBusConfig.ClientInfo,
 
             // Read messages from start if no commit exists.
             AutoOffsetReset = AutoOffsetReset.Earliest
