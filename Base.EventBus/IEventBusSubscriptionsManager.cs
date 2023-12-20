@@ -18,7 +18,7 @@ public interface IEventBusSubscriptionsManager
     IEnumerable<SubscriptionInfo> GetHandlersForEvent<T>() where T : IntegrationEvent;
     IEnumerable<SubscriptionInfo> GetHandlersForEvent(string eventName);
 
-    Type GetEventTypeByName(string eventName);
+    Type? GetEventTypeByName(string eventName);
 
     string GetEventKey<T>() where T : IntegrationEvent;
     

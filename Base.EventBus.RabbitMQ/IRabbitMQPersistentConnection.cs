@@ -8,5 +8,5 @@ public interface IRabbitMQPersistentConnection : IDisposable
 
     bool TryConnect();
 
-    IModel CreateModel();
+    IModel? CreateModel();
 }

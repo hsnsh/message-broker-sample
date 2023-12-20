@@ -45,12 +45,12 @@ public sealed class KafkaConsumer
             {
                 switch (message.Level)
                 {
-                    case SyslogLevel.Emergency | SyslogLevel.Alert | SyslogLevel.Critical | SyslogLevel.Error:
+                    case SyslogLevel.Emergency or SyslogLevel.Alert or SyslogLevel.Critical or SyslogLevel.Error:
                     {
                         _logger.LogError("Kafka Consumer [ {TopicName} ] => {Facility}, Message: {Message}", topicName, message.Facility, message.Message);
                         break;
                     }
-                    case SyslogLevel.Warning | SyslogLevel.Notice | SyslogLevel.Debug:
+                    case SyslogLevel.Warning or SyslogLevel.Notice or SyslogLevel.Debug:
                     {
                         _logger.LogDebug("Kafka Consumer [ {TopicName} ] => {Facility}, Message: {Message}", topicName, message.Facility, message.Message);
                         break;

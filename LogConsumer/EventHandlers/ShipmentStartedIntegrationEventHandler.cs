@@ -13,7 +13,7 @@ public sealed class ShipmentStartedIntegrationEventHandler : IIntegrationEventHa
         _logger = loggerFactory.CreateLogger<ShipmentStartedIntegrationEventHandler>() ?? throw new ArgumentNullException(nameof(loggerFactory));
     }
 
-    public async Task Handle(ShipmentStartedIntegrationEvent @event)
+    public async Task HandleAsync(ShipmentStartedIntegrationEvent @event)
     {
         var space = typeof(ShipmentStartedIntegrationEventHandler).Namespace;
         _logger.LogDebug("Handling Integration Event: {@IntegrationEvent} at {AppName}", @event, space);

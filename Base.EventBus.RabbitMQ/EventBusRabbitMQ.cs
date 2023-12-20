@@ -2,7 +2,6 @@
 using System.Text;
 using System.Text.Json;
 using Base.EventBus.SubManagers;
-using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -22,7 +21,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
     private readonly ILogger<EventBusRabbitMQ> _logger;
     private readonly IEventBusSubscriptionsManager _subsManager;
 
-    private IModel _consumerChannel;
+    private readonly IModel _consumerChannel;
 
     public EventBusRabbitMQ(IServiceProvider serviceProvider)
     {
@@ -40,7 +39,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         _subsManager.OnEventRemoved += SubsManager_OnEventRemoved;
     }
 
-    public async Task PublishAsync(IntegrationEvent @event)
+    public Task PublishAsync(IntegrationEvent @event)
     {
         if (!_persistentConnection.IsConnected)
         {
@@ -86,6 +85,8 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
 
             _logger.LogInformation("RabbitMQ Producer [ {EventName} ] => EventId [ {EventId} ] COMPLETED", eventName, @event.Id.ToString());
         }
+
+        return Task.CompletedTask;
     }
 
     public void Subscribe<T, TH>() where T : IntegrationEvent where TH : IIntegrationEventHandler<T>
@@ -145,7 +146,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         _subsManager.Clear();
     }
 
-    private void SubsManager_OnEventRemoved([CanBeNull] object sender, string eventName)
+    private void SubsManager_OnEventRemoved(object? sender, string eventName)
     {
         if (!_persistentConnection.IsConnected)
         {
@@ -199,7 +200,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         }
     }
 
-    private async void ConsumerReceived([CanBeNull] object sender, BasicDeliverEventArgs eventArgs)
+    private async void ConsumerReceived(object? sender, BasicDeliverEventArgs eventArgs)
     {
         var eventName = eventArgs.RoutingKey;
         eventName = TrimEventName(eventName);
@@ -213,7 +214,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogWarning("RabbitMQ Consumer [ {EventName} ] => Error: {ConsumeError}", eventName, DateTime.UtcNow.ToString("yyyy-MM-dd hh:mm:ss zz"), ex.Message);
+            _logger.LogWarning("RabbitMQ Consumer [ {EventName} ] => Error: {ConsumeError}", eventName, ex.Message);
         }
 
         // Even on exception we take the message off the queue.
@@ -242,11 +243,9 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         return eventName;
     }
 
-    private async Task<bool> ProcessEvent(string eventName, string message)
+    private async Task ProcessEvent(string eventName, string message)
     {
         eventName = TrimEventName(eventName);
-
-        var processed = false;
 
         _logger.LogTrace("Processing RabbitMQ event: {EventName}", eventName);
 
@@ -262,22 +261,18 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
                     if (handler == null) continue;
 
                     var eventType = _subsManager.GetEventTypeByName($"{_eventBusConfig.EventNamePrefix}{eventName}{_eventBusConfig.EventNameSuffix}");
-                    var integrationEvent = JsonConvert.DeserializeObject(message, eventType);
+                    var integrationEvent = JsonConvert.DeserializeObject(message, eventType!);
 
-                    _logger.LogInformation("{ConsumerName} consumed message [ {Topic} ] => EventId [ {EventId} ] Started", _eventBusConfig.ConsumerName, eventName, (integrationEvent as IntegrationEvent).Id.ToString());
-                    var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType);
-                    await (Task)concreteType.GetMethod("Handle").Invoke(handler, new[] { integrationEvent });
-                    _logger.LogInformation("{ConsumerName} consumed message [ {Topic} ] => EventId [ {EventId} ] Completed", _eventBusConfig.ConsumerName, eventName, (integrationEvent as IntegrationEvent).Id.ToString());
+                    _logger.LogInformation("{ConsumerName} consumed message [ {Topic} ] => EventId [ {EventId} ] Started", _eventBusConfig.ConsumerName, eventName, ((integrationEvent as IntegrationEvent)!).Id.ToString());
+                    var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType!);
+                    await (Task)concreteType.GetMethod("Handle")!.Invoke(handler, new[] { integrationEvent })!;
+                    _logger.LogInformation("{ConsumerName} consumed message [ {Topic} ] => EventId [ {EventId} ] Completed", _eventBusConfig.ConsumerName, eventName, ((integrationEvent as IntegrationEvent)!).Id.ToString());
                 }
             }
-
-            processed = true;
         }
         else
         {
             _logger.LogWarning("{ConsumerName} consumed message [ {Topic} ] => No subscription for event", _eventBusConfig.ConsumerName, eventName);
         }
-
-        return processed;
     }
 }

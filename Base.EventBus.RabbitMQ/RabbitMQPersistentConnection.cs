@@ -14,10 +14,10 @@ public class RabbitMQPersistentConnection : IRabbitMQPersistentConnection
     private readonly IConnectionFactory _connectionFactory;
     private readonly ILogger<RabbitMQPersistentConnection> _logger;
     private readonly int _retryCount;
-    IConnection _connection;
-    bool _disposed;
+    private IConnection? _connection;
+    private bool _disposed;
 
-    object sync_root = new object();
+    private readonly object _syncRoot = new();
 
     public RabbitMQPersistentConnection(IServiceProvider serviceProvider)
     {
@@ -39,19 +39,16 @@ public class RabbitMQPersistentConnection : IRabbitMQPersistentConnection
         _retryCount = busSettings.Value.ConnectionRetryCount;
     }
 
-    public bool IsConnected
-    {
-        get { return _connection != null && _connection.IsOpen && !_disposed; }
-    }
+    public bool IsConnected => _connection is { IsOpen: true } && !_disposed;
 
-    public IModel CreateModel()
+    public IModel? CreateModel()
     {
         if (!IsConnected)
         {
             throw new InvalidOperationException("No RabbitMQ connections are available to perform this action");
         }
 
-        return _connection.CreateModel();
+        return _connection?.CreateModel();
     }
 
     public void Dispose()
@@ -62,17 +59,15 @@ public class RabbitMQPersistentConnection : IRabbitMQPersistentConnection
 
         try
         {
-            if (IsConnected)
-            {
-                _connection.ConnectionShutdown -= OnConnectionShutdown;
-                _connection.CallbackException -= OnCallbackException;
-                _connection.ConnectionBlocked -= OnConnectionBlocked;
-                _connection.Dispose();
-            }
+            if (!IsConnected) return;
+            _connection!.ConnectionShutdown -= OnConnectionShutdown;
+            _connection.CallbackException -= OnCallbackException;
+            _connection.ConnectionBlocked -= OnConnectionBlocked;
+            _connection.Dispose();
         }
         catch (IOException ex)
         {
-            _logger.LogCritical(ex.ToString());
+            _logger.LogCritical(ex.Message);
         }
     }
 
@@ -80,7 +75,7 @@ public class RabbitMQPersistentConnection : IRabbitMQPersistentConnection
     {
         _logger.LogInformation("RabbitMQ Client is trying to connect");
 
-        lock (sync_root)
+        lock (_syncRoot)
         {
             var policy = Policy.Handle<SocketException>()
                 .Or<BrokerUnreachableException>()
@@ -98,7 +93,7 @@ public class RabbitMQPersistentConnection : IRabbitMQPersistentConnection
 
             if (IsConnected)
             {
-                _connection.ConnectionShutdown += OnConnectionShutdown;
+                _connection!.ConnectionShutdown += OnConnectionShutdown;
                 _connection.CallbackException += OnCallbackException;
                 _connection.ConnectionBlocked += OnConnectionBlocked;
 
@@ -113,7 +108,7 @@ public class RabbitMQPersistentConnection : IRabbitMQPersistentConnection
         }
     }
 
-    private void OnConnectionBlocked(object sender, ConnectionBlockedEventArgs e)
+    private void OnConnectionBlocked(object? sender, ConnectionBlockedEventArgs e)
     {
         if (_disposed) return;
 
@@ -122,7 +117,7 @@ public class RabbitMQPersistentConnection : IRabbitMQPersistentConnection
         TryConnect();
     }
 
-    void OnCallbackException(object sender, CallbackExceptionEventArgs e)
+    void OnCallbackException(object? sender, CallbackExceptionEventArgs e)
     {
         if (_disposed) return;
 
@@ -131,7 +126,7 @@ public class RabbitMQPersistentConnection : IRabbitMQPersistentConnection
         TryConnect();
     }
 
-    void OnConnectionShutdown(object sender, ShutdownEventArgs reason)
+    void OnConnectionShutdown(object? sender, ShutdownEventArgs reason)
     {
         if (_disposed) return;
 
