@@ -1,5 +1,5 @@
-﻿using Hosting;
-using HsnSoft.Base.EventBus.Abstractions;
+﻿using Base.EventBus;
+using Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

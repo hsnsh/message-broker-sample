@@ -1,4 +1,4 @@
-using HsnSoft.Base.EventBus.Abstractions;
+using Base.EventBus;
 using Microsoft.Extensions.Logging;
 using Shared;
 
