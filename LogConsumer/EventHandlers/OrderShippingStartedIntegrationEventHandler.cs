@@ -12,8 +12,8 @@ public sealed class OrderShippingStartedIntegrationEventHandler : IIntegrationEv
     {
         _logger = loggerFactory.CreateLogger<OrderShippingStartedIntegrationEventHandler>() ?? throw new ArgumentNullException(nameof(loggerFactory));
     }
-
-    public async Task HandleAsync(OrderShippingStartedIntegrationEvent @event)
+    
+    public async Task HandleAsync(MessageEnvelope<OrderShippingStartedIntegrationEvent> @event)
     {
         var space = typeof(OrderShippingStartedIntegrationEvent).Namespace;
         _logger.LogDebug("Handling Integration Event: {@IntegrationEvent} at {AppName}", @event, space);

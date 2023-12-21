@@ -30,7 +30,7 @@ internal static class Program
 
         while (true)
         {
-            await _eventBus.PublishAsync(new OrderStartedIntegrationEvent(Guid.NewGuid(), DateTime.UtcNow, Guid.NewGuid()));
+            await _eventBus.PublishAsync(new OrderStartedIntegrationEvent(Guid.NewGuid()));
 
             var result = Console.ReadLine();
             if (!string.IsNullOrWhiteSpace(result) && result.ToLower().Equals("q")) break;

@@ -38,6 +38,8 @@ public sealed class Startup
 
         app.UseAuthorization();
 
+        app.UseCorrelationId();
+        
         app.UseEndpoints(endpoints =>
         {
             if (!WebHostEnvironment.IsProduction())

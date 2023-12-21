@@ -1,9 +1,9 @@
 namespace Base.EventBus;
 
-public interface IIntegrationEventHandler<TEvent> : IIntegrationEventHandler
-    where TEvent : IntegrationEvent
+public interface IIntegrationEventHandler<TEventMessage> : IIntegrationEventHandler
+    where TEventMessage : IIntegrationEventMessage
 {
-    Task HandleAsync(TEvent @event);
+    Task HandleAsync(MessageEnvelope<TEventMessage> @event);
 }
 
 

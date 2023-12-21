@@ -14,7 +14,7 @@ public sealed class OrderStartedIntegrationEventHandler : IIntegrationEventHandl
         _logger = loggerFactory.CreateLogger<OrderStartedIntegrationEventHandler>() ?? throw new ArgumentNullException(nameof(loggerFactory));
     }
 
-    public async Task HandleAsync(OrderStartedIntegrationEvent @event)
+    public async Task HandleAsync(MessageEnvelope<OrderStartedIntegrationEvent> @event)
     {
         var space = typeof(OrderStartedIntegrationEventHandler).Namespace;
         _logger.LogDebug("Handling Integration Event: {@IntegrationEvent} at {AppName}", @event, space);
@@ -22,7 +22,7 @@ public sealed class OrderStartedIntegrationEventHandler : IIntegrationEventHandl
         // Simulate a work time
         await Task.Delay(5000);
 
-        await _eventBus.PublishAsync(new OrderShippingStartedIntegrationEvent(Guid.NewGuid(), DateTime.UtcNow, @event.OrderId));
+        await _eventBus.PublishAsync(new OrderShippingStartedIntegrationEvent( @event.Message.OrderId));
 
         await Task.CompletedTask;
     }
