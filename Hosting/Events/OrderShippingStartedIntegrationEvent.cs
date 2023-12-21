@@ -1,6 +1,6 @@
 using Base.EventBus;
 
-namespace Shared;
+namespace Hosting.Events;
 
 public record OrderShippingStartedIntegrationEvent(Guid OrderId): IIntegrationEventMessage
 {

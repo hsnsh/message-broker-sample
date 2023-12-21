@@ -1,3 +1,4 @@
+using Base.AspNetCore;
 using Hosting;
 
 namespace OrderAPI;
@@ -33,12 +34,11 @@ public sealed class Startup
                 options.SwaggerEndpoint("/swagger/v1/swagger.json", "Order Service API");
             });
         }
-
+        
+        app.UseCorrelationId();
         app.UseRouting();
 
         app.UseAuthorization();
-
-        app.UseCorrelationId();
         
         app.UseEndpoints(endpoints =>
         {

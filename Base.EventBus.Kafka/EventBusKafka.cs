@@ -13,7 +13,7 @@ public class EventBusKafka : IEventBus, IDisposable
     private readonly ILogger<EventBusKafka> _logger;
     private readonly KafkaConnectionSettings _kafkaConnectionSettings;
     private readonly EventBusConfig _eventBusConfig;
-    //private readonly IHttpContextAccessor _contextAccessor;
+    private readonly IEventBusTraceAccesor _traceAccessor;
 
     private readonly IEventBusSubscriptionsManager _subsManager;
     private readonly CancellationTokenSource _tokenSource;
@@ -29,7 +29,8 @@ public class EventBusKafka : IEventBus, IDisposable
 
         _kafkaConnectionSettings = _serviceProvider.GetRequiredService<IOptions<KafkaConnectionSettings>>().Value;
         _eventBusConfig = _serviceProvider.GetRequiredService<IOptions<EventBusConfig>>().Value;
-
+        _traceAccessor = _serviceProvider.GetService<IEventBusTraceAccesor>();
+        
         _subsManager = new InMemoryEventBusSubscriptionsManager(TrimEventName);
 
         _tokenSource = new CancellationTokenSource();
@@ -37,14 +38,13 @@ public class EventBusKafka : IEventBus, IDisposable
         _messageProcessorTasks = new List<Task>();
     }
 
-    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, Guid? relatedMessageId = null) where TEventMessage : IIntegrationEventMessage
+    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, Guid? relatedMessageId = null, string? correlationId = null) where TEventMessage : IIntegrationEventMessage
     {
         var eventName = eventMessage.GetType().Name;
         eventName = TrimEventName(eventName);
 
         var kafkaProducer = new KafkaProducer(_kafkaConnectionSettings, _eventBusConfig, _logger);
-
-        //var correlationId = _contextAccessor.HttpContext?.GetCorrelationId() ?? Guid.NewGuid().ToString("N");
+        
         var message = new MessageEnvelope<TEventMessage>
         {
             RelatedMessageId = relatedMessageId,
@@ -52,7 +52,7 @@ public class EventBusKafka : IEventBus, IDisposable
             MessageTime = DateTime.UtcNow,
             Message = eventMessage,
             Producer = _eventBusConfig.ClientInfo,
-            //CorrelationId = correlationId,
+            CorrelationId = correlationId ?? _traceAccessor.GetCorrelationId()
         };
 
         await kafkaProducer.StartSendingMessages(eventName, message);
@@ -152,10 +152,10 @@ public class EventBusKafka : IEventBus, IDisposable
 
                         Guid MessageId = (@event as dynamic)?.MessageId;
                         
-                        _logger.LogInformation("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Handling STARTED : MessageId [ {MessageId} ]", _eventBusConfig.ClientInfo, eventName, MessageId.ToString());
+                        _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Handling STARTED : MessageId [ {MessageId} ]", _eventBusConfig.ClientInfo, eventName, MessageId.ToString());
                         var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(messageObject.Key);
                         await (Task)concreteType.GetMethod("HandleAsync")?.Invoke(handler, new[] { @event })!;
-                        _logger.LogInformation("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Handling COMPLETED : MessageId [ {MessageId} ]", _eventBusConfig.ClientInfo, eventName, MessageId.ToString());
+                        _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Handling COMPLETED : MessageId [ {MessageId} ]", _eventBusConfig.ClientInfo, eventName, MessageId.ToString());
                     }
                     catch (Exception ex)
                     {

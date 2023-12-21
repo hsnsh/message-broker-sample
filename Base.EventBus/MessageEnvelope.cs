@@ -1,5 +1,3 @@
-using JetBrains.Annotations;
-
 namespace Base.EventBus;
 
 public sealed record MessageEnvelope<T> where T : IIntegrationEventMessage
@@ -12,11 +10,9 @@ public sealed record MessageEnvelope<T> where T : IIntegrationEventMessage
     
     public T Message { get; set; }
 
-    [CanBeNull]
-    public string Producer { get; set; }
+    public string? Producer { get; set; }
 
-    [CanBeNull]
-    public string CorrelationId { get; set; }
+    public string? CorrelationId { get; set; }
 }
 
 // Marker

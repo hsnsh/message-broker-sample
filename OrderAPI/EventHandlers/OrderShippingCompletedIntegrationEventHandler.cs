@@ -1,5 +1,5 @@
 using Base.EventBus;
-using Shared;
+using Hosting.Events;
 
 namespace OrderAPI.EventHandlers;
 

@@ -20,7 +20,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
     private readonly IRabbitMQPersistentConnection _persistentConnection;
     private readonly EventBusConfig _eventBusConfig;
     private readonly ILogger<EventBusRabbitMQ> _logger;
-    //private readonly IHttpContextAccessor _contextAccessor;
+    private readonly IEventBusTraceAccesor _traceAccessor;
     
     private readonly IEventBusSubscriptionsManager _subsManager;
     private readonly IModel? _consumerChannel;
@@ -29,19 +29,20 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 
-        _eventBusConfig = _serviceProvider.GetRequiredService<IOptions<EventBusConfig>>().Value;
-        _persistentConnection = _serviceProvider.GetRequiredService<IRabbitMQPersistentConnection>();
-
         var loggerFactory = _serviceProvider.GetRequiredService<ILoggerFactory>();
         _logger = loggerFactory.CreateLogger<EventBusRabbitMQ>() ?? throw new ArgumentNullException(nameof(loggerFactory));
-
+        
+        _eventBusConfig = _serviceProvider.GetRequiredService<IOptions<EventBusConfig>>().Value;
+        _persistentConnection = _serviceProvider.GetRequiredService<IRabbitMQPersistentConnection>();
+        _traceAccessor = _serviceProvider.GetService<IEventBusTraceAccesor>();
+     
         _subsManager = new InMemoryEventBusSubscriptionsManager(TrimEventName);
 
         _consumerChannel = CreateConsumerChannel();
         _subsManager.OnEventRemoved += SubsManager_OnEventRemoved;
     }
 
-    public Task PublishAsync<TEventMessage>(TEventMessage eventMessage, Guid? relatedMessageId = null) where TEventMessage : IIntegrationEventMessage
+    public Task PublishAsync<TEventMessage>(TEventMessage eventMessage, Guid? relatedMessageId = null, string? correlationId = null) where TEventMessage : IIntegrationEventMessage
     {
         if (!_persistentConnection.IsConnected)
         {
@@ -66,7 +67,6 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
 
             channel.ExchangeDeclare(exchange: _eventBusConfig.ExchangeName, type: "direct"); //Ensure exchange exists while publishing
             
-            //var correlationId = _contextAccessor.HttpContext?.GetCorrelationId() ?? Guid.NewGuid().ToString("N");
             var @event = new MessageEnvelope<TEventMessage>
             {
                 RelatedMessageId = relatedMessageId,
@@ -74,10 +74,10 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
                 MessageTime = DateTime.UtcNow,
                 Message = eventMessage,
                 Producer = _eventBusConfig.ClientInfo,
-                //CorrelationId = correlationId,
+                CorrelationId = correlationId ?? _traceAccessor.GetCorrelationId()
             };
             
-            _logger.LogInformation("RabbitMQ | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _eventBusConfig.ClientInfo, eventName, @event.MessageId.ToString());
+            _logger.LogDebug("RabbitMQ | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _eventBusConfig.ClientInfo, eventName, @event.MessageId.ToString());
 
             var body = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(@event, @event.GetType(), new JsonSerializerOptions { WriteIndented = true });
 
@@ -96,7 +96,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
                     body: body);
             });
 
-            _logger.LogInformation("RabbitMQ | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] COMPLETED", _eventBusConfig.ClientInfo, eventName, @event.MessageId.ToString());
+            _logger.LogDebug("RabbitMQ | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] COMPLETED", _eventBusConfig.ClientInfo, eventName, @event.MessageId.ToString());
         }
 
         return Task.CompletedTask;
@@ -285,10 +285,10 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
                         var @event = JsonConvert.DeserializeObject(message, constructedClass);
                         Guid messageId = (@event as dynamic)?.Id;
 
-                        _logger.LogInformation("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Handling STARTED : MessageId [ {MessageId} ]", _eventBusConfig.ClientInfo, eventName, messageId.ToString());
+                        _logger.LogDebug("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Handling STARTED : MessageId [ {MessageId} ]", _eventBusConfig.ClientInfo, eventName, messageId.ToString());
                         var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType!);
                         await (Task)concreteType.GetMethod("HandleAsync")?.Invoke(handler, new[] { @event })!;
-                        _logger.LogInformation("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Handling COMPLETED : MessageId [ {MessageId} ]", _eventBusConfig.ClientInfo, eventName, messageId.ToString());
+                        _logger.LogDebug("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Handling COMPLETED : MessageId [ {MessageId} ]", _eventBusConfig.ClientInfo, eventName, messageId.ToString());
                     }
                     catch (Exception ex)
                     {

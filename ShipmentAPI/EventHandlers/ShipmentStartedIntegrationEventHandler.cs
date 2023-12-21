@@ -1,5 +1,5 @@
 using Base.EventBus;
-using Shared;
+using Hosting.Events;
 
 namespace ShipmentAPI.EventHandlers;
 
@@ -22,7 +22,9 @@ public sealed class ShipmentStartedIntegrationEventHandler : IIntegrationEventHa
         // Simulate a work time
         await Task.Delay(5000);
 
-        await _eventBus.PublishAsync(new OrderShippingCompletedIntegrationEvent( @event.Message.OrderId, @event.Message.ShipmentId));
+        await _eventBus.PublishAsync(new OrderShippingCompletedIntegrationEvent(@event.Message.OrderId, @event.Message.ShipmentId),
+            relatedMessageId: @event.MessageId,
+            correlationId: @event.CorrelationId);
 
         await Task.CompletedTask;
     }

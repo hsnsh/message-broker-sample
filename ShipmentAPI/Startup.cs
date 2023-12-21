@@ -1,3 +1,4 @@
+using Base.AspNetCore;
 using Hosting;
 
 namespace ShipmentAPI;
@@ -34,12 +35,11 @@ public sealed class Startup
             });
         }
 
+        app.UseCorrelationId();
         app.UseRouting();
 
         app.UseAuthorization();
 
-        app.UseCorrelationId();
-        
         app.UseEndpoints(endpoints =>
         {
             if (!WebHostEnvironment.IsProduction())

@@ -2,7 +2,7 @@ using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 
-namespace Hosting;
+namespace Base.AspNetCore;
 
 public static class CorrelationExtensions
 {

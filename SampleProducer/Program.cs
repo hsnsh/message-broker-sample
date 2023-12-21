@@ -1,9 +1,9 @@
 ﻿using Base.EventBus;
 using Hosting;
+using Hosting.Events;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Shared;
 
 namespace ShipmentProducer;
 

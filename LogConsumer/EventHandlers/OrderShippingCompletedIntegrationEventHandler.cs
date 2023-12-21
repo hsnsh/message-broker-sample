@@ -1,6 +1,6 @@
 using Base.EventBus;
+using Hosting.Events;
 using Microsoft.Extensions.Logging;
-using Shared;
 
 namespace LogConsumer.EventHandlers;
 
@@ -15,8 +15,12 @@ public sealed class OrderShippingCompletedIntegrationEventHandler : IIntegration
 
     public async Task HandleAsync(MessageEnvelope<OrderShippingCompletedIntegrationEvent> @event)
     {
-        var space = typeof(OrderShippingCompletedIntegrationEventHandler).Namespace;
-        _logger.LogDebug("Handling Integration Event: {@IntegrationEvent} at {AppName}", @event, space);
+        _logger.LogInformation("{Producer} Event[ {EventName} ] => CorrelationId[{CorrelationId}], MessageId[{MessageId}], RelatedMessageId[{RelatedMessageId}]",
+            @event.Producer,
+            nameof(OrderShippingCompletedIntegrationEvent)[..^"IntegrationEvent".Length],
+            @event.CorrelationId ?? string.Empty,
+            @event.MessageId.ToString(),
+            @event.RelatedMessageId != null ? @event.RelatedMessageId.Value.ToString() : string.Empty);
 
         // Simulate a work time
         await Task.Delay(5000);

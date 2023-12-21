@@ -1,3 +1,4 @@
+using Base.AspNetCore;
 using Base.EventBus;
 using Base.EventBus.Kafka;
 using Base.EventBus.RabbitMQ;
@@ -33,6 +34,8 @@ public static class MicroserviceHostExtensions
         services.Configure<EventBusConfig>(configuration.GetSection("Kafka:EventBus"));
 
         // Add event bus instances
+        services.AddHttpContextAccessor();
+        services.AddSingleton<IEventBusTraceAccesor, HttpContextTraceAccessor>();
         services.AddSingleton<IEventBus, EventBusKafka>(sp => new EventBusKafka(sp));
     }
 
@@ -43,6 +46,8 @@ public static class MicroserviceHostExtensions
         services.Configure<EventBusConfig>(configuration.GetSection("RabbitMQ:EventBus"));
 
         // Add event bus instances
+        services.AddHttpContextAccessor();
+        services.AddScoped<IEventBusTraceAccesor, HttpContextTraceAccessor>();
         services.AddSingleton<IRabbitMQPersistentConnection>(sp => new RabbitMQPersistentConnection(sp));
         services.AddSingleton<IEventBus, EventBusRabbitMQ>(sp => new EventBusRabbitMQ(sp));
     }
