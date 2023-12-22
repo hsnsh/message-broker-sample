@@ -54,6 +54,6 @@ public sealed class Startup
         });
 
         // Subscribe all event handlers
-        app.ApplicationServices.UseEventBus();
+        app.UseEventBus(typeof(Startup).Assembly);
     }
 }

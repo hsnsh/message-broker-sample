@@ -1,3 +1,4 @@
+using System.Reflection;
 using HsnSoft.Base.AspNetCore.Security.Claims;
 using HsnSoft.Base.EventBus;
 using HsnSoft.Base.EventBus.Abstractions;
@@ -5,6 +6,7 @@ using HsnSoft.Base.EventBus.Kafka;
 using HsnSoft.Base.EventBus.RabbitMQ;
 using HsnSoft.Base.Kafka;
 using HsnSoft.Base.RabbitMQ;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -21,8 +23,8 @@ public static class MicroserviceHostExtensions
 
     public static IServiceCollection AddEventBus(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddKafkaEventBus(configuration);
-        // services.AddRabbitMQEventBus(configuration);
+        // services.AddKafkaEventBus(configuration);
+        services.AddRabbitMQEventBus(configuration);
 
         // Add All Event Handlers
         services.AddEventHandlers();
@@ -68,15 +70,15 @@ public static class MicroserviceHostExtensions
         }
     }
 
-    public static void UseEventBus(this IServiceProvider sp)
+    public static void UseEventBus(this IApplicationBuilder app, Assembly assembly)
     {
         var refType = typeof(IIntegrationEventHandler);
-        var eventHandlerTypes = AppDomain.CurrentDomain.GetAssemblies()
-            .SelectMany(s => s.GetTypes())
+        var eventHandlerTypes = assembly.GetTypes()
             .Where(p => refType.IsAssignableFrom(p) && p is { IsInterface: false, IsAbstract: false }).ToList();
 
         if (eventHandlerTypes is not { Count: > 0 }) return;
-        var eventBus = sp.GetRequiredService<IEventBus>();
+
+        var eventBus = app.ApplicationServices.GetRequiredService<IEventBus>();
 
         foreach (var eventHandlerType in eventHandlerTypes)
         {

@@ -1,4 +1,7 @@
 ﻿using Hosting;
+using Hosting.Events;
+using HsnSoft.Base.EventBus.Abstractions;
+using LogConsumer.EventHandlers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -21,10 +24,14 @@ internal static class Program
 
         var sp = services.BuildServiceProvider();
 
-        // Subscribe all event handlers
-        sp.UseEventBus();
+        IEventBus _eventBus = sp.GetRequiredService<IEventBus>();
 
-        // IEventBus _eventBus = sp.GetRequiredService<IEventBus>();
+        // Subscribe all event handlers
+        _eventBus.Subscribe<OrderStartedIntegrationEvent, OrderStartedIntegrationEventHandler>();
+        _eventBus.Subscribe<OrderShippingStartedIntegrationEvent, OrderShippingStartedIntegrationEventHandler>();
+        _eventBus.Subscribe<ShipmentStartedIntegrationEvent, ShipmentStartedIntegrationEventHandler>();
+        _eventBus.Subscribe<OrderShippingCompletedIntegrationEvent, OrderShippingCompletedIntegrationEventHandler>();
+
 
         while (true)
         {

@@ -23,9 +23,6 @@ internal static class Program
 
         var sp = services.BuildServiceProvider();
 
-        // Subscribe all event handlers
-        sp.UseEventBus();
-
         IEventBus _eventBus = sp.GetRequiredService<IEventBus>();
 
         while (true)
