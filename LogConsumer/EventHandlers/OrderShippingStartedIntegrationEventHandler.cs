@@ -1,5 +1,6 @@
-using Base.EventBus;
 using Hosting.Events;
+using HsnSoft.Base.Domain.Entities.Events;
+using HsnSoft.Base.EventBus.Abstractions;
 using Microsoft.Extensions.Logging;
 
 namespace LogConsumer.EventHandlers;

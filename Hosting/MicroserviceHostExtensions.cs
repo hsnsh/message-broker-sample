@@ -1,7 +1,10 @@
-using Base.AspNetCore;
-using Base.EventBus;
-using Base.EventBus.Kafka;
-using Base.EventBus.RabbitMQ;
+using HsnSoft.Base.AspNetCore.Security.Claims;
+using HsnSoft.Base.EventBus;
+using HsnSoft.Base.EventBus.Abstractions;
+using HsnSoft.Base.EventBus.Kafka;
+using HsnSoft.Base.EventBus.RabbitMQ;
+using HsnSoft.Base.Kafka;
+using HsnSoft.Base.RabbitMQ;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
