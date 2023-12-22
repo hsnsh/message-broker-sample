@@ -19,6 +19,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
     private readonly IServiceProvider _serviceProvider;
     private readonly IRabbitMQPersistentConnection _persistentConnection;
     private readonly EventBusConfig _eventBusConfig;
+    private readonly RabbitMQConnectionSettings _rabbitMqConnectionSettings;
     private readonly ILogger<EventBusRabbitMQ> _logger;
     private readonly IEventBusTraceAccesor _traceAccessor;
     
@@ -32,6 +33,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         var loggerFactory = _serviceProvider.GetRequiredService<ILoggerFactory>();
         _logger = loggerFactory.CreateLogger<EventBusRabbitMQ>() ?? throw new ArgumentNullException(nameof(loggerFactory));
         
+        _rabbitMqConnectionSettings = _serviceProvider.GetRequiredService<IOptions<RabbitMQConnectionSettings>>().Value;
         _eventBusConfig = _serviceProvider.GetRequiredService<IOptions<EventBusConfig>>().Value;
         _persistentConnection = _serviceProvider.GetRequiredService<IRabbitMQPersistentConnection>();
         _traceAccessor = _serviceProvider.GetService<IEventBusTraceAccesor>();
@@ -51,7 +53,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
 
         var policy = Policy.Handle<BrokerUnreachableException>()
             .Or<SocketException>()
-            .WaitAndRetry(_eventBusConfig.ConnectionRetryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
+            .WaitAndRetry(_rabbitMqConnectionSettings.ConnectionRetryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
             {
                 _logger.LogWarning(ex, "RabbitMQ | Could not publish event message : {Event} after {Timeout}s ({ExceptionMessage})", eventMessage, $"{time.TotalSeconds:n1}", ex.Message);
             });

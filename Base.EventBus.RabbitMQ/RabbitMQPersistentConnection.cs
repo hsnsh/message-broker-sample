@@ -34,9 +34,7 @@ public class RabbitMQPersistentConnection : IRabbitMQPersistentConnection
             UserName = conSettings.Value.UserName,
             Password = conSettings.Value.Password,
         };
-
-        var busSettings = serviceProvider.GetRequiredService<IOptions<EventBusConfig>>();
-        _retryCount = busSettings.Value.ConnectionRetryCount;
+        _retryCount = conSettings.Value.ConnectionRetryCount;
     }
 
     public bool IsConnected => _connection is { IsOpen: true } && !_disposed;

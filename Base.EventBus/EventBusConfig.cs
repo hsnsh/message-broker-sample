@@ -4,7 +4,6 @@ public class EventBusConfig
 {
     public string ExchangeName { get; set; } = "Default";
     public string ClientName { get; set; } = "Default_ClientName";
-    public int ConnectionRetryCount { get; set; } = 5;
     public string EventNamePrefix { get; set; } = "";
     public string EventNameSuffix { get; set; } = "IntegrationEvent";
 
