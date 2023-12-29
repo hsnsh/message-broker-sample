@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using Base.Core;
 using Base.EventBus.Abstractions;
 using Base.EventBus.SubManagers;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,7 +15,7 @@ public class EventBusKafka : IEventBus, IDisposable
     private readonly ILogger<EventBusKafka> _logger;
     private readonly KafkaConnectionSettings _kafkaConnectionSettings;
     private readonly KafkaEventBusConfig _kafkaEventBusConfig;
-    private readonly IEventBusTraceAccesor _traceAccessor;
+    private readonly ITraceAccesor _traceAccessor;
 
     private readonly IEventBusSubscriptionsManager _subsManager;
     private readonly CancellationTokenSource _tokenSource;
@@ -30,7 +31,7 @@ public class EventBusKafka : IEventBus, IDisposable
 
         _kafkaConnectionSettings = _serviceProvider.GetRequiredService<IOptions<KafkaConnectionSettings>>().Value;
         _kafkaEventBusConfig = _serviceProvider.GetRequiredService<IOptions<KafkaEventBusConfig>>().Value;
-        _traceAccessor = _serviceProvider.GetService<IEventBusTraceAccesor>();
+        _traceAccessor = _serviceProvider.GetService<ITraceAccesor>();
         
         _subsManager = new InMemoryEventBusSubscriptionsManager(TrimEventName);
 

@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace Base.AspNetCore;
 
-public class HttpContextTraceAccessor : IEventBusTraceAccesor
+public class HttpContextTraceAccessor : ITraceAccesor
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
 

@@ -1,6 +1,7 @@
 ﻿using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+using Base.Core;
 using Base.EventBus.Abstractions;
 using Base.EventBus.SubManagers;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,7 +23,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
     private readonly RabbitMQEventBusConfig _rabbitMqEventBusConfig;
     private readonly RabbitMQConnectionSettings _rabbitMqConnectionSettings;
     private readonly ILogger<EventBusRabbitMQ> _logger;
-    private readonly IEventBusTraceAccesor _traceAccessor;
+    private readonly ITraceAccesor _traceAccessor;
     
     private readonly IEventBusSubscriptionsManager _subsManager;
     private readonly IModel? _consumerChannel;
@@ -37,7 +38,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         _rabbitMqConnectionSettings = _serviceProvider.GetRequiredService<IOptions<RabbitMQConnectionSettings>>().Value;
         _rabbitMqEventBusConfig = _serviceProvider.GetRequiredService<IOptions<RabbitMQEventBusConfig>>().Value;
         _persistentConnection = _serviceProvider.GetRequiredService<IRabbitMQPersistentConnection>();
-        _traceAccessor = _serviceProvider.GetService<IEventBusTraceAccesor>();
+        _traceAccessor = _serviceProvider.GetService<ITraceAccesor>();
      
         _subsManager = new InMemoryEventBusSubscriptionsManager(TrimEventName);
 
