@@ -1,6 +1,5 @@
+using Base.EventBus.Abstractions;
 using Hosting.Events;
-using HsnSoft.Base.Domain.Entities.Events;
-using HsnSoft.Base.EventBus.Abstractions;
 
 namespace OrderAPI.EventHandlers;
 

@@ -7,11 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
+        <ProjectReference Include="..\Base.Core\Base.Core.csproj" />
     </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\Base.EventBus.Abstractions\Base.EventBus.Abstractions.csproj" />
-    </ItemGroup>
-
+    
 </Project>

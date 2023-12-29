@@ -1,4 +1,4 @@
-using HsnSoft.Base.Domain.Entities.Events;
+using Base.EventBus.Abstractions;
 
 namespace Hosting.Events;
 

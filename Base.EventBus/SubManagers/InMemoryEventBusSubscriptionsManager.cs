@@ -1,3 +1,5 @@
+using Base.EventBus.Abstractions;
+
 namespace Base.EventBus.SubManagers;
 
 public class InMemoryEventBusSubscriptionsManager : IEventBusSubscriptionsManager

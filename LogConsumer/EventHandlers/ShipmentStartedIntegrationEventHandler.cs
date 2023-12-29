@@ -1,6 +1,5 @@
+using Base.EventBus.Abstractions;
 using Hosting.Events;
-using HsnSoft.Base.Domain.Entities.Events;
-using HsnSoft.Base.EventBus.Abstractions;
 using Microsoft.Extensions.Logging;
 
 namespace LogConsumer.EventHandlers;
@@ -21,7 +20,7 @@ public sealed class ShipmentStartedIntegrationEventHandler : IIntegrationEventHa
             nameof(ShipmentStartedIntegrationEvent)[..^"IntegrationEvent".Length],
             @event.CorrelationId ?? string.Empty,
             @event.MessageId.ToString(),
-            @event.RelatedMessageId != null ? @event.RelatedMessageId.Value.ToString() : string.Empty);
+            @event.ParentMessageId != null ? @event.ParentMessageId.Value.ToString() : string.Empty);
 
         // Simulate a work time
         await Task.Delay(5000);

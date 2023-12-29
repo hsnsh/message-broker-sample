@@ -11,7 +11,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Base.Core\Base.Core.csproj" />
+      <ProjectReference Include="..\Base.EventBus.Abstractions\Base.EventBus.Abstractions.csproj" />
     </ItemGroup>
     
 </Project>

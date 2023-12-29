@@ -1,6 +1,6 @@
 ﻿using System.Security.Claims;
 using Base.Core;
-using Base.EventBus;
+using Base.EventBus.Abstractions;
 using Microsoft.AspNetCore.Http;
 
 namespace Base.AspNetCore;

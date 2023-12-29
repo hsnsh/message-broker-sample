@@ -1,4 +1,4 @@
-namespace Base.EventBus;
+namespace Base.EventBus.Abstractions;
 
 public interface IIntegrationEventHandler<TEventMessage> : IIntegrationEventHandler
     where TEventMessage : IIntegrationEventMessage

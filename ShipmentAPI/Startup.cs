@@ -1,5 +1,5 @@
+using Base.AspNetCore;
 using Hosting;
-using HsnSoft.Base.AspNetCore.Tracing;
 
 namespace ShipmentAPI;
 

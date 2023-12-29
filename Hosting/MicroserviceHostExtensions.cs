@@ -1,11 +1,8 @@
 using System.Reflection;
-using HsnSoft.Base.AspNetCore.Security.Claims;
-using HsnSoft.Base.EventBus;
-using HsnSoft.Base.EventBus.Abstractions;
-using HsnSoft.Base.EventBus.Kafka;
-using HsnSoft.Base.EventBus.RabbitMQ;
-using HsnSoft.Base.Kafka;
-using HsnSoft.Base.RabbitMQ;
+using Base.AspNetCore;
+using Base.EventBus.Abstractions;
+using Base.EventBus.Kafka;
+using Base.EventBus.RabbitMQ;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,7 +33,7 @@ public static class MicroserviceHostExtensions
     {
         // Add configuration objects
         services.Configure<KafkaConnectionSettings>(configuration.GetSection("Kafka:Connection"));
-        services.Configure<EventBusConfig>(configuration.GetSection("Kafka:EventBus"));
+        services.Configure<KafkaEventBusConfig>(configuration.GetSection("Kafka:EventBus"));
 
         // Add event bus instances
         services.AddHttpContextAccessor();
@@ -48,7 +45,7 @@ public static class MicroserviceHostExtensions
     {
         // Add configuration objects
         services.Configure<RabbitMQConnectionSettings>(configuration.GetSection("RabbitMQ:Connection"));
-        services.Configure<EventBusConfig>(configuration.GetSection("RabbitMQ:EventBus"));
+        services.Configure<RabbitMQEventBusConfig>(configuration.GetSection("RabbitMQ:EventBus"));
 
         // Add event bus instances
         services.AddHttpContextAccessor();

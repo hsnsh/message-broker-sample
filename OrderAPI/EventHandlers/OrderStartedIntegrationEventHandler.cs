@@ -1,6 +1,5 @@
+using Base.EventBus.Abstractions;
 using Hosting.Events;
-using HsnSoft.Base.Domain.Entities.Events;
-using HsnSoft.Base.EventBus.Abstractions;
 
 namespace OrderAPI.EventHandlers;
 
@@ -24,7 +23,7 @@ public sealed class OrderStartedIntegrationEventHandler : IIntegrationEventHandl
         await Task.Delay(5000);
 
         await _eventBus.PublishAsync(new OrderShippingStartedIntegrationEvent(@event.Message.OrderId),
-            relatedMessageId: @event.MessageId,
+            parentMessageId: @event.MessageId,
             correlationId: @event.CorrelationId);
 
         await Task.CompletedTask;

@@ -1,5 +1,5 @@
+using Base.EventBus.Abstractions;
 using Hosting.Events;
-using HsnSoft.Base.EventBus.Abstractions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace OrderAPI.Controllers;

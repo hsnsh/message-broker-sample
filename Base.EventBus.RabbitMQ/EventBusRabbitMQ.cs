@@ -1,6 +1,7 @@
 ﻿using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+using Base.EventBus.Abstractions;
 using Base.EventBus.SubManagers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -18,7 +19,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IRabbitMQPersistentConnection _persistentConnection;
-    private readonly EventBusConfig _eventBusConfig;
+    private readonly RabbitMQEventBusConfig _rabbitMqEventBusConfig;
     private readonly RabbitMQConnectionSettings _rabbitMqConnectionSettings;
     private readonly ILogger<EventBusRabbitMQ> _logger;
     private readonly IEventBusTraceAccesor _traceAccessor;
@@ -34,7 +35,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         _logger = loggerFactory.CreateLogger<EventBusRabbitMQ>() ?? throw new ArgumentNullException(nameof(loggerFactory));
         
         _rabbitMqConnectionSettings = _serviceProvider.GetRequiredService<IOptions<RabbitMQConnectionSettings>>().Value;
-        _eventBusConfig = _serviceProvider.GetRequiredService<IOptions<EventBusConfig>>().Value;
+        _rabbitMqEventBusConfig = _serviceProvider.GetRequiredService<IOptions<RabbitMQEventBusConfig>>().Value;
         _persistentConnection = _serviceProvider.GetRequiredService<IRabbitMQPersistentConnection>();
         _traceAccessor = _serviceProvider.GetService<IEventBusTraceAccesor>();
      
@@ -44,7 +45,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         _subsManager.OnEventRemoved += SubsManager_OnEventRemoved;
     }
 
-    public Task PublishAsync<TEventMessage>(TEventMessage eventMessage, Guid? relatedMessageId = null, string? correlationId = null) where TEventMessage : IIntegrationEventMessage
+    public Task PublishAsync<TEventMessage>(TEventMessage eventMessage, Guid? parentMessageId = null, string? correlationId = null) where TEventMessage : IIntegrationEventMessage
     {
         if (!_persistentConnection.IsConnected)
         {
@@ -67,19 +68,19 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         {
             _logger.LogDebug("RabbitMQ | Declaring exchange to publish event name: {EventName}", eventName);
 
-            channel.ExchangeDeclare(exchange: _eventBusConfig.ExchangeName, type: "direct"); //Ensure exchange exists while publishing
+            channel.ExchangeDeclare(exchange: _rabbitMqEventBusConfig.ExchangeName, type: "direct"); //Ensure exchange exists while publishing
             
             var @event = new MessageEnvelope<TEventMessage>
             {
-                RelatedMessageId = relatedMessageId,
+                ParentMessageId = parentMessageId,
                 MessageId = Guid.NewGuid(),
                 MessageTime = DateTime.UtcNow,
                 Message = eventMessage,
-                Producer = _eventBusConfig.ClientInfo,
+                Producer = _rabbitMqEventBusConfig.ClientInfo,
                 CorrelationId = correlationId ?? _traceAccessor.GetCorrelationId()
             };
             
-            _logger.LogDebug("RabbitMQ | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _eventBusConfig.ClientInfo, eventName, @event.MessageId.ToString());
+            _logger.LogDebug("RabbitMQ | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _rabbitMqEventBusConfig.ClientInfo, eventName, @event.MessageId.ToString());
 
             var body = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(@event, @event.GetType(), new JsonSerializerOptions { WriteIndented = true });
 
@@ -91,14 +92,14 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
                 _logger.LogDebug("RabbitMQ | Publishing event: {Event}", @event);
 
                 channel?.BasicPublish(
-                    exchange: _eventBusConfig.ExchangeName,
+                    exchange: _rabbitMqEventBusConfig.ExchangeName,
                     routingKey: eventName,
                     mandatory: true,
                     basicProperties: properties,
                     body: body);
             });
 
-            _logger.LogDebug("RabbitMQ | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] COMPLETED", _eventBusConfig.ClientInfo, eventName, @event.MessageId.ToString());
+            _logger.LogDebug("RabbitMQ | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] COMPLETED", _rabbitMqEventBusConfig.ClientInfo, eventName, @event.MessageId.ToString());
         }
 
         return Task.CompletedTask;
@@ -131,7 +132,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
                 arguments: null);
 
             _consumerChannel?.QueueBind(queue: GetConsumerQueueName(eventName),
-                exchange: _eventBusConfig.ExchangeName,
+                exchange: _rabbitMqEventBusConfig.ExchangeName,
                 routingKey: eventName);
         }
 
@@ -171,7 +172,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         using (var channel = _persistentConnection.CreateModel())
         {
             channel.QueueUnbind(queue: GetConsumerQueueName(eventName),
-                exchange: _eventBusConfig.ExchangeName,
+                exchange: _rabbitMqEventBusConfig.ExchangeName,
                 routingKey: TrimEventName(eventName));
 
             if (_subsManager.IsEmpty)
@@ -190,14 +191,14 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
 
         var channel = _persistentConnection.CreateModel();
 
-        channel?.ExchangeDeclare(exchange: _eventBusConfig.ExchangeName, type: "direct");
+        channel?.ExchangeDeclare(exchange: _rabbitMqEventBusConfig.ExchangeName, type: "direct");
 
         return channel;
     }
 
     private void StartBasicConsume(string eventName)
     {
-        _logger.LogInformation("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Subscribed", _eventBusConfig.ClientInfo, eventName);
+        _logger.LogInformation("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Subscribed", _rabbitMqEventBusConfig.ClientInfo, eventName);
 
         if (_consumerChannel != null)
         {
@@ -220,40 +221,40 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         var eventName = eventArgs.RoutingKey;
         eventName = TrimEventName(eventName);
 
-        _logger.LogDebug("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Consume STARTED", _eventBusConfig.ClientInfo, eventName);
+        _logger.LogDebug("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Consume STARTED", _rabbitMqEventBusConfig.ClientInfo, eventName);
         try
         {
             var message = Encoding.UTF8.GetString(eventArgs.Body.ToArray());
-            _logger.LogDebug("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Received: {Message}", _eventBusConfig.ClientInfo, eventName, message);
+            _logger.LogDebug("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Received: {Message}", _rabbitMqEventBusConfig.ClientInfo, eventName, message);
             await ProcessEvent(eventName, message);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Consume ERROR : {ConsumeError} | {Time}", _eventBusConfig.ClientInfo, eventName, ex.Message, DateTime.UtcNow.ToString("yyyy-MM-dd hh:mm:ss zz"));
+            _logger.LogWarning("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Consume ERROR : {ConsumeError} | {Time}", _rabbitMqEventBusConfig.ClientInfo, eventName, ex.Message, DateTime.UtcNow.ToString("yyyy-MM-dd hh:mm:ss zz"));
         }
 
         // Even on exception we take the message off the queue.
         // in a REAL WORLD app this should be handled with a Dead Letter Exchange (DLX). 
         // For more information see: https://www.rabbitmq.com/dlx.html
         _consumerChannel?.BasicAck(eventArgs.DeliveryTag, multiple: false);
-        _logger.LogDebug("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Consume COMPLETED", _eventBusConfig.ClientInfo, eventName);
+        _logger.LogDebug("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Consume COMPLETED", _rabbitMqEventBusConfig.ClientInfo, eventName);
     }
 
     private string GetConsumerQueueName(string eventName)
     {
-        return $"{_eventBusConfig.ClientInfo}_{TrimEventName(eventName)}";
+        return $"{_rabbitMqEventBusConfig.ClientInfo}_{TrimEventName(eventName)}";
     }
 
     private string TrimEventName(string eventName)
     {
-        if (_eventBusConfig.DeleteEventPrefix && eventName.StartsWith(_eventBusConfig.EventNamePrefix))
+        if (_rabbitMqEventBusConfig.DeleteEventPrefix && eventName.StartsWith(_rabbitMqEventBusConfig.EventNamePrefix))
         {
-            eventName = eventName[_eventBusConfig.EventNamePrefix.Length..];
+            eventName = eventName[_rabbitMqEventBusConfig.EventNamePrefix.Length..];
         }
 
-        if (_eventBusConfig.DeleteEventSuffix && eventName.EndsWith(_eventBusConfig.EventNameSuffix))
+        if (_rabbitMqEventBusConfig.DeleteEventSuffix && eventName.EndsWith(_rabbitMqEventBusConfig.EventNameSuffix))
         {
-            eventName = eventName[..^_eventBusConfig.EventNameSuffix.Length];
+            eventName = eventName[..^_rabbitMqEventBusConfig.EventNameSuffix.Length];
         }
 
         return eventName;
@@ -274,34 +275,34 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
                     var handler = _serviceProvider.GetService(subscription.HandlerType);
                     if (handler == null)
                     {
-                        _logger.LogWarning("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => No HANDLER for event", _eventBusConfig.ClientInfo, eventName);
+                        _logger.LogWarning("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => No HANDLER for event", _rabbitMqEventBusConfig.ClientInfo, eventName);
                         continue;
                     }
 
                     try
                     {
-                        var eventType = _subsManager.GetEventTypeByName($"{_eventBusConfig.EventNamePrefix}{eventName}{_eventBusConfig.EventNameSuffix}");
+                        var eventType = _subsManager.GetEventTypeByName($"{_rabbitMqEventBusConfig.EventNamePrefix}{eventName}{_rabbitMqEventBusConfig.EventNameSuffix}");
                       
                         Type genericClass = typeof(MessageEnvelope<>);
                         Type constructedClass = genericClass.MakeGenericType(eventType);
                         var @event = JsonConvert.DeserializeObject(message, constructedClass);
                         Guid messageId = (@event as dynamic)?.Id;
 
-                        _logger.LogDebug("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Handling STARTED : MessageId [ {MessageId} ]", _eventBusConfig.ClientInfo, eventName, messageId.ToString());
+                        _logger.LogDebug("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Handling STARTED : MessageId [ {MessageId} ]", _rabbitMqEventBusConfig.ClientInfo, eventName, messageId.ToString());
                         var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType!);
                         await (Task)concreteType.GetMethod("HandleAsync")?.Invoke(handler, new[] { @event })!;
-                        _logger.LogDebug("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Handling COMPLETED : MessageId [ {MessageId} ]", _eventBusConfig.ClientInfo, eventName, messageId.ToString());
+                        _logger.LogDebug("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Handling COMPLETED : MessageId [ {MessageId} ]", _rabbitMqEventBusConfig.ClientInfo, eventName, messageId.ToString());
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Handling ERROR : {HandlingError}", _eventBusConfig.ClientInfo, eventName, ex.Message);
+                        _logger.LogWarning("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Handling ERROR : {HandlingError}", _rabbitMqEventBusConfig.ClientInfo, eventName, ex.Message);
                     }
                 }
             }
         }
         else
         {
-            _logger.LogWarning("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => No SUBSCRIPTION for event", _eventBusConfig.ClientInfo, eventName);
+            _logger.LogWarning("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => No SUBSCRIPTION for event", _rabbitMqEventBusConfig.ClientInfo, eventName);
         }
     }
 }
