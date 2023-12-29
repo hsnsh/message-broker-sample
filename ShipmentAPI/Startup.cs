@@ -18,7 +18,7 @@ public sealed class Startup
     {
         services.ConfigureMicroserviceHost();
 
-        services.AddEventBus(Configuration);
+        services.AddMicroserviceEventBus(Configuration);
 
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();

@@ -19,7 +19,7 @@ internal static class Program
             builder.SetMinimumLevel(LogLevel.Information).AddConsole()));
 
         // Add event bus instance
-        services.AddEventBus(configuration);
+        services.AddMicroserviceEventBus(configuration);
 
         var sp = services.BuildServiceProvider();
 

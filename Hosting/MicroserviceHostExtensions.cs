@@ -21,7 +21,7 @@ public static class MicroserviceHostExtensions
         return services;
     }
 
-    public static IServiceCollection AddEventBus(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddMicroserviceEventBus(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddKafkaEventBus(configuration);
         // services.AddRabbitMQEventBus(configuration);
