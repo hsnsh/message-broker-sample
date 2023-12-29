@@ -2,17 +2,11 @@ using JetBrains.Annotations;
 
 namespace Base.EventBus.Abstractions;
 
-public sealed record MessageEnvelope<T> where T : IIntegrationEventMessage
+public sealed class ParentMessageEnvelope
 {
     public int HopLevel { get; set; }
 
-    public Guid? ParentMessageId { get; set; }
-
     public Guid MessageId { get; set; }
-
-    public DateTimeOffset MessageTime { get; set; }
-
-    public T Message { get; set; }
 
     [CanBeNull]
     public string CorrelationId { get; set; }
@@ -26,9 +20,4 @@ public sealed record MessageEnvelope<T> where T : IIntegrationEventMessage
     public string Channel { get; set; }
     [CanBeNull]
     public string Producer { get; set; }
-}
-
-// Marker
-public interface IIntegrationEventMessage
-{
 }
