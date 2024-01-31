@@ -1,18 +1,19 @@
 using Hosting.Events;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus;
+using HsnSoft.Base.EventBus.Logging;
 
 namespace OrderAPI.EventHandlers;
 
 public sealed class OrderShippingCompletedIntegrationEventHandler : IIntegrationEventHandler<OrderShippingCompletedEto>
 {
-    private readonly ILogger<OrderShippingCompletedIntegrationEventHandler> _logger;
+    private readonly IEventBusLogger _logger;
     private readonly IEventBus _eventBus;
 
-    public OrderShippingCompletedIntegrationEventHandler(ILoggerFactory loggerFactory, IEventBus eventBus)
+    public OrderShippingCompletedIntegrationEventHandler(IEventBusLogger logger, IEventBus eventBus)
     {
         _eventBus = eventBus;
-        _logger = loggerFactory.CreateLogger<OrderShippingCompletedIntegrationEventHandler>() ?? throw new ArgumentNullException(nameof(loggerFactory));
+        _logger = logger;
     }
 
     public async Task HandleAsync(MessageEnvelope<OrderShippingCompletedEto> @event)

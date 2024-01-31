@@ -54,7 +54,7 @@ public static class MicroserviceHostExtensions
 
         // Add event bus instances
         services.AddHttpContextAccessor();
-        services.AddScoped<ITraceAccesor, HttpContextTraceAccessor>();
+        services.AddSingleton<ITraceAccesor, HttpContextTraceAccessor>();
         services.AddSingleton<IEventBusLogger, DefaultEventBusLogger>();
         services.AddSingleton<IRabbitMQPersistentConnection>(sp => new RabbitMQPersistentConnection(sp));
         services.AddSingleton<IEventBus, EventBusRabbitMQ>(sp => new EventBusRabbitMQ(sp));

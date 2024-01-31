@@ -1,24 +1,24 @@
 using Hosting.Events;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus;
-using Microsoft.Extensions.Logging;
+using HsnSoft.Base.EventBus.Logging;
 
 namespace LogConsumer.EventHandlers;
 
 public sealed class OrderStartedIntegrationEventHandler : IIntegrationEventHandler<OrderStartedEto>
 {
-    private readonly ILogger<OrderStartedIntegrationEventHandler> _logger;
+    private readonly IEventBusLogger _logger;
 
-    public OrderStartedIntegrationEventHandler(ILoggerFactory loggerFactory)
+    public OrderStartedIntegrationEventHandler(IEventBusLogger logger)
     {
-        _logger = loggerFactory.CreateLogger<OrderStartedIntegrationEventHandler>() ?? throw new ArgumentNullException(nameof(loggerFactory));
+        _logger = logger;
     }
 
     public async Task HandleAsync(MessageEnvelope<OrderStartedEto> @event)
     {
         _logger.LogInformation("{Producer} Event[ {EventName} ] => CorrelationId[{CorrelationId}], MessageId[{MessageId}], RelatedMessageId[{RelatedMessageId}]",
             @event.Producer,
-            nameof(OrderStartedEto)[..^"IntegrationEvent".Length],
+            nameof(OrderStartedEto)[..^"Eto".Length],
             @event.CorrelationId ?? string.Empty,
             @event.MessageId.ToString(),
             @event.ParentMessageId != null ? @event.ParentMessageId.Value.ToString() : string.Empty);

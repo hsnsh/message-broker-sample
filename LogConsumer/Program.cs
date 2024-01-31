@@ -4,7 +4,6 @@ using HsnSoft.Base.EventBus;
 using LogConsumer.EventHandlers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace LogConsumer;
 
