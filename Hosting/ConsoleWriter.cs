@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace Base.Core;
+namespace Hosting;
 
 public static class ConsoleWriter
 {

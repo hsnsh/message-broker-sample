@@ -1,5 +1,5 @@
-using Base.EventBus.Abstractions;
 using Hosting.Events;
+using HsnSoft.Base.EventBus;
 using Microsoft.AspNetCore.Mvc;
 
 namespace OrderAPI.Controllers;
@@ -25,7 +25,7 @@ public class WeatherForecastController : ControllerBase
     [HttpGet(Name = "GetWeatherForecast")]
     public async Task<IEnumerable<WeatherForecast>> Get()
     {
-        await _eventBus.PublishAsync(new OrderStartedIntegrationEvent(Guid.NewGuid()));
+        await _eventBus.PublishAsync(new OrderStartedEto(Guid.NewGuid()));
         
         return Enumerable.Range(1, 5).Select(index => new WeatherForecast
             {

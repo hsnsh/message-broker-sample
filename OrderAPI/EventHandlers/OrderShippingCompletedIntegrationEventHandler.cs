@@ -1,9 +1,10 @@
-using Base.EventBus.Abstractions;
 using Hosting.Events;
+using HsnSoft.Base.Domain.Entities.Events;
+using HsnSoft.Base.EventBus;
 
 namespace OrderAPI.EventHandlers;
 
-public sealed class OrderShippingCompletedIntegrationEventHandler : IIntegrationEventHandler<OrderShippingCompletedIntegrationEvent>
+public sealed class OrderShippingCompletedIntegrationEventHandler : IIntegrationEventHandler<OrderShippingCompletedEto>
 {
     private readonly ILogger<OrderShippingCompletedIntegrationEventHandler> _logger;
     private readonly IEventBus _eventBus;
@@ -14,7 +15,7 @@ public sealed class OrderShippingCompletedIntegrationEventHandler : IIntegration
         _logger = loggerFactory.CreateLogger<OrderShippingCompletedIntegrationEventHandler>() ?? throw new ArgumentNullException(nameof(loggerFactory));
     }
 
-    public async Task HandleAsync(MessageEnvelope<OrderShippingCompletedIntegrationEvent> @event)
+    public async Task HandleAsync(MessageEnvelope<OrderShippingCompletedEto> @event)
     {
         var space = typeof(OrderShippingCompletedIntegrationEventHandler).Namespace;
         _logger.LogDebug("Handling Integration Event: {@IntegrationEvent} at {AppName}", @event, space);

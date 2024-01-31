@@ -1,13 +1,12 @@
-﻿using Base.EventBus.Abstractions;
-using Hosting;
+﻿using Hosting;
 using Hosting.Events;
+using HsnSoft.Base.EventBus;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace ShipmentProducer;
 
-internal static class Program
+public class Program
 {
     public static async Task Main(string[] args)
     {
@@ -15,19 +14,26 @@ internal static class Program
 
         var services = new ServiceCollection();
 
-        services.AddSingleton<ILoggerFactory>(sp => LoggerFactory.Create(static builder =>
-            builder.SetMinimumLevel(LogLevel.Information).AddConsole()));
-
         // Add event bus instance
         services.AddMicroserviceEventBus(configuration);
 
         var sp = services.BuildServiceProvider();
 
+        // var logger = sp.GetService<IEventBusLogger>();
+        //
+        // logger.LogDebug("LogDebug log message");
+        // logger.LogError("LogError log message");
+        // logger.LogWarning("LogWarning log message");
+        // logger.LogInformation("LogInformation log message");
+        //
+        // logger.EventBusErrorLog(new ProduceMessageLogModel(Guid.NewGuid().ToString(), "", "", DateTimeOffset.UtcNow, null, ""));
+        // logger.EventBusInfoLog(new ProduceMessageLogModel(Guid.NewGuid().ToString(), "", "", DateTimeOffset.UtcNow, null, ""));
+
         IEventBus _eventBus = sp.GetRequiredService<IEventBus>();
 
         while (true)
         {
-            await _eventBus.PublishAsync(new OrderStartedIntegrationEvent(Guid.NewGuid()));
+            await _eventBus.PublishAsync(new OrderStartedEto(Guid.NewGuid()));
 
             var result = Console.ReadLine();
             if (!string.IsNullOrWhiteSpace(result) && result.ToLower().Equals("q")) break;

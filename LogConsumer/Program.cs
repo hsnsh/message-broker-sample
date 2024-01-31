@@ -1,6 +1,6 @@
-﻿using Base.EventBus.Abstractions;
-using Hosting;
+﻿using Hosting;
 using Hosting.Events;
+using HsnSoft.Base.EventBus;
 using LogConsumer.EventHandlers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,9 +16,6 @@ internal static class Program
 
         var services = new ServiceCollection();
 
-        services.AddSingleton<ILoggerFactory>(sp => LoggerFactory.Create(static builder =>
-            builder.SetMinimumLevel(LogLevel.Information).AddConsole()));
-
         // Add event bus instance
         services.AddMicroserviceEventBus(configuration);
 
@@ -27,11 +24,10 @@ internal static class Program
         IEventBus _eventBus = sp.GetRequiredService<IEventBus>();
 
         // Subscribe all event handlers
-        _eventBus.Subscribe<OrderStartedIntegrationEvent, OrderStartedIntegrationEventHandler>();
-        _eventBus.Subscribe<OrderShippingStartedIntegrationEvent, OrderShippingStartedIntegrationEventHandler>();
-        _eventBus.Subscribe<ShipmentStartedIntegrationEvent, ShipmentStartedIntegrationEventHandler>();
-        _eventBus.Subscribe<OrderShippingCompletedIntegrationEvent, OrderShippingCompletedIntegrationEventHandler>();
-
+        _eventBus.Subscribe<OrderStartedEto, OrderStartedIntegrationEventHandler>();
+        _eventBus.Subscribe<OrderShippingStartedEto, OrderShippingStartedIntegrationEventHandler>();
+        _eventBus.Subscribe<ShipmentStartedEto, ShipmentStartedIntegrationEventHandler>();
+        _eventBus.Subscribe<OrderShippingCompletedEto, OrderShippingCompletedIntegrationEventHandler>();
 
         while (true)
         {

@@ -1,9 +1,10 @@
-using Base.EventBus.Abstractions;
 using Hosting.Events;
+using HsnSoft.Base.Domain.Entities.Events;
+using HsnSoft.Base.EventBus;
 
 namespace ShipmentAPI.EventHandlers;
 
-public sealed class OrderShippingStartedIntegrationEventHandler : IIntegrationEventHandler<OrderShippingStartedIntegrationEvent>
+public sealed class OrderShippingStartedIntegrationEventHandler : IIntegrationEventHandler<OrderShippingStartedEto>
 {
     private readonly ILogger<OrderShippingStartedIntegrationEventHandler> _logger;
     private readonly IEventBus _eventBus;
@@ -14,17 +15,26 @@ public sealed class OrderShippingStartedIntegrationEventHandler : IIntegrationEv
         _logger = loggerFactory.CreateLogger<OrderShippingStartedIntegrationEventHandler>() ?? throw new ArgumentNullException(nameof(loggerFactory));
     }
 
-    public async Task HandleAsync(MessageEnvelope<OrderShippingStartedIntegrationEvent> @event)
+    public async Task HandleAsync(MessageEnvelope<OrderShippingStartedEto> @event)
     {
-        var space = typeof(OrderShippingStartedIntegrationEvent).Namespace;
+        var space = typeof(OrderShippingStartedEto).Namespace;
         _logger.LogDebug("Handling Integration Event: {@IntegrationEvent} at {AppName}", @event, space);
 
         // Simulate a work time
         await Task.Delay(5000);
 
-        await _eventBus.PublishAsync(new ShipmentStartedIntegrationEvent(@event.Message.OrderId, Guid.NewGuid()),
-            parentMessageId: @event.MessageId,
-            correlationId: @event.CorrelationId);
+        var parentIntegrationEvent = new ParentMessageEnvelope
+        {
+            HopLevel = @event.HopLevel,
+            MessageId = @event.MessageId,
+            CorrelationId = @event.CorrelationId,
+            UserId = @event.UserId,
+            UserRoleUniqueName = @event.UserRoleUniqueName,
+            Channel = @event.Channel,
+            Producer = @event.Producer
+        };
+
+        await _eventBus.PublishAsync(new ShipmentStartedEto(@event.Message.OrderId, Guid.NewGuid()), parentIntegrationEvent);
 
         await Task.CompletedTask;
     }

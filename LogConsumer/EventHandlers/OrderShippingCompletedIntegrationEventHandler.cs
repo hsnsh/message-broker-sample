@@ -1,10 +1,11 @@
-using Base.EventBus.Abstractions;
 using Hosting.Events;
+using HsnSoft.Base.Domain.Entities.Events;
+using HsnSoft.Base.EventBus;
 using Microsoft.Extensions.Logging;
 
 namespace LogConsumer.EventHandlers;
 
-public sealed class OrderShippingCompletedIntegrationEventHandler : IIntegrationEventHandler<OrderShippingCompletedIntegrationEvent>
+public sealed class OrderShippingCompletedIntegrationEventHandler : IIntegrationEventHandler<OrderShippingCompletedEto>
 {
     private readonly ILogger<OrderShippingCompletedIntegrationEventHandler> _logger;
 
@@ -13,11 +14,11 @@ public sealed class OrderShippingCompletedIntegrationEventHandler : IIntegration
         _logger = loggerFactory.CreateLogger<OrderShippingCompletedIntegrationEventHandler>() ?? throw new ArgumentNullException(nameof(loggerFactory));
     }
 
-    public async Task HandleAsync(MessageEnvelope<OrderShippingCompletedIntegrationEvent> @event)
+    public async Task HandleAsync(MessageEnvelope<OrderShippingCompletedEto> @event)
     {
         _logger.LogInformation("{Producer} Event[ {EventName} ] => CorrelationId[{CorrelationId}], MessageId[{MessageId}], RelatedMessageId[{RelatedMessageId}]",
             @event.Producer,
-            nameof(OrderShippingCompletedIntegrationEvent)[..^"IntegrationEvent".Length],
+            nameof(OrderShippingCompletedEto)[..^"IntegrationEvent".Length],
             @event.CorrelationId ?? string.Empty,
             @event.MessageId.ToString(),
             @event.ParentMessageId != null ? @event.ParentMessageId.Value.ToString() : string.Empty);

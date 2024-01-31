@@ -1,9 +1,10 @@
-using Base.EventBus.Abstractions;
 using Hosting.Events;
+using HsnSoft.Base.Domain.Entities.Events;
+using HsnSoft.Base.EventBus;
 
 namespace OrderAPI.EventHandlers;
 
-public sealed class OrderStartedIntegrationEventHandler : IIntegrationEventHandler<OrderStartedIntegrationEvent>
+public sealed class OrderStartedIntegrationEventHandler : IIntegrationEventHandler<OrderStartedEto>
 {
     private readonly ILogger<OrderStartedIntegrationEventHandler> _logger;
     private readonly IEventBus _eventBus;
@@ -14,7 +15,7 @@ public sealed class OrderStartedIntegrationEventHandler : IIntegrationEventHandl
         _logger = loggerFactory.CreateLogger<OrderStartedIntegrationEventHandler>() ?? throw new ArgumentNullException(nameof(loggerFactory));
     }
 
-    public async Task HandleAsync(MessageEnvelope<OrderStartedIntegrationEvent> @event)
+    public async Task HandleAsync(MessageEnvelope<OrderStartedEto> @event)
     {
         var space = typeof(OrderStartedIntegrationEventHandler).Namespace;
         _logger.LogDebug("Handling Integration Event: {@IntegrationEvent} at {AppName}", @event, space);
@@ -22,9 +23,18 @@ public sealed class OrderStartedIntegrationEventHandler : IIntegrationEventHandl
         // Simulate a work time
         await Task.Delay(5000);
 
-        await _eventBus.PublishAsync(new OrderShippingStartedIntegrationEvent(@event.Message.OrderId),
-            parentMessageId: @event.MessageId,
-            correlationId: @event.CorrelationId);
+        var parentIntegrationEvent = new ParentMessageEnvelope
+        {
+            HopLevel = @event.HopLevel,
+            MessageId = @event.MessageId,
+            CorrelationId = @event.CorrelationId,
+            UserId = @event.UserId,
+            UserRoleUniqueName = @event.UserRoleUniqueName,
+            Channel = @event.Channel,
+            Producer = @event.Producer
+        };
+        
+        await _eventBus.PublishAsync(new OrderShippingStartedEto(@event.Message.OrderId), parentIntegrationEvent);
 
         await Task.CompletedTask;
     }
