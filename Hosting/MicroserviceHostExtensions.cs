@@ -22,13 +22,13 @@ public static class MicroserviceHostExtensions
         return services;
     }
 
-    public static IServiceCollection AddMicroserviceEventBus(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddMicroserviceEventBus(this IServiceCollection services, IConfiguration configuration, Assembly assembly)
     {
         //  services.AddKafkaEventBus(configuration);
         services.AddRabbitMQEventBus(configuration);
 
         // Add All Event Handlers
-        services.AddEventHandlers();
+        services.AddEventHandlers(assembly);
 
         return services;
     }
@@ -60,11 +60,10 @@ public static class MicroserviceHostExtensions
         services.AddSingleton<IEventBus, EventBusRabbitMQ>(sp => new EventBusRabbitMQ(sp));
     }
 
-    private static void AddEventHandlers(this IServiceCollection services)
+    private static void AddEventHandlers(this IServiceCollection services, Assembly assembly)
     {
         var refType = typeof(IIntegrationEventHandler);
-        var types = AppDomain.CurrentDomain.GetAssemblies()
-            .SelectMany(s => s.GetTypes())
+        var types = assembly.GetTypes()
             .Where(p => refType.IsAssignableFrom(p) && p is { IsInterface: false, IsAbstract: false });
 
         foreach (var type in types.ToList())

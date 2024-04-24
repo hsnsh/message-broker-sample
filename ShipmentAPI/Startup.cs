@@ -1,5 +1,6 @@
 using Hosting;
 using HsnSoft.Base.AspNetCore.Tracing;
+using ShipmentAPI.EventHandlers;
 
 namespace ShipmentAPI;
 
@@ -18,7 +19,7 @@ public sealed class Startup
     {
         services.ConfigureMicroserviceHost();
 
-        services.AddMicroserviceEventBus(Configuration);
+        services.AddMicroserviceEventBus(Configuration, typeof(EventHandlersAssemblyMarker).Assembly);
 
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
@@ -54,6 +55,6 @@ public sealed class Startup
         });
 
         // Subscribe all event handlers
-        app.UseEventBus(typeof(Startup).Assembly);
+        app.UseEventBus(typeof(EventHandlersAssemblyMarker).Assembly);
     }
 }

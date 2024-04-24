@@ -1,5 +1,6 @@
 using Hosting;
 using HsnSoft.Base.AspNetCore.Tracing;
+using OrderAPI.EventHandlers;
 
 namespace OrderAPI;
 
@@ -18,7 +19,7 @@ public sealed class Startup
     {
         services.ConfigureMicroserviceHost();
 
-        services.AddMicroserviceEventBus(Configuration);
+        services.AddMicroserviceEventBus(Configuration, typeof(EventHandlersAssemblyMarker).Assembly);
 
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
@@ -34,12 +35,12 @@ public sealed class Startup
                 options.SwaggerEndpoint("/swagger/v1/swagger.json", "Order Service API");
             });
         }
-        
+
         app.UseCorrelationId();
         app.UseRouting();
 
         app.UseAuthorization();
-        
+
         app.UseEndpoints(endpoints =>
         {
             if (!WebHostEnvironment.IsProduction())
@@ -54,6 +55,6 @@ public sealed class Startup
         });
 
         // Subscribe all event handlers
-        app.UseEventBus(typeof(Startup).Assembly);
+        app.UseEventBus(typeof(EventHandlersAssemblyMarker).Assembly);
     }
 }

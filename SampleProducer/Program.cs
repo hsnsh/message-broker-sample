@@ -15,7 +15,7 @@ public class Program
         var services = new ServiceCollection();
 
         // Add event bus instance
-        services.AddMicroserviceEventBus(configuration);
+        services.AddMicroserviceEventBus(configuration, typeof(EventHandlersAssemblyMarker).Assembly);
 
         var sp = services.BuildServiceProvider();
 
