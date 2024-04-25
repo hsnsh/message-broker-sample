@@ -2,41 +2,32 @@ using Hosting.Events;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus;
 using HsnSoft.Base.EventBus.Logging;
+using ShipmentAPI.Services;
 
 namespace ShipmentAPI.EventHandlers;
 
 public sealed class OrderShippingStartedIntegrationEventHandler : IIntegrationEventHandler<OrderShippingStartedEto>
 {
     private readonly IEventBusLogger _logger;
-    private readonly IEventBus _eventBus;
+    private readonly IShipmentService _shipmentService;
 
-    public OrderShippingStartedIntegrationEventHandler(IEventBusLogger logger, IEventBus eventBus)
+    public OrderShippingStartedIntegrationEventHandler(IEventBusLogger logger,
+        IShipmentService shipmentService)
     {
-        _eventBus = eventBus;
-        _logger = logger;
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _shipmentService = shipmentService ?? throw new ArgumentNullException(nameof(shipmentService));
     }
 
     public async Task HandleAsync(MessageEnvelope<OrderShippingStartedEto> @event)
     {
-        var space = typeof(OrderShippingStartedEto).Namespace;
-        _logger.LogDebug("Handling Integration Event: {@IntegrationEvent} at {AppName}", @event, space);
+        _logger.LogInformation("{Producer} Event[ {EventName} ] => CorrelationId[{CorrelationId}], MessageId[{MessageId}], RelatedMessageId[{RelatedMessageId}]",
+            @event.Producer,
+            nameof(OrderShippingStartedEto)[..^"Eto".Length],
+            @event.CorrelationId ?? string.Empty,
+            @event.MessageId.ToString(),
+            @event.ParentMessageId != null ? @event.ParentMessageId.Value.ToString() : string.Empty);
 
-        // Simulate a work time
-        await Task.Delay(5000);
-
-        var parentIntegrationEvent = new ParentMessageEnvelope
-        {
-            HopLevel = @event.HopLevel,
-            MessageId = @event.MessageId,
-            CorrelationId = @event.CorrelationId,
-            UserId = @event.UserId,
-            UserRoleUniqueName = @event.UserRoleUniqueName,
-            Channel = @event.Channel,
-            Producer = @event.Producer
-        };
-
-        await _eventBus.PublishAsync(new ShipmentStartedEto(@event.Message.OrderId, Guid.NewGuid()), parentIntegrationEvent);
-
-        await Task.CompletedTask;
+        _shipmentService.SetParentIntegrationEvent(@event);
+        await _shipmentService.OrderShippingStartedAsync(@event.Message);
     }
 }

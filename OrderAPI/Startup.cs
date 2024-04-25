@@ -1,6 +1,7 @@
 using Hosting;
 using HsnSoft.Base.AspNetCore.Tracing;
 using OrderAPI.EventHandlers;
+using OrderAPI.Services;
 
 namespace OrderAPI;
 
@@ -21,6 +22,8 @@ public sealed class Startup
 
         services.AddMicroserviceEventBus(Configuration, typeof(EventHandlersAssemblyMarker).Assembly);
 
+        services.AddSingleton<IOrderService, OrderService>();
+        
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
     }

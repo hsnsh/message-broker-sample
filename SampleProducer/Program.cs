@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace ShipmentProducer;
 
-public class Program
+public static class Program
 {
     public static async Task Main(string[] args)
     {
@@ -29,15 +29,25 @@ public class Program
         // logger.EventBusErrorLog(new ProduceMessageLogModel(Guid.NewGuid().ToString(), "", "", DateTimeOffset.UtcNow, null, ""));
         // logger.EventBusInfoLog(new ProduceMessageLogModel(Guid.NewGuid().ToString(), "", "", DateTimeOffset.UtcNow, null, ""));
 
-        IEventBus _eventBus = sp.GetRequiredService<IEventBus>();
+        var eventBus = sp.GetRequiredService<IEventBus>();
 
-        while (true)
+        // // TEST SCENARIO 1
+        // while (true)
+        // {
+        //     await _eventBus.PublishAsync(new OrderStartedEto(Guid.NewGuid()));
+        //
+        //     var result = Console.ReadLine();
+        //     if (!string.IsNullOrWhiteSpace(result) && result.ToLower().Equals("q")) break;
+        // }
+
+        // TEST SCENARIO 2
+        for (var i = 1; i <= 10000; i++)
         {
-            await _eventBus.PublishAsync(new OrderStartedEto(Guid.NewGuid()));
-
-            var result = Console.ReadLine();
-            if (!string.IsNullOrWhiteSpace(result) && result.ToLower().Equals("q")) break;
+            await eventBus.PublishAsync(new OrderStartedEto(Guid.NewGuid()));
+            Console.WriteLine("Published: {0}", +i);
         }
+
+        Console.WriteLine("SAMPLE PUBLISHER TERMINATED");
     }
 
     private static IConfiguration GetConfiguration() =>

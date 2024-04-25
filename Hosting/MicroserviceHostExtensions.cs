@@ -17,6 +17,8 @@ public static class MicroserviceHostExtensions
 {
     public static IServiceCollection ConfigureMicroserviceHost(this IServiceCollection services)
     {
+        services.AddOptions();
+
         services.AddControllers();
 
         return services;
