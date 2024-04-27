@@ -47,7 +47,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         _subsManager = new InMemoryEventBusSubscriptionsManager(TrimEventName);
 
         _consumerChannel = CreateConsumerChannel();
-        semaphore = new SemaphoreSlim(_rabbitMqEventBusConfig.ConsumerMaxThreadCount);
+        semaphore = new SemaphoreSlim(_rabbitMqEventBusConfig.ConsumerParallelThreadCount * _rabbitMqEventBusConfig.ConsumerMaxFetchCount);
     }
 
     public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, bool isReQueuePublish = false) where TEventMessage : IIntegrationEventMessage
@@ -156,7 +156,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
                 arguments: null);
 
             // take 1 message per consumer
-            _consumerChannel?.BasicQos(0, _rabbitMqEventBusConfig.ConsumerMaxThreadCount, false);
+            _consumerChannel?.BasicQos(0, _rabbitMqEventBusConfig.ConsumerMaxFetchCount, false);
 
             _consumerChannel?.QueueBind(queue: GetConsumerQueueName(eventName),
                 exchange: _rabbitMqEventBusConfig.ExchangeName,
@@ -175,13 +175,19 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
 
         if (_consumerChannel != null)
         {
-            var consumer = new EventingBasicConsumer(_consumerChannel);
-            consumer.Received += ConsumerReceived;
+            for (int i = 0; i < _rabbitMqEventBusConfig.ConsumerParallelThreadCount; i++)
+            {
+                Task.Run(() =>
+                {
+                    var consumer = new EventingBasicConsumer(_consumerChannel);
+                    consumer.Received += ConsumerReceived;
 
-            _consumerChannel.BasicConsume(
-                queue: GetConsumerQueueName(eventName),
-                autoAck: false,
-                consumer: consumer);
+                    _consumerChannel.BasicConsume(
+                        queue: GetConsumerQueueName(eventName),
+                        autoAck: false,
+                        consumer: consumer);
+                });
+            }
         }
         else
         {
@@ -267,7 +273,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
                 var constructedClass = genericClass.MakeGenericType(eventType!);
                 var @event = JsonConvert.DeserializeObject(message, constructedClass);
                 Guid messageId = ((dynamic)@event)?.MessageId;
-                
+
                 var handler = _serviceProvider.GetService(subscription.HandlerType);
                 if (handler == null)
                 {
@@ -279,7 +285,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
                 {
                     Console.WriteLine("RabbitMQ | {0} CONSUMER [ {1} ] => Handling STARTED : Event [ {2} ]", _rabbitMqEventBusConfig.ClientInfo, eventName, @event);
                     var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType!);
-                    (((Task)concreteType.GetMethod("HandleAsync")?.Invoke(handler, new[] { @event }))!).GetAwaiter().GetResult();
+                    ((Task)concreteType.GetMethod("HandleAsync")?.Invoke(handler, new[] { @event }))!.GetAwaiter().GetResult();
                     Console.WriteLine("RabbitMQ | {0} CONSUMER [ {1} ] => Handling COMPLETED : Event [ {2} ]", _rabbitMqEventBusConfig.ClientInfo, eventName, @event);
                 }
                 catch (Exception ex)
@@ -351,7 +357,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         };
         if (@event.IsReQueued)
         {
-            @event.ReQueueCount = failedEnvelopeInfo != null ? failedEnvelopeInfo.ReQueueCount : 0;
+            @event.ReQueueCount = failedEnvelopeInfo?.ReQueueCount ?? 0;
         }
 
         Console.WriteLine("RabbitMQ | {0} PRODUCER [ MessageBrokerError ] => MessageId [ {1} ] STARTED", _rabbitMqEventBusConfig.ClientInfo, @event.MessageId.ToString());
@@ -410,19 +416,23 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
     public void Dispose()
     {
         if (_disposed) return;
+        Console.WriteLine("Message Broker Bridge shutting down...");
 
         _disposed = true;
         Thread.Sleep(1000); //wait for dispose set
 
-        while (_publishing || _consuming || semaphore.CurrentCount < _rabbitMqEventBusConfig.ConsumerMaxThreadCount)
+        while (_publishing || _consuming || semaphore.CurrentCount < _rabbitMqEventBusConfig.ConsumerParallelThreadCount * _rabbitMqEventBusConfig.ConsumerMaxFetchCount)
         {
-            Console.WriteLine("Publisher and Consumers are waiting...");
+            Console.WriteLine("Process Count [ {0}/{1} ] => Publisher and Consumers are waiting...", semaphore.CurrentCount, _rabbitMqEventBusConfig.ConsumerParallelThreadCount * _rabbitMqEventBusConfig.ConsumerMaxFetchCount);
             Thread.Sleep(1000);
         }
+        Console.WriteLine("Process Count [ {0}/{1} ] => Publisher and Consumers are waiting...", semaphore.CurrentCount, _rabbitMqEventBusConfig.ConsumerParallelThreadCount * _rabbitMqEventBusConfig.ConsumerMaxFetchCount);
 
         semaphore.Dispose();
         _consumerChannel?.Dispose();
         _subsManager.Clear();
+
+        Console.WriteLine("Message Broker Bridge terminated");
     }
 
     [CanBeNull]

@@ -27,7 +27,7 @@ public sealed class OrderStartedIntegrationEventHandler : IIntegrationEventHandl
         //
         // await _eventBus.PublishAsync(new OrderStartedEto(Guid.NewGuid()), parentIntegrationEvent);
 
-        await Task.Delay(100);
+        await Task.Delay(10000);
 
         throw new Exception("VERITABANINA BAGLANAMADIM");
     }

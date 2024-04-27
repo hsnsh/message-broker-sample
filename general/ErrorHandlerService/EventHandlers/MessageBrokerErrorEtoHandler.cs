@@ -15,7 +15,7 @@ public sealed class MessageBrokerErrorEtoHandler : IIntegrationEventHandler<Mess
 
     public async Task HandleAsync(MessageEnvelope<MessageBrokerErrorEto> @event)
     {
-        await Task.Delay(100);
+        await Task.Delay(10000);
 
         if (@event.ReQueueCount > 1)
         {
