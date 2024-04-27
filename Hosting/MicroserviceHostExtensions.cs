@@ -27,7 +27,7 @@ public static class MicroserviceHostExtensions
     public static IServiceCollection AddMicroserviceEventBus(this IServiceCollection services, IConfiguration configuration, Assembly assembly)
     {
         //  services.AddKafkaEventBus(configuration);
-        services.AddRabbitMQEventBus(configuration);
+        services.AddRabbitMqEventBus(configuration);
 
         // Add All Event Handlers
         services.AddEventHandlers(assembly);
@@ -48,7 +48,7 @@ public static class MicroserviceHostExtensions
         services.AddSingleton<IEventBus, EventBusKafka>(sp => new EventBusKafka(sp));
     }
 
-    private static void AddRabbitMQEventBus(this IServiceCollection services, IConfiguration configuration)
+    private static void AddRabbitMqEventBus(this IServiceCollection services, IConfiguration configuration)
     {
         // Add configuration objects
         services.Configure<RabbitMQConnectionSettings>(configuration.GetSection("RabbitMQ:Connection"));

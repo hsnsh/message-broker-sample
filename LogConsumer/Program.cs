@@ -20,13 +20,13 @@ internal static class Program
 
         var sp = services.BuildServiceProvider();
 
-        IEventBus _eventBus = sp.GetRequiredService<IEventBus>();
+        IEventBus eventBus = sp.GetRequiredService<IEventBus>();
 
         // Subscribe all event handlers
-        _eventBus.Subscribe<OrderStartedEto, OrderStartedIntegrationEventHandler>();
-        _eventBus.Subscribe<OrderShippingStartedEto, OrderShippingStartedIntegrationEventHandler>();
-        _eventBus.Subscribe<ShipmentStartedEto, ShipmentStartedIntegrationEventHandler>();
-        _eventBus.Subscribe<OrderShippingCompletedEto, OrderShippingCompletedIntegrationEventHandler>();
+        eventBus.Subscribe<OrderStartedEto, OrderStartedIntegrationEventHandler>();
+        eventBus.Subscribe<OrderShippingStartedEto, OrderShippingStartedIntegrationEventHandler>();
+        eventBus.Subscribe<ShipmentStartedEto, ShipmentStartedIntegrationEventHandler>();
+        eventBus.Subscribe<OrderShippingCompletedEto, OrderShippingCompletedIntegrationEventHandler>();
 
         while (true)
         {
