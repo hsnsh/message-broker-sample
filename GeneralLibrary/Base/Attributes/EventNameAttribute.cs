@@ -1,6 +1,6 @@
 using JetBrains.Annotations;
 
-namespace GeneralTestApi.Base.Attributes;
+namespace GeneralLibrary.Base.Attributes;
 
 [AttributeUsage(AttributeTargets.Class)]
 public class EventNameAttribute : Attribute, IEventNameProvider

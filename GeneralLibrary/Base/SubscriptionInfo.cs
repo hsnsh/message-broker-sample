@@ -1,4 +1,4 @@
-namespace GeneralTestApi.Base;
+namespace GeneralLibrary.Base;
 
 public class SubscriptionInfo
 {

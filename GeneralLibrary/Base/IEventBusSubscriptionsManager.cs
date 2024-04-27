@@ -1,6 +1,6 @@
 using JetBrains.Annotations;
 
-namespace GeneralTestApi.Base;
+namespace GeneralLibrary.Base;
 
 public interface IEventBusSubscriptionsManager
 {

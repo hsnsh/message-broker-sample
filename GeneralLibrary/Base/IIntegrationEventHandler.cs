@@ -1,4 +1,4 @@
-namespace GeneralTestApi.Base;
+namespace GeneralLibrary.Base;
 
 public interface IIntegrationEventHandler<TEventMessage> : IIntegrationEventHandler
     where TEventMessage : IIntegrationEventMessage

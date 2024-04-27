@@ -6,7 +6,7 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
 
-namespace GeneralTestApi.Base;
+namespace GeneralLibrary.Base;
 
 public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
 {
@@ -58,6 +58,7 @@ public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
             _connection!.ConnectionShutdown -= OnConnectionShutdown;
             _connection.CallbackException -= OnCallbackException;
             _connection.ConnectionBlocked -= OnConnectionBlocked;
+            _connection.Close();
             _connection.Dispose();
         }
         catch (IOException ex)

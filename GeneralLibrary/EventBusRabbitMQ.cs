@@ -1,17 +1,20 @@
+using System.Dynamic;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
-using GeneralTestApi.Base;
+using GeneralLibrary.Base;
+using GeneralLibrary.Events;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Polly;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
-namespace GeneralTestApi;
+namespace GeneralLibrary;
 
 public sealed class EventBusRabbitMq : IEventBus, IDisposable
 {
@@ -47,7 +50,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         semaphore = new SemaphoreSlim(_rabbitMqEventBusConfig.ConsumerMaxThreadCount);
     }
 
-    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null) where TEventMessage : IIntegrationEventMessage
+    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, bool isReQueuePublish = false) where TEventMessage : IIntegrationEventMessage
     {
         if (!_persistentConnection.IsConnected)
         {
@@ -78,8 +81,13 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
             Channel = parentMessage?.Channel,
             UserId = parentMessage?.UserId,
             UserRoleUniqueName = parentMessage?.UserRoleUniqueName,
-            HopLevel = parentMessage != null ? parentMessage.HopLevel + 1 : 1
+            HopLevel2 = parentMessage != null ? parentMessage.HopLevel2 + 1 : 1,
+            IsReQueued = isReQueuePublish || (parentMessage?.IsReQueued ?? false)
         };
+        if (@event.IsReQueued)
+        {
+            @event.ReQueueCount = parentMessage != null ? parentMessage.ReQueueCount + 1 : 0;
+        }
 
         Console.WriteLine("RabbitMQ | {0} PRODUCER [ {1} ] => MessageId [ {2} ] STARTED", _rabbitMqEventBusConfig.ClientInfo, eventName, @event.MessageId.ToString());
 
@@ -90,16 +98,28 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         {
             using var publisherChannel = _persistentConnection.CreateModel();
 
-            Console.WriteLine("RabbitMQ | Declaring exchange to publish event name: {0}", eventName);
-            publisherChannel.ExchangeDeclare(exchange: _rabbitMqEventBusConfig.ExchangeName, type: "direct"); //Ensure exchange exists while publishing
+            if (!isReQueuePublish)
+            {
+                Console.WriteLine("RabbitMQ | Declaring exchange to publish event name: {0}", eventName);
+                publisherChannel.ExchangeDeclare(exchange: _rabbitMqEventBusConfig.ExchangeName, type: "direct"); //Ensure exchange exists while publishing
+            }
+            else
+            {
+                // Direct re-queue, no-exchange
+                publisherChannel?.QueueDeclare(queue: GetConsumerQueueName(eventName),
+                    durable: true,
+                    exclusive: false,
+                    autoDelete: false,
+                    arguments: null);
+            }
 
             var properties = publisherChannel?.CreateBasicProperties();
             properties!.DeliveryMode = 2; // persistent
 
             Console.WriteLine("RabbitMQ | Publishing event: {0}", @event);
             publisherChannel.BasicPublish(
-                exchange: _rabbitMqEventBusConfig.ExchangeName,
-                routingKey: eventName,
+                exchange: isReQueuePublish ? "" : _rabbitMqEventBusConfig.ExchangeName,
+                routingKey: isReQueuePublish ? GetConsumerQueueName(eventName) : eventName,
                 mandatory: true,
                 basicProperties: properties,
                 body: body);
@@ -175,6 +195,11 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         _consuming = true;
 
         var eventName = eventArgs.RoutingKey;
+        if (string.IsNullOrWhiteSpace(eventArgs.Exchange)) // No-Fanout-Exchange direct queue
+        {
+            eventName = eventArgs.RoutingKey.Split("_").Last();
+        }
+
         eventName = TrimEventName(eventName);
 
         Console.WriteLine("RabbitMQ | {0} CONSUMER [ {1} ] => Consume STARTED", _rabbitMqEventBusConfig.ClientInfo, eventName);
@@ -206,14 +231,14 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
             {
                 Console.WriteLine("RabbitMQ | {0} CONSUMER [ {1} ] => Consume ERROR : {2} | {3}", _rabbitMqEventBusConfig.ClientInfo, eventName, ex.Message, DateTime.UtcNow.ToString("yyyy-MM-dd hh:mm:ss zz"));
 
-                // TODO: Publish error queue
-                // var eventType = _subsManager.GetEventTypeByName($"{_rabbitMqEventBusConfig.EventNamePrefix}{eventName}{_rabbitMqEventBusConfig.EventNameSuffix}");
-                //
-                // var genericClass = typeof(MessageEnvelope<>);
-                // var constructedClass = genericClass.MakeGenericType(eventType!);
-                // var @event = JsonConvert.DeserializeObject(message, constructedClass);
-                
-                // YENI KUYRUK ICIN EXCHANGE "" olacak, direkt HATA KURUGUNA ATILACAK HHS_IdentityService_Error
+                try
+                {
+                    ConsumeErrorPublish(ex.Message, eventName, message);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("RabbitMQ | {0} PRODUCER [ MessageBrokerError ] => FAILED: {1}", _rabbitMqEventBusConfig.ClientInfo, e.Message);
+                }
 
                 // remove from old queue 
                 _consumerChannel?.BasicAck(eventArgs.DeliveryTag, multiple: false);
@@ -259,7 +284,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
                 catch (Exception ex)
                 {
                     Console.WriteLine("RabbitMQ | {0} CONSUMER [ {1} ] => Handling ERROR : {2}", _rabbitMqEventBusConfig.ClientInfo, eventName, ex.Message);
-                    throw new Exception("Message Process Error");
+                    throw new Exception(ex.Message);
                 }
             }
         }
@@ -267,6 +292,98 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         {
             Console.WriteLine("RabbitMQ | {0} CONSUMER [ {1} ] => No SUBSCRIPTION for event", _rabbitMqEventBusConfig.ClientInfo, eventName);
         }
+    }
+
+    private void ConsumeErrorPublish([NotNull] string errorMessage, [NotNull] string failedEventName, [NotNull] string failedMessageContent)
+    {
+        if (!_persistentConnection.IsConnected)
+        {
+            _persistentConnection.TryConnect();
+        }
+
+        var policy = Policy.Handle<BrokerUnreachableException>()
+            .Or<SocketException>()
+            .WaitAndRetry(_rabbitMqConnectionSettings.ConnectionRetryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
+            {
+                Console.WriteLine("RabbitMQ | Could not publish failed event message : {0} after {1}s ({2})", failedMessageContent, $"{time.TotalSeconds:n1}", ex.Message);
+            });
+
+        Type failedMessageType = null;
+        dynamic failedMessageObject = null;
+        ParentMessageEnvelope failedEnvelopeInfo = null;
+        DateTimeOffset? failedMessageEnvelopeTime = null;
+        try
+        {
+            failedMessageType = _subsManager.GetEventTypeByName($"{_rabbitMqEventBusConfig.EventNamePrefix}{failedEventName}{_rabbitMqEventBusConfig.EventNameSuffix}");
+            var failedEnvelope = JsonConvert.DeserializeObject<dynamic>(failedMessageContent);
+            failedEnvelopeInfo = ((JObject)failedEnvelope)?.ToObject<ParentMessageEnvelope>();
+
+            dynamic dynamicObject = JsonConvert.DeserializeObject<ExpandoObject>(failedMessageContent)!;
+
+            failedMessageEnvelopeTime = dynamicObject.MessageTime;
+            failedMessageEnvelopeTime = failedMessageEnvelopeTime?.UtcDateTime;
+
+            failedMessageObject = dynamicObject.Message;
+        }
+        catch (Exception e) { errorMessage += "Failed envelope could not convert:" + e.Message; }
+
+        var @event = new MessageEnvelope<MessageBrokerErrorEto>
+        {
+            ParentMessageId = failedEnvelopeInfo?.MessageId,
+            MessageId = Guid.NewGuid(),
+            MessageTime = DateTime.UtcNow,
+            Message = new MessageBrokerErrorEto(
+                ErrorTime: DateTime.UtcNow,
+                ErrorMessage: errorMessage,
+                FailedEventName: failedEventName,
+                FailedMessageTypeName: failedMessageType?.Name,
+                FailedMessageObject: failedMessageObject,
+                FailedMessageEnvelopeTime: failedMessageEnvelopeTime
+            ),
+            Producer = _rabbitMqEventBusConfig.ClientInfo,
+            CorrelationId = failedEnvelopeInfo?.CorrelationId,
+            Channel = failedEnvelopeInfo?.Channel,
+            UserId = failedEnvelopeInfo?.UserId,
+            UserRoleUniqueName = failedEnvelopeInfo?.UserRoleUniqueName,
+            HopLevel2 = failedEnvelopeInfo != null ? failedEnvelopeInfo.HopLevel2 + 1 : 1,
+            IsReQueued = failedEnvelopeInfo?.IsReQueued ?? false
+        };
+        if (@event.IsReQueued)
+        {
+            @event.ReQueueCount = failedEnvelopeInfo != null ? failedEnvelopeInfo.ReQueueCount : 0;
+        }
+
+        Console.WriteLine("RabbitMQ | {0} PRODUCER [ MessageBrokerError ] => MessageId [ {1} ] STARTED", _rabbitMqEventBusConfig.ClientInfo, @event.MessageId.ToString());
+
+        var body = JsonSerializer.SerializeToUtf8Bytes(@event, @event.GetType(), new JsonSerializerOptions { WriteIndented = true });
+
+        Console.WriteLine("RabbitMQ | Creating channel to publish event name: MessageBrokerError");
+        policy.Execute(() =>
+        {
+            using var publisherChannel = _persistentConnection.CreateModel();
+
+            var eventName = @event.Message.GetType().Name;
+            eventName = TrimEventName(eventName);
+
+            publisherChannel?.QueueDeclare(queue: GetConsumerQueueName(eventName),
+                durable: true,
+                exclusive: false,
+                autoDelete: false,
+                arguments: null);
+
+            var properties = publisherChannel?.CreateBasicProperties();
+            properties!.DeliveryMode = 2; // persistent
+
+            Console.WriteLine("RabbitMQ | Publishing event: {0}", @event);
+            publisherChannel.BasicPublish(
+                exchange: "",
+                routingKey: GetConsumerQueueName(eventName),
+                mandatory: true,
+                basicProperties: properties,
+                body: body);
+        });
+
+        Console.WriteLine("RabbitMQ | {0} PRODUCER [ MessageBrokerError ] => MessageId [ {1} ] COMPLETED", _rabbitMqEventBusConfig.ClientInfo, @event.MessageId.ToString());
     }
 
     private string GetConsumerQueueName(string eventName)

@@ -1,4 +1,4 @@
-namespace GeneralTestApi.Base.Attributes;
+namespace GeneralLibrary.Base.Attributes;
 
 [AttributeUsage(AttributeTargets.Class)]
 public class GenericEventNameAttribute : Attribute, IEventNameProvider

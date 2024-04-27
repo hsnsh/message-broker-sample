@@ -1,4 +1,6 @@
-using GeneralTestApi.Base;
+using GeneralLibrary;
+using GeneralLibrary.Base;
+using GeneralLibrary.Events;
 using GeneralTestApi.EventHandlers;
 
 namespace GeneralTestApi;

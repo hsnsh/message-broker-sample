@@ -1,4 +1,5 @@
-using GeneralTestApi.Base;
+using GeneralLibrary.Base;
+using GeneralLibrary.Events;
 using Microsoft.AspNetCore;
 
 namespace GeneralTestApi;
@@ -18,7 +19,7 @@ internal class Program
             using (var scope = host.Services.CreateScope())
             {
                 var eventBus = scope.ServiceProvider.GetRequiredService<IEventBus>();
-                for (var i = 0; i < 100; i++)
+                for (var i = 0; i < 1000; i++)
                 {
                     await eventBus.PublishAsync(new OrderStartedEto(Guid.NewGuid()));
                 }
