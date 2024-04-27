@@ -4,6 +4,7 @@ using HsnSoft.Base.EventBus;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace Hosting;
 
@@ -28,15 +29,6 @@ public abstract class BaseServiceAppService : BaseApplicationService, IEventAppl
 
     public void SetParentIntegrationEvent<T>(MessageEnvelope<T> @event) where T : IIntegrationEventMessage
     {
-        ParentIntegrationEvent = new ParentMessageEnvelope
-        {
-            HopLevel = @event.HopLevel,
-            MessageId = @event.MessageId,
-            CorrelationId = @event.CorrelationId,
-            UserId = @event.UserId,
-            UserRoleUniqueName = @event.UserRoleUniqueName,
-            Channel = @event.Channel,
-            Producer = @event.Producer
-        };
+        ParentIntegrationEvent = JsonConvert.DeserializeObject<ParentMessageEnvelope>(JsonConvert.SerializeObject(@event));
     }
 }

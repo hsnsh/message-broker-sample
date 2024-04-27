@@ -1,3 +1,5 @@
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
 using Hosting;
 using HsnSoft.Base.AspNetCore.Tracing;
 using OrderAPI.EventHandlers;
@@ -16,7 +18,7 @@ public sealed class Startup
         WebHostEnvironment = environment;
     }
 
-    public void ConfigureServices(IServiceCollection services)
+    public IServiceProvider ConfigureServices(IServiceCollection services)
     {
         services.ConfigureMicroserviceHost();
 
@@ -26,9 +28,14 @@ public sealed class Startup
         
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
+    
+        var container = new ContainerBuilder();
+        container.Populate(services);
+
+        return new AutofacServiceProvider(container.Build());
     }
 
-    public void Configure(IApplicationBuilder app)
+    public void Configure(IApplicationBuilder app, IHostApplicationLifetime hostApplicationLifetime)
     {
         if (!WebHostEnvironment.IsProduction())
         {
@@ -59,5 +66,12 @@ public sealed class Startup
 
         // Subscribe all event handlers
         app.UseEventBus(typeof(EventHandlersAssemblyMarker).Assembly);
+        
+        hostApplicationLifetime.ApplicationStopping.Register(OnShutdown);
+    }
+    
+    private void OnShutdown()
+    {
+        Console.WriteLine("Application stopping...");
     }
 }

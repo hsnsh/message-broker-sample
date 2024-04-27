@@ -18,8 +18,8 @@ internal static class Program
         services.AddOptions();
 
         // Add configuration objects
-        services.Configure<RabbitMqConnectionSettings>(configuration.GetSection("RabbitMQ:Connection"));
-        services.Configure<RabbitMqEventBusConfig>(configuration.GetSection("RabbitMQ:EventBus"));
+        services.Configure<RabbitMqConnectionSettings>(configuration.GetSection("RabbitMq:Connection"));
+        services.Configure<RabbitMqEventBusConfig>(configuration.GetSection("RabbitMq:EventBus"));
         services.AddSingleton<IRabbitMqPersistentConnection, RabbitMqPersistentConnection>();
 
         services.AddSingleton<IEventBus, EventBusRabbitMq>();

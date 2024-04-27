@@ -1,12 +1,21 @@
 using System.Reflection;
+using HsnSoft.Base.AspNetCore;
+using HsnSoft.Base.AspNetCore.Security.Claims;
 using HsnSoft.Base.AspNetCore.Tracing;
+using HsnSoft.Base.Auditing;
+using HsnSoft.Base.Data;
 using HsnSoft.Base.EventBus;
 using HsnSoft.Base.EventBus.Kafka;
 using HsnSoft.Base.EventBus.Logging;
 using HsnSoft.Base.EventBus.RabbitMQ;
 using HsnSoft.Base.Kafka;
+using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.RabbitMQ;
+using HsnSoft.Base.Security;
+using HsnSoft.Base.Security.Claims;
+using HsnSoft.Base.Timing;
 using HsnSoft.Base.Tracing;
+using HsnSoft.Base.Users;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,6 +28,16 @@ public static class MicroserviceHostExtensions
     {
         services.AddOptions();
 
+        services.AddBaseMultiTenancyServiceCollection();
+        services.AddBaseSecurityServiceCollection();
+        services.AddBaseTimingServiceCollection();
+        services.AddBaseAuditingServiceCollection();
+        services.AddBaseDataServiceCollection();
+        services.AddBaseAspNetCoreServiceCollection();
+        services.AddBaseAspNetCoreJsonLocalization();
+        services.AddEndpointsApiExplorer();
+        services.AddHttpContextAccessor();
+        
         services.AddControllers();
 
         return services;
@@ -43,6 +62,8 @@ public static class MicroserviceHostExtensions
 
         // Add event bus instances
         services.AddHttpContextAccessor();
+        services.AddSingleton<ICurrentPrincipalAccessor, HttpContextCurrentPrincipalAccessor>();
+        services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddSingleton<ITraceAccesor, HttpContextTraceAccessor>();
         services.AddSingleton<IEventBusLogger, DefaultEventBusLogger>();
         services.AddSingleton<IEventBus, EventBusKafka>(sp => new EventBusKafka(sp));
@@ -51,15 +72,17 @@ public static class MicroserviceHostExtensions
     private static void AddRabbitMqEventBus(this IServiceCollection services, IConfiguration configuration)
     {
         // Add configuration objects
-        services.Configure<RabbitMQConnectionSettings>(configuration.GetSection("RabbitMQ:Connection"));
-        services.Configure<RabbitMQEventBusConfig>(configuration.GetSection("RabbitMQ:EventBus"));
+        services.Configure<RabbitMqConnectionSettings>(configuration.GetSection("RabbitMq:Connection"));
+        services.Configure<RabbitMqEventBusConfig>(configuration.GetSection("RabbitMq:EventBus"));
 
         // Add event bus instances
         services.AddHttpContextAccessor();
+        services.AddSingleton<ICurrentPrincipalAccessor, HttpContextCurrentPrincipalAccessor>();
+        services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddSingleton<ITraceAccesor, HttpContextTraceAccessor>();
         services.AddSingleton<IEventBusLogger, DefaultEventBusLogger>();
-        services.AddSingleton<IRabbitMQPersistentConnection>(sp => new RabbitMQPersistentConnection(sp));
-        services.AddSingleton<IEventBus, EventBusRabbitMQ>(sp => new EventBusRabbitMQ(sp));
+        services.AddSingleton<IRabbitMqPersistentConnection, RabbitMqPersistentConnection>();
+        services.AddSingleton<IEventBus, EventBusRabbitMq>();
     }
 
     private static void AddEventHandlers(this IServiceCollection services, Assembly assembly)

@@ -81,7 +81,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
             Channel = parentMessage?.Channel,
             UserId = parentMessage?.UserId,
             UserRoleUniqueName = parentMessage?.UserRoleUniqueName,
-            HopLevel2 = parentMessage != null ? parentMessage.HopLevel2 + 1 : 1,
+            HopLevel = parentMessage != null ? parentMessage.HopLevel + 1 : 1,
             IsReQueued = isReQueuePublish || (parentMessage?.IsReQueued ?? false)
         };
         if (@event.IsReQueued)
@@ -266,7 +266,8 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
                 var genericClass = typeof(MessageEnvelope<>);
                 var constructedClass = genericClass.MakeGenericType(eventType!);
                 var @event = JsonConvert.DeserializeObject(message, constructedClass);
-
+                Guid messageId = ((dynamic)@event)?.MessageId;
+                
                 var handler = _serviceProvider.GetService(subscription.HandlerType);
                 if (handler == null)
                 {
@@ -345,7 +346,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
             Channel = failedEnvelopeInfo?.Channel,
             UserId = failedEnvelopeInfo?.UserId,
             UserRoleUniqueName = failedEnvelopeInfo?.UserRoleUniqueName,
-            HopLevel2 = failedEnvelopeInfo != null ? failedEnvelopeInfo.HopLevel2 + 1 : 1,
+            HopLevel = failedEnvelopeInfo != null ? failedEnvelopeInfo.HopLevel + 1 : 1,
             IsReQueued = failedEnvelopeInfo?.IsReQueued ?? false
         };
         if (@event.IsReQueued)

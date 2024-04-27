@@ -4,7 +4,7 @@ namespace GeneralLibrary.Base;
 
 public sealed class ParentMessageEnvelope
 {
-    public int HopLevel2 { get; set; }
+    public int HopLevel { get; set; }
     
     public bool IsReQueued { get; set; }
     public int ReQueueCount { get; set; }

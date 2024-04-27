@@ -12,7 +12,7 @@ public sealed class OrderService : BaseServiceAppService, IOrderService
     public async Task OrderStartedAsync(OrderStartedEto input, CancellationToken cancellationToken = default)
     {
         // SAMPLE WORK (work done , 10/second)
-        // await Task.Delay(100, cancellationToken);
+        await Task.Delay(1000, cancellationToken);
 
         await EventBus.PublishAsync(new OrderShippingStartedEto(input.OrderId), ParentIntegrationEvent);
     }
@@ -20,7 +20,7 @@ public sealed class OrderService : BaseServiceAppService, IOrderService
     public async Task OrderShippingCompletedAsync(OrderShippingCompletedEto input, CancellationToken cancellationToken = default)
     {
         // SAMPLE WORK (work done , 10/second)
-        // await Task.Delay(100, cancellationToken);
+        await Task.Delay(1000, cancellationToken);
 
         await Task.CompletedTask;
     }

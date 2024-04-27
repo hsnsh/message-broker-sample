@@ -23,8 +23,8 @@ public sealed class Startup
         services.AddOptions();
 
         // Add configuration objects
-        services.Configure<RabbitMqConnectionSettings>(Configuration.GetSection("RabbitMQ:Connection"));
-        services.Configure<RabbitMqEventBusConfig>(Configuration.GetSection("RabbitMQ:EventBus"));
+        services.Configure<RabbitMqConnectionSettings>(Configuration.GetSection("RabbitMq:Connection"));
+        services.Configure<RabbitMqEventBusConfig>(Configuration.GetSection("RabbitMq:EventBus"));
         services.AddSingleton<IRabbitMqPersistentConnection, RabbitMqPersistentConnection>();
 
 

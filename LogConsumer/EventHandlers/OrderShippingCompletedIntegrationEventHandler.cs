@@ -24,7 +24,7 @@ public sealed class OrderShippingCompletedIntegrationEventHandler : IIntegration
             @event.ParentMessageId != null ? @event.ParentMessageId.Value.ToString() : string.Empty);
 
         // Simulate a work time
-        await Task.Delay(5000);
+        await Task.Delay(1000);
 
         await Task.CompletedTask;
     }

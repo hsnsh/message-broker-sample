@@ -12,7 +12,7 @@ public sealed class ShipmentService : BaseServiceAppService, IShipmentService
     public async Task OrderShippingStartedAsync(OrderShippingStartedEto input, CancellationToken cancellationToken = default)
     {
         // SAMPLE WORK (work done , 10/second)
-        // await Task.Delay(100, cancellationToken);
+        await Task.Delay(1000, cancellationToken);
 
         await EventBus.PublishAsync(new ShipmentStartedEto(input.OrderId,Guid.NewGuid()), ParentIntegrationEvent);
     }
@@ -20,7 +20,7 @@ public sealed class ShipmentService : BaseServiceAppService, IShipmentService
     public async Task ShipmentStartedAsync(ShipmentStartedEto input, CancellationToken cancellationToken = default)
     {
         // SAMPLE WORK (work done , 10/second)
-        // await Task.Delay(100, cancellationToken);
+        await Task.Delay(1000, cancellationToken);
       
         await EventBus.PublishAsync(new OrderShippingCompletedEto(input.OrderId, input.ShipmentId), ParentIntegrationEvent);
 
