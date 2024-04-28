@@ -1,4 +1,5 @@
 using System.Net.Sockets;
+using GeneralLibrary.Base;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Options;
 using Polly;
@@ -6,7 +7,7 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
 
-namespace GeneralLibrary.Base;
+namespace GeneralLibrary;
 
 public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
 {
