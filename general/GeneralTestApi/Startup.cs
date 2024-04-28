@@ -1,6 +1,11 @@
 using GeneralLibrary;
 using GeneralLibrary.Base;
+using GeneralLibrary.Base.EventBus;
+using GeneralLibrary.Base.EventBus.Logging;
+using GeneralLibrary.Base.EventBus.RabbitMQ;
+using GeneralLibrary.Base.RabbitMQ;
 using GeneralLibrary.Events;
+using GeneralLibrary.Shared;
 using GeneralTestApi.EventHandlers;
 
 namespace GeneralTestApi;
@@ -23,6 +28,7 @@ public sealed class Startup
         services.AddOptions();
 
         // Add configuration objects
+        services.AddSingleton<IEventBusLogger, DefaultEventBusLogger>();
         services.Configure<RabbitMqConnectionSettings>(Configuration.GetSection("RabbitMq:Connection"));
         services.Configure<RabbitMqEventBusConfig>(Configuration.GetSection("RabbitMq:EventBus"));
         services.AddSingleton<IRabbitMqPersistentConnection, RabbitMqPersistentConnection>();

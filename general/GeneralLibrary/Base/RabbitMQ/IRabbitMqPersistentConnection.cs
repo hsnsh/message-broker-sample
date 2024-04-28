@@ -1,7 +1,7 @@
 using JetBrains.Annotations;
 using RabbitMQ.Client;
 
-namespace GeneralLibrary.Base;
+namespace GeneralLibrary.Base.RabbitMQ;
 
 public interface IRabbitMqPersistentConnection : IDisposable
 {

@@ -1,4 +1,6 @@
 using GeneralLibrary.Base;
+using GeneralLibrary.Base.Domain.Entities.Events;
+using GeneralLibrary.Base.EventBus;
 using GeneralLibrary.Events;
 
 namespace GeneralTestApi.EventHandlers;
@@ -27,7 +29,7 @@ public sealed class OrderStartedIntegrationEventHandler : IIntegrationEventHandl
         //
         // await _eventBus.PublishAsync(new OrderStartedEto(Guid.NewGuid()), parentIntegrationEvent);
 
-        await Task.Delay(10000);
+        await Task.Delay(1000);
 
         throw new Exception("VERITABANINA BAGLANAMADIM");
     }

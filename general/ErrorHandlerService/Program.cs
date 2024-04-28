@@ -1,7 +1,12 @@
 ﻿using ErrorHandlerService.EventHandlers;
 using GeneralLibrary;
 using GeneralLibrary.Base;
+using GeneralLibrary.Base.EventBus;
+using GeneralLibrary.Base.EventBus.Logging;
+using GeneralLibrary.Base.EventBus.RabbitMQ;
+using GeneralLibrary.Base.RabbitMQ;
 using GeneralLibrary.Events;
+using GeneralLibrary.Shared;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -18,6 +23,7 @@ internal static class Program
         services.AddOptions();
 
         // Add configuration objects
+        services.AddSingleton<IEventBusLogger, DefaultEventBusLogger>();
         services.Configure<RabbitMqConnectionSettings>(configuration.GetSection("RabbitMq:Connection"));
         services.Configure<RabbitMqEventBusConfig>(configuration.GetSection("RabbitMq:EventBus"));
         services.AddSingleton<IRabbitMqPersistentConnection, RabbitMqPersistentConnection>();

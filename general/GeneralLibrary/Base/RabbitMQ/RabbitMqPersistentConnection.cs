@@ -1,5 +1,5 @@
 using System.Net.Sockets;
-using GeneralLibrary.Base;
+using GeneralLibrary.Base.EventBus.Logging;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Options;
 using Polly;
@@ -7,11 +7,12 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
 
-namespace GeneralLibrary;
+namespace GeneralLibrary.Base.RabbitMQ;
 
 public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
 {
     private readonly IConnectionFactory _connectionFactory;
+    private readonly IEventBusLogger _logger;
     private readonly int _retryCount;
 
     [CanBeNull]
@@ -21,8 +22,9 @@ public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
 
     private readonly object _syncRoot = new();
 
-    public RabbitMqPersistentConnection(IOptions<RabbitMqConnectionSettings> conSettings)
+    public RabbitMqPersistentConnection(IOptions<RabbitMqConnectionSettings> conSettings, IEventBusLogger logger)
     {
+        _logger = logger;
         _connectionFactory = new ConnectionFactory()
         {
             HostName = conSettings.Value.HostName,
@@ -64,13 +66,13 @@ public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
         }
         catch (IOException ex)
         {
-            Console.WriteLine(ex.Message);
+            _logger.LogError(ex.Message);
         }
     }
 
     public bool TryConnect()
     {
-        Console.WriteLine("RabbitMQ Client is trying to connect");
+        _logger.LogInformation("RabbitMQ Client is trying to connect");
 
         lock (_syncRoot)
         {
@@ -78,7 +80,7 @@ public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
                 .Or<BrokerUnreachableException>()
                 .WaitAndRetry(_retryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
                     {
-                        Console.WriteLine("RabbitMQ Client could not connect after {0}s ({1})", $"{time.TotalSeconds:n1}", ex.Message);
+                        _logger.LogWarning("RabbitMQ Client could not connect after {TimeOut}s ({ExceptionMessage})", $"{time.TotalSeconds:n1}", ex.Message);
                     }
                 );
 
@@ -94,12 +96,12 @@ public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
                 _connection.CallbackException += OnCallbackException;
                 _connection.ConnectionBlocked += OnConnectionBlocked;
 
-                Console.WriteLine("RabbitMQ Client acquired a persistent connection to '{0}'", _connection.Endpoint.HostName);
+                _logger.LogInformation("RabbitMQ Client acquired a persistent connection to '{HostName}'", _connection.Endpoint.HostName);
 
                 return true;
             }
 
-            Console.WriteLine("FATAL ERROR: RabbitMQ connections could not be created and opened");
+            _logger.LogError("FATAL ERROR: RabbitMQ connections could not be created and opened");
 
             return false;
         }
@@ -109,7 +111,7 @@ public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
     {
         if (_disposed) return;
 
-        Console.WriteLine("A RabbitMQ connection is shutdown. Trying to re-connect...");
+        _logger.LogWarning("A RabbitMQ connection is shutdown. Trying to re-connect...");
 
         TryConnect();
     }
@@ -118,7 +120,7 @@ public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
     {
         if (_disposed) return;
 
-        Console.WriteLine("A RabbitMQ connection throw exception. Trying to re-connect...");
+        _logger.LogWarning("A RabbitMQ connection throw exception. Trying to re-connect...");
 
         TryConnect();
     }
@@ -127,7 +129,7 @@ public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
     {
         if (_disposed) return;
 
-        Console.WriteLine("A RabbitMQ connection is on shutdown. Trying to re-connect...");
+        _logger.LogWarning("A RabbitMQ connection is on shutdown. Trying to re-connect...");
 
         TryConnect();
     }

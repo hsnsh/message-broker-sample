@@ -1,4 +1,6 @@
 using GeneralLibrary.Base;
+using GeneralLibrary.Base.Domain.Entities.Events;
+using GeneralLibrary.Base.EventBus;
 using GeneralLibrary.Events;
 using Newtonsoft.Json;
 
@@ -15,7 +17,7 @@ public sealed class MessageBrokerErrorEtoHandler : IIntegrationEventHandler<Mess
 
     public async Task HandleAsync(MessageEnvelope<MessageBrokerErrorEto> @event)
     {
-        await Task.Delay(10000);
+        await Task.Delay(1000);
 
         if (@event.ReQueueCount > 1)
         {

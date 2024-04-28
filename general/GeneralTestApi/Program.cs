@@ -1,4 +1,5 @@
 using GeneralLibrary.Base;
+using GeneralLibrary.Base.EventBus;
 using GeneralLibrary.Events;
 using Microsoft.AspNetCore;
 
@@ -19,7 +20,7 @@ internal class Program
             using (var scope = host.Services.CreateScope())
             {
                 var eventBus = scope.ServiceProvider.GetRequiredService<IEventBus>();
-                for (var i = 0; i < 1000; i++)
+                for (var i = 0; i < 100; i++)
                 {
                     await eventBus.PublishAsync(new OrderStartedEto(Guid.NewGuid()));
                 }

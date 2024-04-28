@@ -1,11 +1,11 @@
 using JetBrains.Annotations;
 
-namespace GeneralLibrary.Base;
+namespace GeneralLibrary.Base.Domain.Entities.Events;
 
 public sealed record MessageEnvelope<T> where T : IIntegrationEventMessage
 {
     public int HopLevel { get; set; }
-    
+
     public bool IsReQueued { get; set; }
     public int ReQueueCount { get; set; }
 

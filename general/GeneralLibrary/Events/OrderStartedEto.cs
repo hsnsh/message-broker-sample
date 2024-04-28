@@ -1,4 +1,5 @@
 using GeneralLibrary.Base;
+using GeneralLibrary.Base.Domain.Entities.Events;
 
 namespace GeneralLibrary.Events;
 

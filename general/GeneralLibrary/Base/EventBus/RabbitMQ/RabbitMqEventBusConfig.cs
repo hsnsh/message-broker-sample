@@ -1,4 +1,4 @@
-﻿namespace GeneralLibrary.Base;
+﻿namespace GeneralLibrary.Base.EventBus.RabbitMQ;
 
 public class RabbitMqEventBusConfig : EventBusConfig
 {

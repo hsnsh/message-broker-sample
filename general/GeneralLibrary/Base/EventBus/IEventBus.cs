@@ -1,6 +1,7 @@
+using GeneralLibrary.Base.Domain.Entities.Events;
 using JetBrains.Annotations;
 
-namespace GeneralLibrary.Base;
+namespace GeneralLibrary.Base.EventBus;
 
 public interface IEventBus
 {
@@ -10,9 +11,9 @@ public interface IEventBus
         where TEvent : IIntegrationEventMessage
         where THandler : IIntegrationEventHandler<TEvent>;
 
-    // void Subscribe(Type eventType, Type eventHandlerType);
-    //
-    // void Unsubscribe<TEvent, THandler>()
-    //     where TEvent : IIntegrationEventMessage
-    //     where THandler : IIntegrationEventHandler<TEvent>;
+    void Subscribe(Type eventType, Type eventHandlerType);
+
+    void Unsubscribe<TEvent, THandler>()
+        where TEvent : IIntegrationEventMessage
+        where THandler : IIntegrationEventHandler<TEvent>;
 }

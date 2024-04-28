@@ -1,10 +1,8 @@
-using GeneralLibrary.Base;
-using GeneralLibrary.Base.Domain.Entities.Events;
 using JetBrains.Annotations;
 
-namespace GeneralLibrary.Events;
+namespace GeneralLibrary.Base.Domain.Entities.Events;
 
-public record MessageBrokerErrorEto(
+public record MessageBrokerError(
     DateTime ErrorTime,
     [NotNull] string ErrorMessage,
     [NotNull] string FailedEventName,
@@ -25,7 +23,7 @@ public record MessageBrokerErrorEto(
 
     [CanBeNull]
     public dynamic FailedMessageObject { get; } = FailedMessageObject;
-    
+
     [CanBeNull]
     public DateTimeOffset? FailedMessageEnvelopeTime { get; } = FailedMessageEnvelopeTime;
 }
