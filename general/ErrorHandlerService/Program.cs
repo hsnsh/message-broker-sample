@@ -1,6 +1,7 @@
 ﻿using ErrorHandlerService.EventHandlers;
 using GeneralLibrary;
 using GeneralLibrary.Base;
+using GeneralLibrary.Base.Domain.Entities.Events;
 using GeneralLibrary.Base.EventBus;
 using GeneralLibrary.Base.EventBus.Logging;
 using GeneralLibrary.Base.EventBus.RabbitMQ;

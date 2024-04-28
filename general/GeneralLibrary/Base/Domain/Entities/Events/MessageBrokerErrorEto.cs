@@ -2,7 +2,7 @@ using JetBrains.Annotations;
 
 namespace GeneralLibrary.Base.Domain.Entities.Events;
 
-public record MessageBrokerError(
+public record MessageBrokerErrorEto(
     DateTime ErrorTime,
     [NotNull] string ErrorMessage,
     [NotNull] string FailedEventName,
@@ -23,7 +23,7 @@ public record MessageBrokerError(
 
     [CanBeNull]
     public dynamic FailedMessageObject { get; } = FailedMessageObject;
-
+    
     [CanBeNull]
     public DateTimeOffset? FailedMessageEnvelopeTime { get; } = FailedMessageEnvelopeTime;
 }
