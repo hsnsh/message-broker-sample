@@ -1,4 +1,3 @@
-using GeneralLibrary.Base;
 using GeneralLibrary.Base.EventBus;
 using GeneralLibrary.Events;
 using Microsoft.AspNetCore;

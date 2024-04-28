@@ -1,4 +1,3 @@
-using GeneralLibrary.Base;
 using GeneralLibrary.Base.Domain.Entities.Events;
 using GeneralLibrary.Base.EventBus;
 using GeneralLibrary.Events;

@@ -1,6 +1,5 @@
-using GeneralLibrary;
-using GeneralLibrary.Base;
 using GeneralLibrary.Base.EventBus;
+using GeneralLibrary.Base.EventBus.Kafka;
 using GeneralLibrary.Base.EventBus.Logging;
 using GeneralLibrary.Base.EventBus.RabbitMQ;
 using GeneralLibrary.Base.RabbitMQ;
@@ -27,15 +26,17 @@ public sealed class Startup
 
         services.AddOptions();
 
-        // Add configuration objects
+        // RABBIT-MQ
+        // services.AddSingleton<IEventBusLogger, DefaultEventBusLogger>();
+        // services.Configure<RabbitMqConnectionSettings>(configuration.GetSection("RabbitMq:Connection"));
+        // services.Configure<RabbitMqEventBusConfig>(configuration.GetSection("RabbitMq:EventBus"));
+        // services.AddSingleton<IRabbitMqPersistentConnection, RabbitMqPersistentConnection>();
+        // services.AddSingleton<IEventBus, EventBusRabbitMq>();
+      
+        // KAFKA
         services.AddSingleton<IEventBusLogger, DefaultEventBusLogger>();
-        services.Configure<RabbitMqConnectionSettings>(Configuration.GetSection("RabbitMq:Connection"));
-        services.Configure<RabbitMqEventBusConfig>(Configuration.GetSection("RabbitMq:EventBus"));
-        services.AddSingleton<IRabbitMqPersistentConnection, RabbitMqPersistentConnection>();
-
-
-        services.AddSingleton<IEventBus, EventBusRabbitMq>();
-
+        services.AddSingleton<IEventBus, EventBusKafka>(sp => new EventBusKafka(sp));
+        
         services.AddTransient<OrderStartedIntegrationEventHandler>();
 
         services.AddEndpointsApiExplorer();
