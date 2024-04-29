@@ -3,8 +3,6 @@ using GeneralLibrary.Base.Domain.Entities.Events;
 using GeneralLibrary.Base.EventBus;
 using GeneralLibrary.Base.EventBus.Kafka;
 using GeneralLibrary.Base.EventBus.Logging;
-using GeneralLibrary.Base.EventBus.RabbitMQ;
-using GeneralLibrary.Base.RabbitMQ;
 using GeneralLibrary.Shared;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
