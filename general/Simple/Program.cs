@@ -10,7 +10,7 @@ internal static class Program
 
     public static void Main(string[] args)
     {
-        var connectionFactory = new ConnectionFactory()
+        var connectionFactory = new ConnectionFactory
         {
             HostName = "localhost",
             Port = 35672,

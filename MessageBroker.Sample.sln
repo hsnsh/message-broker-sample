@@ -27,6 +27,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ErrorHandlerService", "gene
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeneralLibrary", "general\GeneralLibrary\GeneralLibrary.csproj", "{D71FDE5C-2B8A-4E37-87BD-FF0019B037C4}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Multithread", "Multithread", "{4623D2AC-DCA2-43F9-801E-D3F0479B2628}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Multithread.Api", "multithread\Multithread.Api\Multithread.Api.csproj", "{94756D61-8C77-49DA-9974-70B841F30079}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -69,6 +73,10 @@ Global
 		{D71FDE5C-2B8A-4E37-87BD-FF0019B037C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D71FDE5C-2B8A-4E37-87BD-FF0019B037C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D71FDE5C-2B8A-4E37-87BD-FF0019B037C4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{94756D61-8C77-49DA-9974-70B841F30079}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94756D61-8C77-49DA-9974-70B841F30079}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94756D61-8C77-49DA-9974-70B841F30079}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94756D61-8C77-49DA-9974-70B841F30079}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -84,6 +92,7 @@ Global
 		{139C06EF-1C40-419E-BDA8-1BBF1E211C48} = {766872AD-B2B0-4859-8B29-A9ADD8FA8491}
 		{29F6985F-00D5-4DA9-A774-C4345E52D7D6} = {766872AD-B2B0-4859-8B29-A9ADD8FA8491}
 		{D71FDE5C-2B8A-4E37-87BD-FF0019B037C4} = {766872AD-B2B0-4859-8B29-A9ADD8FA8491}
+		{94756D61-8C77-49DA-9974-70B841F30079} = {4623D2AC-DCA2-43F9-801E-D3F0479B2628}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C703DC80-0D51-435C-A25A-ED489A0A20CF}

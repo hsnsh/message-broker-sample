@@ -185,7 +185,7 @@ public class EventBusKafka : IEventBus, IDisposable
 
                         _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Handling STARTED : MessageId [ {MessageId} ]", _kafkaEventBusConfig.ClientInfo, eventName, messageId.ToString());
                         var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(messageObject.Key);
-                        (((Task)concreteType.GetMethod("HandleAsync")?.Invoke(handler, new[] { @event }))!).GetAwaiter().GetResult();
+                        ((Task)concreteType.GetMethod("HandleAsync")?.Invoke(handler, new[] { @event }))!.GetAwaiter().GetResult();
                         _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Handling COMPLETED : MessageId [ {MessageId} ]", _kafkaEventBusConfig.ClientInfo, eventName, messageId.ToString());
 
                         var handleEndTime = DateTimeOffset.UtcNow;

@@ -102,7 +102,7 @@ public static class BaseStringExtensions
                 continue;
             }
 
-            if ((++count) == n)
+            if (++count == n)
             {
                 return i;
             }

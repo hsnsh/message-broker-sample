@@ -41,7 +41,7 @@ public static class Program
         // }
 
         // TEST SCENARIO 2
-        for (var i = 1; i <= 10000; i++)
+        for (var i = 1; i <= 1000; i++)
         {
             await eventBus.PublishAsync(new OrderStartedEto(Guid.NewGuid()));
             Console.WriteLine("Published: {0}", +i);

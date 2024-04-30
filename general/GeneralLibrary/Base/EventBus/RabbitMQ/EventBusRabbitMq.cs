@@ -385,7 +385,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
                 {
                     _logger.LogDebug("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Handling STARTED : MessageId [ {MessageId} ]", _rabbitMqEventBusConfig.ClientInfo, eventName, messageId.ToString());
                     var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType!);
-                    (((Task)concreteType.GetMethod("HandleAsync")?.Invoke(handler, new[] { @event }))!).GetAwaiter().GetResult();
+                    ((Task)concreteType.GetMethod("HandleAsync")?.Invoke(handler, new[] { @event }))!.GetAwaiter().GetResult();
 
                     var handleEndTime = DateTimeOffset.UtcNow;
                     var processTime = $"{(handleEndTime - handleStartTime).TotalMilliseconds:0.####}ms";
