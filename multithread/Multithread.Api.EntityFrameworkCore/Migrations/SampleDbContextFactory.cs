@@ -1,20 +1,19 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
-using Multithread.Api.Infrastructure;
 
-namespace Multithread.Api.Migrations;
+namespace Multithread.Api.EntityFrameworkCore.Migrations;
 
-internal sealed class SampleDbContextFactory : IDesignTimeDbContextFactory<SampleDbContext>
+internal sealed class SampleDbContextFactory : IDesignTimeDbContextFactory<SampleEfCoreDbContext>
 {
-    public SampleDbContext CreateDbContext(string[] args)
+    public SampleEfCoreDbContext CreateDbContext(string[] args)
     {
-        var builder = new DbContextOptionsBuilder<SampleDbContext>()
+        var builder = new DbContextOptionsBuilder<SampleEfCoreDbContext>()
             .UseNpgsql("Host=localhost;Port=35432;Database=SampleDb;User ID=postgres;Password=postgres;Pooling=true;Connection Lifetime=0;",
                 b =>
                 {
                     b.MigrationsHistoryTable("__EFMigrationsHistory");
                 });
 
-        return new SampleDbContext(builder.Options);
+        return new SampleEfCoreDbContext(builder.Options);
     }
 }

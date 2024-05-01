@@ -1,6 +1,5 @@
-using Microsoft.EntityFrameworkCore;
 using Multithread.Api.Application;
-using Multithread.Api.Infrastructure;
+using Multithread.Api.EntityFrameworkCore;
 
 namespace Multithread.Api;
 
@@ -19,23 +18,7 @@ public sealed class Startup
     {
         services.AddControllers();
 
-        services.AddDbContext<SampleDbContext>(options =>
-            {
-                options.UseNpgsql(Configuration.GetConnectionString("SampleDb"), sqlOptions =>
-                {
-                    sqlOptions.MigrationsHistoryTable("__EFMigrationsHistory");
-                    sqlOptions.MigrationsAssembly(typeof(Program).Assembly.GetName().Name);
-                    sqlOptions.EnableRetryOnFailure(30, TimeSpan.FromSeconds(6), null);
-                    sqlOptions.MaxBatchSize(100);
-                });
-                options.EnableSensitiveDataLogging(false);
-                // options.EnableThreadSafetyChecks(false);
-            }
-        );
-
-        services.AddScoped(typeof(SampleManager<,>));
-
-        services.AddScoped<ISampleAppService, SampleAppService>();
+        AddContentServiceInfrastructures(services);
 
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
@@ -67,6 +50,15 @@ public sealed class Startup
         });
 
         hostApplicationLifetime.ApplicationStopping.Register(OnShutdown);
+    }
+
+
+    private void AddContentServiceInfrastructures(IServiceCollection services)
+    {
+        services.AddScoped<ISampleAppService, SampleAppService>();
+
+        services.AddEfCoreDatabaseConfiguration(typeof(Startup), Configuration);
+        // services.AddMongoDatabaseConfiguration(typeof(Startup), Configuration);
     }
 
     private void OnShutdown()

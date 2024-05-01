@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
+using Multithread.Api.Domain.Core;
 
-namespace Multithread.Api.Infrastructure.Domain;
+namespace Multithread.Api.Domain;
 
 public sealed class SampleEntity : Entity<Guid>
 {
@@ -12,7 +13,7 @@ public sealed class SampleEntity : Entity<Guid>
         Name = string.Empty;
     }
 
-    internal SampleEntity(Guid id, [NotNull] string name) : this()
+    public SampleEntity(Guid id, [NotNull] string name) : this()
     {
         Id = id;
         SetName(name);

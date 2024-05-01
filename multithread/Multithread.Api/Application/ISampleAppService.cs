@@ -1,4 +1,4 @@
-using Multithread.Api.Infrastructure.Domain;
+using Multithread.Api.Domain;
 
 namespace Multithread.Api.Application;
 

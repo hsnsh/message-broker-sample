@@ -1,4 +1,4 @@
-namespace Multithread.Api.Infrastructure.Domain;
+namespace Multithread.Api.Domain.Core;
 
 public interface IEntity
 {

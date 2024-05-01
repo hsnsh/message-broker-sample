@@ -31,6 +31,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Multithread", "Multithread"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Multithread.Api", "multithread\Multithread.Api\Multithread.Api.csproj", "{94756D61-8C77-49DA-9974-70B841F30079}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Multithread.Api.EntityFrameworkCore", "multithread\Multithread.Api.EntityFrameworkCore\Multithread.Api.EntityFrameworkCore.csproj", "{607BE936-A8C5-4506-A8F1-800C2D2199ED}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Multithread.Api.MongoDb", "multithread\Multithread.Api.MongoDb\Multithread.Api.MongoDb.csproj", "{D4C7011F-7BDE-4A65-B39F-CFB06FA887B1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Multithread.Api.Domain", "multithread\Multithread.Api.Domain\Multithread.Api.Domain.csproj", "{CD412330-F483-48B7-BFFC-0BDF55FFB301}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -77,6 +83,18 @@ Global
 		{94756D61-8C77-49DA-9974-70B841F30079}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{94756D61-8C77-49DA-9974-70B841F30079}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{94756D61-8C77-49DA-9974-70B841F30079}.Release|Any CPU.Build.0 = Release|Any CPU
+		{607BE936-A8C5-4506-A8F1-800C2D2199ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{607BE936-A8C5-4506-A8F1-800C2D2199ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{607BE936-A8C5-4506-A8F1-800C2D2199ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{607BE936-A8C5-4506-A8F1-800C2D2199ED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D4C7011F-7BDE-4A65-B39F-CFB06FA887B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D4C7011F-7BDE-4A65-B39F-CFB06FA887B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D4C7011F-7BDE-4A65-B39F-CFB06FA887B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D4C7011F-7BDE-4A65-B39F-CFB06FA887B1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CD412330-F483-48B7-BFFC-0BDF55FFB301}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CD412330-F483-48B7-BFFC-0BDF55FFB301}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CD412330-F483-48B7-BFFC-0BDF55FFB301}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CD412330-F483-48B7-BFFC-0BDF55FFB301}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -93,6 +111,9 @@ Global
 		{29F6985F-00D5-4DA9-A774-C4345E52D7D6} = {766872AD-B2B0-4859-8B29-A9ADD8FA8491}
 		{D71FDE5C-2B8A-4E37-87BD-FF0019B037C4} = {766872AD-B2B0-4859-8B29-A9ADD8FA8491}
 		{94756D61-8C77-49DA-9974-70B841F30079} = {4623D2AC-DCA2-43F9-801E-D3F0479B2628}
+		{607BE936-A8C5-4506-A8F1-800C2D2199ED} = {4623D2AC-DCA2-43F9-801E-D3F0479B2628}
+		{D4C7011F-7BDE-4A65-B39F-CFB06FA887B1} = {4623D2AC-DCA2-43F9-801E-D3F0479B2628}
+		{CD412330-F483-48B7-BFFC-0BDF55FFB301} = {4623D2AC-DCA2-43F9-801E-D3F0479B2628}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C703DC80-0D51-435C-A25A-ED489A0A20CF}

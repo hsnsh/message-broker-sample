@@ -7,15 +7,11 @@
 
     <ItemGroup>
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3"/>
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-        <PackageReference Include="JetBrains.Annotations" Version="2023.3.0" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.18" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.18" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="7.0.18" />
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.11" />
+      <ProjectReference Include="..\Multithread.Api.EntityFrameworkCore\Multithread.Api.EntityFrameworkCore.csproj" />
+<!--      <ProjectReference Include="..\Multithread.Api.MongoDb\Multithread.Api.MongoDb.csproj" />-->
     </ItemGroup>
     
 </Project>

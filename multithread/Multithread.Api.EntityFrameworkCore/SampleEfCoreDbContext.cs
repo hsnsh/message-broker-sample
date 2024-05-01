@@ -1,13 +1,13 @@
 using Microsoft.EntityFrameworkCore;
-using Multithread.Api.Infrastructure.Domain;
+using Multithread.Api.Domain;
 
-namespace Multithread.Api.Infrastructure;
+namespace Multithread.Api.EntityFrameworkCore;
 
-public sealed class SampleDbContext : DbContext
+public sealed class SampleEfCoreDbContext : DbContext
 {
     public DbSet<SampleEntity> Samples { get; set; }
 
-    public SampleDbContext(DbContextOptions<SampleDbContext> options) : base(options)
+    public SampleEfCoreDbContext(DbContextOptions<SampleEfCoreDbContext> options) : base(options)
     {
     }
 

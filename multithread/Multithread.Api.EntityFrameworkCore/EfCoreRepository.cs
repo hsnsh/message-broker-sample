@@ -1,24 +1,36 @@
 using System.Linq.Expressions;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
-using Multithread.Api.Infrastructure.Domain;
+using Multithread.Api.Domain.Core;
 
-namespace Multithread.Api.Infrastructure;
+namespace Multithread.Api.EntityFrameworkCore;
 
-public sealed class SampleManager<TDbContext, TEntity>
+public interface IEfCoreRepository<TEntity> where TEntity : class, IEntity
+{
+    DbContext GetDbContext();
+
+    DbSet<TEntity> GetDbSet();
+}
+
+public sealed class EfCoreRepository<TDbContext, TEntity> : IEfCoreRepository<TEntity>
     where TDbContext : DbContext
     where TEntity : class, IEntity
 {
     private readonly TDbContext _dbContext;
     private static readonly object DbResourceLock = new();
 
-    public SampleManager([NotNull] TDbContext dbContext)
+    public EfCoreRepository([NotNull] TDbContext dbContext)
     {
         _dbContext = dbContext;
     }
 
-    private DbSet<TEntity> GetDbSet() => _dbContext?.Set<TEntity>();
-    private void SaveChanges() => _dbContext.SaveChanges();
+    DbContext IEfCoreRepository<TEntity>.GetDbContext() => GetDbContext();
+
+    DbSet<TEntity> IEfCoreRepository<TEntity>.GetDbSet() => GetDbSet();
+
+    private TDbContext GetDbContext() => _dbContext;
+    private DbSet<TEntity> GetDbSet() => GetDbContext().Set<TEntity>();
+    private void SaveChanges() => GetDbContext().SaveChanges();
 
     [ItemCanBeNull]
     public async Task<TEntity> FindAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
@@ -31,86 +43,70 @@ public sealed class SampleManager<TDbContext, TEntity>
         return await GetDbSet().Where(predicate).ToListAsync(cancellationToken);
     }
 
-    public Task<TEntity> InsertAsync(TEntity entity, bool autoSave = false)
+    public Task<TEntity> InsertAsync(TEntity entity)
     {
         lock (DbResourceLock)
         {
             var inserted = GetDbSet().Add(entity).Entity;
-            if (autoSave)
-            {
-                SaveChanges();
-            }
+            SaveChanges();
 
             return Task.FromResult(inserted);
         }
     }
 
-    public Task InsertManyAsync(IEnumerable<TEntity> entities, bool autoSave = false)
+    public Task InsertManyAsync(IEnumerable<TEntity> entities)
     {
         lock (DbResourceLock)
         {
             GetDbSet().AddRange(entities.ToArray());
-            if (autoSave)
-            {
-                SaveChanges();
-            }
+            SaveChanges();
         }
 
         return Task.CompletedTask;
     }
 
-    public Task<TEntity> UpdateAsync(TEntity entity, bool autoSave = false)
+    public Task<TEntity> UpdateAsync(TEntity entity)
     {
+        var context = GetDbContext();
         lock (DbResourceLock)
         {
-            _dbContext.Attach(entity);
-            var updated = _dbContext.Update(entity).Entity;
-            if (autoSave)
-            {
-                SaveChanges();
-            }
+            context.Attach(entity);
+            var updated = context.Update(entity).Entity;
+            SaveChanges();
 
             return Task.FromResult(updated);
         }
     }
 
-    public Task UpdateManyAsync(IEnumerable<TEntity> entities, bool autoSave = false)
+    public Task UpdateManyAsync(IEnumerable<TEntity> entities)
     {
         lock (DbResourceLock)
         {
             GetDbSet().UpdateRange(entities);
-            if (autoSave)
-            {
-                SaveChanges();
-            }
+            SaveChanges();
         }
 
         return Task.CompletedTask;
     }
 
-    public Task DeleteAsync(TEntity entity, bool autoSave = false)
+    public Task DeleteAsync(TEntity entity)
     {
         lock (DbResourceLock)
         {
             GetDbSet().Remove(entity);
-            if (autoSave)
-            {
-                SaveChanges();
-            }
+            SaveChanges();
         }
 
         return Task.CompletedTask;
     }
 
-    public Task DeleteManyAsync(IEnumerable<TEntity> entities, bool autoSave = false)
+    public Task DeleteManyAsync(IEnumerable<TEntity> entities)
     {
+        var context = GetDbContext();
         lock (DbResourceLock)
         {
-            _dbContext.RemoveRange(entities);
-            if (autoSave)
-            {
-                SaveChanges();
-            }
+            context.RemoveRange(entities);
+            SaveChanges();
         }
 
         return Task.CompletedTask;
