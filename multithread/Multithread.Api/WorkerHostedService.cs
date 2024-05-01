@@ -16,7 +16,7 @@ public class WorkerHostedService : BackgroundService
     {
         _logger = logger;
         _scopeFactory = scopeFactory;
-        _workerCount = 10;
+        _workerCount = 100;
         _messageProcessorTasks = new List<Task>();
     }
 
@@ -36,7 +36,7 @@ public class WorkerHostedService : BackgroundService
                     {
                         var processId = (o as ProcessModel)?.ProcessId ?? 0;
 
-                        _logger.LogInformation("{Worker} | WORKER[{WorkerId}] | STARTED", nameof(WorkerHostedService), processId);
+                        _logger.LogDebug("{Worker} | WORKER[{WorkerId}] | STARTED", nameof(WorkerHostedService), processId);
                         var stopWatch = Stopwatch.StartNew();
 
                         // SOME OPERATION
@@ -45,14 +45,14 @@ public class WorkerHostedService : BackgroundService
 
                         stopWatch.Stop();
                         var timespan = stopWatch.Elapsed;
-                        _logger.LogInformation("{Worker} | WORKER[{WorkerId}] | FINISHED ({ProcessTime})sn", nameof(WorkerHostedService), processId, timespan.TotalSeconds.ToString("0.###"));
+                        _logger.LogDebug("{Worker} | WORKER[{WorkerId}] | FINISHED ({ProcessTime})sn", nameof(WorkerHostedService), processId, timespan.TotalSeconds.ToString("0.###"));
                     },
-                    state: new ProcessModel { ProcessId = i + loopCount * 10 },
+                    state: new ProcessModel { ProcessId = i + loopCount * _workerCount },
                     cancellationToken: stopToken)
                 );
             }
 
-            Parallel.For(0, 10, i =>
+            Parallel.For(0, _workerCount, i =>
             {
                 _messageProcessorTasks[i].Start();
             });

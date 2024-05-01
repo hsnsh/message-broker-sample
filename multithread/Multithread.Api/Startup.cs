@@ -1,4 +1,6 @@
+using Microsoft.EntityFrameworkCore;
 using Multithread.Api.Application;
+using Multithread.Api.Infrastructure;
 
 namespace Multithread.Api;
 
@@ -16,6 +18,20 @@ public sealed class Startup
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddControllers();
+
+        services.AddDbContext<SampleDbContext>(options =>
+            {
+                options.UseNpgsql(Configuration.GetConnectionString("SampleDb"), sqlOptions =>
+                {
+                    sqlOptions.MigrationsHistoryTable("__EFMigrationsHistory");
+                    sqlOptions.MigrationsAssembly(typeof(Program).Assembly.GetName().Name);
+                });
+                // options.EnableSensitiveDataLogging(true);
+                // options.EnableThreadSafetyChecks(false);
+            }
+        );
+
+        services.AddScoped(typeof(SampleManager<,>));
 
         services.AddScoped<ISampleAppService, SampleAppService>();
 
