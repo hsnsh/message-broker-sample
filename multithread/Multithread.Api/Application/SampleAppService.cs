@@ -20,16 +20,13 @@ public sealed class SampleAppService : ISampleAppService
         await Task.Delay(100, cancellationToken);
         _logger.LogDebug("{Service} | OPERATION[{OperationId}] | STARTED", nameof(SampleAppService), sampleInput);
 
-        // using (var scope = _serviceScopeFactory.CreateScope())
-        // {
-        //  await Task.Delay(sampleWorkTime, stopToken);
-        // Thread.Sleep(sampleWorkTime);
-        // }
+        Thread.Sleep(sampleWorkTime);
+        var response = Guid.NewGuid().ToString("N").ToUpper();
 
-        var placed = await _sampleManager.InsertAsync(new SampleEntity(Guid.NewGuid(), sampleInput.ToString()));
-        await _sampleManager.SaveChangesAsync(cancellationToken);
+        // var placed = await _sampleManager.InsertAsync(new SampleEntity(Guid.NewGuid(), sampleInput.ToString()));
+        // await _sampleManager.SaveChangesAsync(cancellationToken);
+        // var response = placed.Id.ToString("N").ToUpper();
         
-        var response = placed.Id.ToString("N").ToUpper();
         _logger.LogDebug("{Service} | OPERATION[{OperationId}] | COMPLETED => ResponseId: {ResponseId}", nameof(SampleAppService), sampleInput, response);
 
         return response;

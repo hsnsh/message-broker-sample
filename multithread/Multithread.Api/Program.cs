@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore;
+using Multithread.Api.Workers;
 
 namespace Multithread.Api;
 
@@ -46,7 +47,7 @@ internal class Program
                 logging.ClearProviders();
                 logging.AddConsole();
             })
-            .ConfigureServices(x => x.AddHostedService<WorkerHostedService>())
+            .ConfigureServices(x => x.AddHostedService<InsertWorkerService>())
             .Build();
 
     private static IConfiguration GetConfiguration() =>
