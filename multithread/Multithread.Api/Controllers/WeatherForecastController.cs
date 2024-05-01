@@ -26,8 +26,9 @@ public class WeatherForecastController : ControllerBase
     {
         for (var i = 1; i <= 1000; i++)
         {
-            await _sampleAppService.InsertOperation(i, cancellationToken);
-            Console.WriteLine("Published: {0}", i);
+            // await _sampleAppService.InsertOperation(i, cancellationToken);
+            var res = await _sampleAppService.FindOperation(i.ToString(), cancellationToken);
+            Console.WriteLine("Find: {0} {1}", i, res?.Id.ToString().ToUpper());
         }
 
         return Enumerable.Range(1, 5).Select(index => new WeatherForecast

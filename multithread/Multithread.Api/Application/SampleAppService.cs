@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using Multithread.Api.Infrastructure;
 using Multithread.Api.Infrastructure.Domain;
 
@@ -39,5 +40,19 @@ public sealed class SampleAppService : ISampleAppService
         _logger.LogInformation("{Service} | DELETE[{OperationId}] | COMPLETED => Response: {Response}", nameof(SampleAppService), sampleInput, true);
 
         return Task.FromResult(true);
+    }
+
+    [ItemCanBeNull]
+    public async Task<SampleEntity> FindOperation(string sampleInput, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("{Service} | FIND[{OperationId}] | STARTED", nameof(SampleAppService), sampleInput);
+
+        //  Task.Delay(new Random().Next(1, 10) * 1000, cancellationToken).GetAwaiter().GetResult();
+
+        var response = await _sampleManager.FindAsync(x => x.Name.Equals(sampleInput), cancellationToken);
+
+        _logger.LogInformation("{Service} | FIND[{OperationId}] | COMPLETED => Response: {Response}", nameof(SampleAppService), sampleInput, response?.Id.ToString() ?? string.Empty);
+
+        return response;
     }
 }

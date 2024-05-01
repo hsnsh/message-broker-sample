@@ -1,5 +1,5 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
+using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Multithread.Api.Infrastructure.Domain;
 
@@ -18,13 +18,18 @@ public sealed class SampleManager<TDbContext, TEntity>
     }
 
     private DbSet<TEntity> GetDbSet() => _dbContext?.Set<TEntity>();
+    private void SaveChanges() => _dbContext.SaveChanges();
 
+    [ItemCanBeNull]
     public async Task<TEntity> FindAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
-        => await GetDbSet().Where(predicate).SingleOrDefaultAsync(cancellationToken);
-
+    {
+        return await GetDbSet().Where(predicate).FirstOrDefaultAsync(cancellationToken);
+    }
 
     public async Task<List<TEntity>> GetListAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
-        => await GetDbSet().Where(predicate).ToListAsync(cancellationToken);
+    {
+        return await GetDbSet().Where(predicate).ToListAsync(cancellationToken);
+    }
 
     public Task<TEntity> InsertAsync(TEntity entity, bool autoSave = false)
     {
@@ -118,6 +123,4 @@ public sealed class SampleManager<TDbContext, TEntity>
             return GetDbSet().Where(predicate).ExecuteDelete();
         }
     }
-
-    private void SaveChanges() => _dbContext.SaveChanges();
 }
