@@ -25,15 +25,17 @@ public sealed class Startup
                 {
                     sqlOptions.MigrationsHistoryTable("__EFMigrationsHistory");
                     sqlOptions.MigrationsAssembly(typeof(Program).Assembly.GetName().Name);
+                    sqlOptions.EnableRetryOnFailure(30, TimeSpan.FromSeconds(6), null);
+                    sqlOptions.MaxBatchSize(100);
                 });
-                // options.EnableSensitiveDataLogging(true);
+                options.EnableSensitiveDataLogging(false);
                 // options.EnableThreadSafetyChecks(false);
             }
         );
 
         services.AddScoped(typeof(SampleManager<,>));
 
-        services.AddTransient<ISampleAppService, SampleAppService>();
+        services.AddScoped<ISampleAppService, SampleAppService>();
 
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();

@@ -16,32 +16,28 @@ public sealed class SampleAppService : ISampleAppService
 
     public async Task<string> InsertOperation(int sampleInput, CancellationToken cancellationToken)
     {
-        await Task.Delay(100, cancellationToken);
-        _logger.LogDebug("{Service} | INSERT[{OperationId}] | STARTED", nameof(SampleAppService), sampleInput);
+        _logger.LogInformation("{Service} | INSERT[{OperationId}] | STARTED", nameof(SampleAppService), sampleInput);
 
-        string response;
+        // await Task.Delay(new Random().Next(1, 10) * 1000, cancellationToken);
+        // var response = Guid.NewGuid().ToString("N").ToUpper();
 
-        Task.Delay(new Random().Next(1, 10) * 1000, cancellationToken).GetAwaiter().GetResult();
-        response = Guid.NewGuid().ToString("N").ToUpper();
+        var placed = await _sampleManager.InsertAsync(new SampleEntity(Guid.NewGuid(), sampleInput.ToString()), autoSave: true);
+        var response = placed.Id.ToString("N").ToUpper();
 
-        // var placed = _sampleManager.InsertAsync(new SampleEntity(Guid.NewGuid(), sampleInput.ToString()), cancellationToken).GetAwaiter().GetResult();
-        // response = placed.Id.ToString("N").ToUpper();
-
-        _logger.LogDebug("{Service} | INSERT[{OperationId}] | COMPLETED => ResponseId: {ResponseId}", nameof(SampleAppService), sampleInput, response);
+        _logger.LogInformation("{Service} | INSERT[{OperationId}] | COMPLETED => ResponseId: {ResponseId}", nameof(SampleAppService), sampleInput, response);
         return response;
     }
 
-    public async Task<bool> DeleteOperation(string sampleInput, CancellationToken cancellationToken)
+    public Task<bool> DeleteOperation(string sampleInput, CancellationToken cancellationToken)
     {
-        await Task.Delay(100, cancellationToken);
         _logger.LogInformation("{Service} | DELETE[{OperationId}] | STARTED", nameof(SampleAppService), sampleInput);
 
-        Task.Delay(new Random().Next(1, 10) * 1000, cancellationToken).GetAwaiter().GetResult();
+        //  Task.Delay(new Random().Next(1, 10) * 1000, cancellationToken).GetAwaiter().GetResult();
 
-        // _sampleManager.DeleteDirectAsync(x => x.Name.Equals(sampleInput), cancellationToken).GetAwaiter().GetResult();
+        _sampleManager.DeleteDirect(x => x.Name.Equals(sampleInput));
 
         _logger.LogInformation("{Service} | DELETE[{OperationId}] | COMPLETED => Response: {Response}", nameof(SampleAppService), sampleInput, true);
 
-        return true;
+        return Task.FromResult(true);
     }
 }

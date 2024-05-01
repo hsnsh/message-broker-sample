@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Multithread.Api.Infrastructure.Domain;
@@ -9,14 +10,14 @@ public sealed class SampleManager<TDbContext, TEntity>
     where TEntity : class, IEntity
 {
     private readonly TDbContext _dbContext;
-    private static readonly object DbResourceLock = new object();
+    private static readonly object DbResourceLock = new();
 
-    public SampleManager(TDbContext dbContext)
+    public SampleManager([NotNull] TDbContext dbContext)
     {
         _dbContext = dbContext;
     }
 
-    private DbSet<TEntity> GetDbSet() => _dbContext.Set<TEntity>();
+    private DbSet<TEntity> GetDbSet() => _dbContext?.Set<TEntity>();
 
     public async Task<TEntity> FindAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
         => await GetDbSet().Where(predicate).SingleOrDefaultAsync(cancellationToken);
@@ -25,78 +26,98 @@ public sealed class SampleManager<TDbContext, TEntity>
     public async Task<List<TEntity>> GetListAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
         => await GetDbSet().Where(predicate).ToListAsync(cancellationToken);
 
-    public async Task<TEntity> InsertAsync(TEntity entity, bool autoSave = false, CancellationToken cancellationToken = default)
-    {
-        var inserted = (await GetDbSet().AddAsync(entity, cancellationToken)).Entity;
-        if (autoSave)
-        {
-            await SaveChangesAsync(cancellationToken);
-        }
-
-        return inserted;
-    }
-
-    public async Task InsertManyAsync(IEnumerable<TEntity> entities, bool autoSave = false, CancellationToken cancellationToken = default)
-    {
-        await GetDbSet().AddRangeAsync(entities.ToArray());
-        if (autoSave)
-        {
-            await SaveChangesAsync(cancellationToken);
-        }
-    }
-
-    public async Task<TEntity> UpdateAsync(TEntity entity, bool autoSave = false, CancellationToken cancellationToken = default)
-    {
-        _dbContext.Attach(entity);
-        var updated = _dbContext.Update(entity).Entity;
-        if (autoSave)
-        {
-            await SaveChangesAsync(cancellationToken);
-        }
-
-        return updated;
-    }
-
-    public async Task UpdateManyAsync(IEnumerable<TEntity> entities, bool autoSave = false, CancellationToken cancellationToken = default)
-    {
-        GetDbSet().UpdateRange(entities);
-        if (autoSave)
-        {
-            await SaveChangesAsync(cancellationToken);
-        }
-    }
-
-    public async Task DeleteAsync(TEntity entity, bool autoSave = false, CancellationToken cancellationToken = default)
-    {
-        GetDbSet().Remove(entity);
-        if (autoSave)
-        {
-            await SaveChangesAsync(cancellationToken);
-        }
-    }
-
-    public async Task DeleteManyAsync(IEnumerable<TEntity> entities, bool autoSave = false, CancellationToken cancellationToken = default)
-    {
-        _dbContext.RemoveRange(entities);
-        if (autoSave)
-        {
-            await SaveChangesAsync(cancellationToken);
-        }
-    }
-
-    public Task<int> DeleteDirectAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+    public Task<TEntity> InsertAsync(TEntity entity, bool autoSave = false)
     {
         lock (DbResourceLock)
         {
-            return Task.FromResult(GetDbSet().Where(predicate).ExecuteDeleteAsync(cancellationToken).GetAwaiter().GetResult());
+            var inserted = GetDbSet().Add(entity).Entity;
+            if (autoSave)
+            {
+                SaveChanges();
+            }
+
+            return Task.FromResult(inserted);
         }
     }
 
-    private Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    public Task InsertManyAsync(IEnumerable<TEntity> entities, bool autoSave = false)
     {
         lock (DbResourceLock)
         {
-            return Task.FromResult(_dbContext.SaveChangesAsync(cancellationToken).GetAwaiter().GetResult());
+            GetDbSet().AddRange(entities.ToArray());
+            if (autoSave)
+            {
+                SaveChanges();
+            }
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task<TEntity> UpdateAsync(TEntity entity, bool autoSave = false)
+    {
+        lock (DbResourceLock)
+        {
+            _dbContext.Attach(entity);
+            var updated = _dbContext.Update(entity).Entity;
+            if (autoSave)
+            {
+                SaveChanges();
+            }
+
+            return Task.FromResult(updated);
         }
     }
+
+    public Task UpdateManyAsync(IEnumerable<TEntity> entities, bool autoSave = false)
+    {
+        lock (DbResourceLock)
+        {
+            GetDbSet().UpdateRange(entities);
+            if (autoSave)
+            {
+                SaveChanges();
+            }
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteAsync(TEntity entity, bool autoSave = false)
+    {
+        lock (DbResourceLock)
+        {
+            GetDbSet().Remove(entity);
+            if (autoSave)
+            {
+                SaveChanges();
+            }
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteManyAsync(IEnumerable<TEntity> entities, bool autoSave = false)
+    {
+        lock (DbResourceLock)
+        {
+            _dbContext.RemoveRange(entities);
+            if (autoSave)
+            {
+                SaveChanges();
+            }
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public int DeleteDirect(Expression<Func<TEntity, bool>> predicate)
+    {
+        lock (DbResourceLock)
+        {
+            return GetDbSet().Where(predicate).ExecuteDelete();
+        }
+    }
+
+    private void SaveChanges() => _dbContext.SaveChanges();
 }

@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
+using Multithread.Api.Application;
 
 namespace Multithread.Api.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("weather")]
 public class WeatherForecastController : ControllerBase
 {
     private static readonly string[] Summaries = new[]
@@ -12,15 +13,23 @@ public class WeatherForecastController : ControllerBase
     };
 
     private readonly ILogger<WeatherForecastController> _logger;
+    private readonly ISampleAppService _sampleAppService;
 
-    public WeatherForecastController(ILogger<WeatherForecastController> logger)
+    public WeatherForecastController(ILogger<WeatherForecastController> logger, ISampleAppService sampleAppService)
     {
         _logger = logger;
+        _sampleAppService = sampleAppService;
     }
 
-    [HttpGet(Name = "GetWeatherForecast")]
-    public IEnumerable<WeatherForecast> Get()
+    [HttpGet("data")]
+    public async Task<IEnumerable<WeatherForecast>> Get(CancellationToken cancellationToken)
     {
+        for (var i = 1; i <= 1000; i++)
+        {
+            await _sampleAppService.InsertOperation(i, cancellationToken);
+            Console.WriteLine("Published: {0}", i);
+        }
+
         return Enumerable.Range(1, 5).Select(index => new WeatherForecast
             {
                 Date = DateTime.Now.AddDays(index),
