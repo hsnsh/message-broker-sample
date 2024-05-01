@@ -4,11 +4,12 @@ using Multithread.Api.Infrastructure.Domain;
 
 namespace Multithread.Api.Infrastructure;
 
-public sealed class SampleManager<TDbContext, TEntity> 
-    where TDbContext : DbContext 
+public sealed class SampleManager<TDbContext, TEntity>
+    where TDbContext : DbContext
     where TEntity : class, IEntity
 {
     private readonly TDbContext _dbContext;
+    private static readonly object DbResourceLock = new object();
 
     public SampleManager(TDbContext dbContext)
     {
@@ -24,34 +25,78 @@ public sealed class SampleManager<TDbContext, TEntity>
     public async Task<List<TEntity>> GetListAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
         => await GetDbSet().Where(predicate).ToListAsync(cancellationToken);
 
-    public async Task<TEntity> InsertAsync(TEntity entity) => (await GetDbSet().AddAsync(entity)).Entity;
+    public async Task<TEntity> InsertAsync(TEntity entity, bool autoSave = false, CancellationToken cancellationToken = default)
+    {
+        var inserted = (await GetDbSet().AddAsync(entity, cancellationToken)).Entity;
+        if (autoSave)
+        {
+            await SaveChangesAsync(cancellationToken);
+        }
 
-    public async Task InsertManyAsync(IEnumerable<TEntity> entities) => await GetDbSet().AddRangeAsync(entities.ToArray());
+        return inserted;
+    }
 
-    public async Task<TEntity> UpdateAsync(TEntity entity)
+    public async Task InsertManyAsync(IEnumerable<TEntity> entities, bool autoSave = false, CancellationToken cancellationToken = default)
+    {
+        await GetDbSet().AddRangeAsync(entities.ToArray());
+        if (autoSave)
+        {
+            await SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    public async Task<TEntity> UpdateAsync(TEntity entity, bool autoSave = false, CancellationToken cancellationToken = default)
     {
         _dbContext.Attach(entity);
-        return _dbContext.Update(entity).Entity;
+        var updated = _dbContext.Update(entity).Entity;
+        if (autoSave)
+        {
+            await SaveChangesAsync(cancellationToken);
+        }
+
+        return updated;
     }
 
-    public async Task UpdateManyAsync(IEnumerable<TEntity> entities) => GetDbSet().UpdateRange(entities);
-
-    public async Task DeleteAsync(TEntity entity) => GetDbSet().Remove(entity);
-
-    public async Task DeleteManyAsync(IEnumerable<TEntity> entities) => _dbContext.RemoveRange(entities);
-
-    public async Task DeleteAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+    public async Task UpdateManyAsync(IEnumerable<TEntity> entities, bool autoSave = false, CancellationToken cancellationToken = default)
     {
-        var entities = await GetDbSet()
-            .Where(predicate)
-            .ToListAsync(cancellationToken);
-
-        await DeleteManyAsync(entities);
+        GetDbSet().UpdateRange(entities);
+        if (autoSave)
+        {
+            await SaveChangesAsync(cancellationToken);
+        }
     }
 
-    public async Task DeleteDirectAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
-        => await GetDbSet().Where(predicate).ExecuteDeleteAsync(cancellationToken);
+    public async Task DeleteAsync(TEntity entity, bool autoSave = false, CancellationToken cancellationToken = default)
+    {
+        GetDbSet().Remove(entity);
+        if (autoSave)
+        {
+            await SaveChangesAsync(cancellationToken);
+        }
+    }
 
-    public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
-        => await _dbContext.SaveChangesAsync(cancellationToken);
+    public async Task DeleteManyAsync(IEnumerable<TEntity> entities, bool autoSave = false, CancellationToken cancellationToken = default)
+    {
+        _dbContext.RemoveRange(entities);
+        if (autoSave)
+        {
+            await SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    public Task<int> DeleteDirectAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+    {
+        lock (DbResourceLock)
+        {
+            return Task.FromResult(GetDbSet().Where(predicate).ExecuteDeleteAsync(cancellationToken).GetAwaiter().GetResult());
+        }
+    }
+
+    private Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        lock (DbResourceLock)
+        {
+            return Task.FromResult(_dbContext.SaveChangesAsync(cancellationToken).GetAwaiter().GetResult());
+        }
+    }
 }

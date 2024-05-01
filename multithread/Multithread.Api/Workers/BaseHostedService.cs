@@ -5,13 +5,15 @@ namespace Multithread.Api.Workers;
 public abstract class BaseHostedService<TService> : BackgroundService
 {
     private readonly ILogger _logger;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly List<Task> _messageProcessorTasks;
     private readonly int _workerCount;
     private readonly int _maxTerminatingWaitPeriodForAllWorker = 30000;
 
-    protected BaseHostedService(ILoggerFactory loggerFactory, int workerCount = 10)
+    protected BaseHostedService(ILogger logger, IServiceScopeFactory serviceScopeFactory, int workerCount = 10)
     {
-        _logger = loggerFactory.CreateLogger(typeof(TService).Name);
+        _logger = logger;
+        _serviceScopeFactory = serviceScopeFactory;
         _workerCount = workerCount < 1 ? 1 : workerCount;
         _messageProcessorTasks = new List<Task>();
     }
@@ -20,52 +22,56 @@ public abstract class BaseHostedService<TService> : BackgroundService
     {
         _logger.LogInformation("{Worker} | STARTING...", typeof(TService).Name);
 
-        var loopCount = 0;
-        while (!stopToken.IsCancellationRequested)
+        using (var scope = _serviceScopeFactory.CreateScope())
         {
-            _logger.LogInformation("{Worker} | WORKER COUNT IS {WorkerCount}", typeof(TService).Name, _workerCount);
-
-            for (var i = 1; i <= _workerCount; i++)
+            var loopCount = 0;
+            while (!stopToken.IsCancellationRequested)
             {
-                _messageProcessorTasks.Add(new Task(
-                    action: o =>
-                    {
-                        var processId = (o as ProcessModel)?.ProcessId ?? 0;
+                _logger.LogInformation("{Worker} | WORKER COUNT IS {WorkerCount}", typeof(TService).Name, _workerCount);
 
-                        _logger.LogDebug("{Worker} | WORKER[{WorkerId}] | STARTED", typeof(TService).Name, processId);
-                        var stopWatch = Stopwatch.StartNew();
 
-                        // SOME OPERATION
-                        DoSomethingAsync(processId, stopToken)
-                            .GetAwaiter().GetResult(); // WAIT OPERATION COMPLETED
+                for (var i = 1; i <= _workerCount; i++)
+                {
+                    _messageProcessorTasks.Add(new Task(
+                        action: o =>
+                        {
+                            var processId = (o as ProcessModel)?.ProcessId ?? 0;
 
-                        stopWatch.Stop();
-                        var timespan = stopWatch.Elapsed;
-                        _logger.LogDebug("{Worker} | WORKER[{WorkerId}] | FINISHED ({ProcessTime})sn", typeof(TService).Name, processId, timespan.TotalSeconds.ToString("0.###"));
-                    },
-                    state: new ProcessModel { ProcessId = i + loopCount * _workerCount },
-                    cancellationToken: stopToken)
-                );
+                            _logger.LogDebug("{Worker} | WORKER[{WorkerId}] | STARTED", typeof(TService).Name, processId);
+                            var stopWatch = Stopwatch.StartNew();
+
+                            // SOME OPERATION
+                            DoSomethingAsync(scope, processId, stopToken)
+                                .GetAwaiter().GetResult(); // WAIT OPERATION COMPLETED
+
+                            stopWatch.Stop();
+                            var timespan = stopWatch.Elapsed;
+                            _logger.LogDebug("{Worker} | WORKER[{WorkerId}] | FINISHED ({ProcessTime})sn", typeof(TService).Name, processId, timespan.TotalSeconds.ToString("0.###"));
+                        },
+                        state: new ProcessModel { ProcessId = i + loopCount * _workerCount },
+                        cancellationToken: stopToken)
+                    );
+                }
+
+                Parallel.For(0, _workerCount, i =>
+                {
+                    _messageProcessorTasks[i].Start();
+                });
+
+                await Task.WhenAll(_messageProcessorTasks).ContinueWith(_ =>
+                {
+                    _messageProcessorTasks.RemoveAll(t => t.IsCompleted);
+                }, stopToken);
+
+                _logger.LogDebug("{Worker} | ALL WORKER IS AVAILABLE", typeof(TService).Name);
+                // loop wait period
+                await Task.Delay(1000, stopToken);
+                loopCount++;
             }
-
-            Parallel.For(0, _workerCount, i =>
-            {
-                _messageProcessorTasks[i].Start();
-            });
-
-            await Task.WhenAll(_messageProcessorTasks).ContinueWith(_ =>
-            {
-                _messageProcessorTasks.RemoveAll(t => t.IsCompleted);
-            }, stopToken);
-
-            _logger.LogDebug("{Worker} | ALL WORKER IS AVAILABLE", typeof(TService).Name);
-            // loop wait period
-            await Task.Delay(1000, stopToken);
-            loopCount++;
         }
     }
 
-    protected abstract Task DoSomethingAsync(int workerId, CancellationToken stopToken);
+    protected abstract Task DoSomethingAsync(IServiceScope scope, int workerId, CancellationToken stopToken);
 
     public override void Dispose()
     {

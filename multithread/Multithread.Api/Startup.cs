@@ -33,7 +33,7 @@ public sealed class Startup
 
         services.AddScoped(typeof(SampleManager<,>));
 
-        services.AddScoped<ISampleAppService, SampleAppService>();
+        services.AddTransient<ISampleAppService, SampleAppService>();
 
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();

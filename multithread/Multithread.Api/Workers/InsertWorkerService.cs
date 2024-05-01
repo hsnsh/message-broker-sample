@@ -4,24 +4,22 @@ namespace Multithread.Api.Workers;
 
 public sealed class InsertWorkerService : BaseHostedService<InsertWorkerService>
 {
-    private readonly ILogger<InsertWorkerService> _logger;
-    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ILogger _logger;
 
-    public InsertWorkerService(ILoggerFactory loggerFactory, IServiceScopeFactory scopeFactory) : base(loggerFactory)
+    public InsertWorkerService(ILogger<InsertWorkerService> logger, IServiceScopeFactory serviceScopeFactory) 
+        : base(logger, serviceScopeFactory, workerCount: 3)
     {
-        _logger = loggerFactory.CreateLogger<InsertWorkerService>();
-        _scopeFactory = scopeFactory;
+        _logger = logger;
     }
 
-    protected override async Task DoSomethingAsync(int workerId, CancellationToken stopToken)
+    protected override async Task DoSomethingAsync(IServiceScope scope, int workerId, CancellationToken stopToken)
     {
         _logger.LogDebug("{Worker} | WORKER[{WorkerId}] | PROCESSING...", nameof(InsertWorkerService), workerId);
 
         try
         {
-            using var scope = _scopeFactory.CreateScope();
-            var sampleAppService = scope.ServiceProvider.GetService<ISampleAppService>();
-            await sampleAppService?.SampleOperation(workerId, stopToken)!;
+            var sampleAppService = scope.ServiceProvider.GetRequiredService<ISampleAppService>();
+            await sampleAppService.InsertOperation(workerId, stopToken)!;
 
             _logger.LogDebug("{Worker} | WORKER[{WorkerId}] | SUCCESSFULLY PROCESSED", nameof(InsertWorkerService), workerId);
         }

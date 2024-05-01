@@ -47,7 +47,11 @@ internal class Program
                 logging.ClearProviders();
                 logging.AddConsole();
             })
-            .ConfigureServices(x => x.AddHostedService<InsertWorkerService>())
+            .ConfigureServices(x =>
+            {
+                x.AddHostedService<InsertWorkerService>();
+                x.AddHostedService<DeleteWorkerService>();
+            })
             .Build();
 
     private static IConfiguration GetConfiguration() =>
