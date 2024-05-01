@@ -15,7 +15,7 @@ public sealed class InsertWorkerService : BaseHostedService<InsertWorkerService>
 
     protected override async Task DoSomethingAsync(int workerId, CancellationToken stopToken)
     {
-        _logger.LogInformation("{Worker} | WORKER[{WorkerId}] | PROCESSING...", nameof(InsertWorkerService), workerId);
+        _logger.LogDebug("{Worker} | WORKER[{WorkerId}] | PROCESSING...", nameof(InsertWorkerService), workerId);
 
         try
         {
@@ -23,11 +23,11 @@ public sealed class InsertWorkerService : BaseHostedService<InsertWorkerService>
             var sampleAppService = scope.ServiceProvider.GetService<ISampleAppService>();
             await sampleAppService?.SampleOperation(workerId, stopToken)!;
 
-            _logger.LogInformation("{Worker} | WORKER[{WorkerId}] | SUCCESSFULLY PROCESSED", nameof(InsertWorkerService), workerId);
+            _logger.LogDebug("{Worker} | WORKER[{WorkerId}] | SUCCESSFULLY PROCESSED", nameof(InsertWorkerService), workerId);
         }
         catch (Exception e)
         {
-            _logger.LogInformation("{Worker} | WORKER[{WorkerId}] | FAILED: {ErrorMessage}", nameof(InsertWorkerService), workerId, e.Message);
+            _logger.LogError("{Worker} | WORKER[{WorkerId}] | FAILED: {ErrorMessage}", nameof(InsertWorkerService), workerId, e.Message);
         }
     }
 }

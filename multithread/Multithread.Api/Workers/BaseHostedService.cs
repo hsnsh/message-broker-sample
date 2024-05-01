@@ -32,7 +32,7 @@ public abstract class BaseHostedService<TService> : BackgroundService
                     {
                         var processId = (o as ProcessModel)?.ProcessId ?? 0;
 
-                        _logger.LogInformation("{Worker} | WORKER[{WorkerId}] | STARTED", typeof(TService).Name, processId);
+                        _logger.LogDebug("{Worker} | WORKER[{WorkerId}] | STARTED", typeof(TService).Name, processId);
                         var stopWatch = Stopwatch.StartNew();
 
                         // SOME OPERATION
@@ -41,7 +41,7 @@ public abstract class BaseHostedService<TService> : BackgroundService
 
                         stopWatch.Stop();
                         var timespan = stopWatch.Elapsed;
-                        _logger.LogInformation("{Worker} | WORKER[{WorkerId}] | FINISHED ({ProcessTime})sn", typeof(TService).Name, processId, timespan.TotalSeconds.ToString("0.###"));
+                        _logger.LogDebug("{Worker} | WORKER[{WorkerId}] | FINISHED ({ProcessTime})sn", typeof(TService).Name, processId, timespan.TotalSeconds.ToString("0.###"));
                     },
                     state: new ProcessModel { ProcessId = i + loopCount * _workerCount },
                     cancellationToken: stopToken)
@@ -58,7 +58,7 @@ public abstract class BaseHostedService<TService> : BackgroundService
                 _messageProcessorTasks.RemoveAll(t => t.IsCompleted);
             }, stopToken);
 
-            _logger.LogInformation("{Worker} | ALL WORKER IS AVAILABLE", typeof(TService).Name);
+            _logger.LogDebug("{Worker} | ALL WORKER IS AVAILABLE", typeof(TService).Name);
             // loop wait period
             await Task.Delay(1000, stopToken);
             loopCount++;
