@@ -35,7 +35,13 @@ public sealed class MongoRepository<TDbContext, TEntity>
 
     public async Task InsertAsync(TEntity entity)
     {
-        await GetDbSet().InsertOneAsync(entity, new InsertOneOptions { BypassDocumentValidation = false });
+        await _dbContext.AddCommandAsync(async () =>
+        {
+            await GetDbSet().InsertOneAsync(entity, new InsertOneOptions { BypassDocumentValidation = false });
+        }, entity, MongoCommandState.Added);
+        await _dbContext.SaveChangesAsync();
+
+        // await GetDbSet().InsertOneAsync(entity, new InsertOneOptions { BypassDocumentValidation = false });
     }
 
     public async Task<int> DeleteDirect(Expression<Func<TEntity, bool>> predicate)

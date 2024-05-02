@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore;
+using Multithread.Api.Application;
 using Multithread.Api.Workers;
 
 namespace Multithread.Api;
@@ -18,7 +19,7 @@ internal class Program
             using (var scope = host.Services.CreateScope())
             {
                 // var sampleAppService = scope.ServiceProvider.GetRequiredService<ISampleAppService>();
-                // for (var i = 1; i <= 1000; i++)
+                // for (var i = 1; i <= 100; i++)
                 // {
                 //     await sampleAppService.InsertOperation(i, default);
                 //     Console.WriteLine("Published: {0}", i);
@@ -56,7 +57,7 @@ internal class Program
             .ConfigureServices(x =>
             {
                 x.AddHostedService<InsertWorkerService>();
-                x.AddHostedService<DeleteWorkerService>();
+                // x.AddHostedService<DeleteWorkerService>();
             })
             .Build();
 

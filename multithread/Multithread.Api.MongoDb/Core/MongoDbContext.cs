@@ -30,12 +30,14 @@ public abstract class MongoDbContext
         return Database.GetCollection<TDocument>(GetCollectionName(typeof(TDocument)));
     }
 
-    public void AddCommand<TEntity>(Func<Task> func, TEntity obj, MongoCommandState commandState) where TEntity : class, IEntity
+    public Task AddCommandAsync<TEntity>(Func<Task> func, TEntity obj, MongoCommandState commandState) where TEntity : class, IEntity
     {
         lock (DbResourceLock)
         {
             CommandTrackerEvent?.Invoke(this, new MongoEntityEventArgs { CommandState = commandState, EntryEntity = obj });
             _commands.Add(func);
+
+            return Task.CompletedTask;
         }
     }
 
@@ -51,6 +53,9 @@ public abstract class MongoDbContext
 
     private async Task<int> SaveChangesAsync(IEnumerable<Func<Task>> commands)
     {
+        var requestCommandCount = commands.Count();
+        if (requestCommandCount < 1) return 0;
+        
         using var session = await Client.StartSessionAsync();
         var isServerSupportTransaction = true;
         try
@@ -70,8 +75,11 @@ public abstract class MongoDbContext
         {
             await session.CommitTransactionAsync();
         }
+      
+        var resultCommandCount = commands.Count();
+        _commands.Clear();
 
-        return commands.Count();
+        return resultCommandCount;
     }
 
     private static string GetCollectionName(MemberInfo entityType)
