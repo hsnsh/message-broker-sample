@@ -15,6 +15,7 @@ public static class MongoDbExtensions
     public static IServiceCollection AddMongoDatabaseConfiguration(this IServiceCollection services, Type assemblyReference, IConfiguration configuration)
     {
         MongoConfigure(assemblyReference);
+        MongoClassMap.RegisterClassMaps();
 
         services.Configure<MongoDbSettings>(configuration.GetSection("MongoDbSettings"));
         services.AddScoped<SampleMongoDbContext>(sp =>
@@ -31,8 +32,6 @@ public static class MongoDbExtensions
 
     private static void MongoConfigure(Type assemblyReference)
     {
-        MongoModelBuilder.Configure();
-
         // MongoDB Guid support
         BsonDefaults.GuidRepresentation = GuidRepresentation.Standard;
         // BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));

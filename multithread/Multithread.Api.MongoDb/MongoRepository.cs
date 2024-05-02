@@ -7,7 +7,7 @@ using Multithread.Api.MongoDb.Core;
 namespace Multithread.Api.MongoDb;
 
 public sealed class MongoRepository<TDbContext, TEntity>
-    where TDbContext : MongoDbContext
+    where TDbContext : BaseMongoDbContext
     where TEntity : class, IEntity
 {
     private readonly TDbContext _dbContext;

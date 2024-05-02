@@ -4,9 +4,9 @@ using Multithread.Api.Domain.Core;
 
 namespace Multithread.Api.MongoDb.ConfigurationMaps;
 
-public sealed class MongoModelBuilder
+public sealed class MongoClassMap
 {
-    public static void Configure()
+    public static void RegisterClassMaps()
     {
         BsonClassMap.RegisterClassMap<Entity<Guid>>(map =>
         {

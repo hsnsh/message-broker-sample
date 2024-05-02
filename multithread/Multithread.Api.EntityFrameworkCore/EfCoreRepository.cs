@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Multithread.Api.Domain.Core;
+using Multithread.Api.EntityFrameworkCore.Core;
 
 namespace Multithread.Api.EntityFrameworkCore;
 
@@ -13,7 +14,7 @@ public interface IEfCoreRepository<TEntity> where TEntity : class, IEntity
 }
 
 public sealed class EfCoreRepository<TDbContext, TEntity> : IEfCoreRepository<TEntity>
-    where TDbContext : DbContext
+    where TDbContext : BaseEfCoreDbContext<TDbContext>
     where TEntity : class, IEntity
 {
     private readonly TDbContext _dbContext;

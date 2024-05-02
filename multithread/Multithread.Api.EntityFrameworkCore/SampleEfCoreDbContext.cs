@@ -1,14 +1,16 @@
 using Microsoft.EntityFrameworkCore;
 using Multithread.Api.Domain;
+using Multithread.Api.EntityFrameworkCore.Core;
 
 namespace Multithread.Api.EntityFrameworkCore;
 
-public sealed class SampleEfCoreDbContext : DbContext
+public sealed class SampleEfCoreDbContext : BaseEfCoreDbContext<SampleEfCoreDbContext>
 {
     public DbSet<SampleEntity> Samples { get; set; }
 
     public SampleEfCoreDbContext(DbContextOptions<SampleEfCoreDbContext> options) : base(options)
     {
+        
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
