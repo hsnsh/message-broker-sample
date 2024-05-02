@@ -1,6 +1,7 @@
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 using Multithread.Api.Domain.Core;
+using Multithread.Api.Domain.Core.Audit;
 
 namespace Multithread.Api.MongoDb.Core;
 
@@ -51,17 +52,62 @@ public abstract class BaseMongoDbContext : MongoDbContext, IScopedDependency
         }
     }
 
-    private void ApplyBaseConceptsForAddedEntity(IEntity entry)
+    private void ApplyBaseConceptsForAddedEntity(object entity)
+    {
+        CheckAndSetId(entity);
+        SetCreationTime(entity);
+        SetCreatorId(entity);
+    }
+
+    private void CheckAndSetId(object entity)
+    {
+        if (entity is IEntity<Guid> entityWithGuidId)
+        {
+            if (entityWithGuidId.Id != default)
+            {
+                return;
+            }
+
+            entityWithGuidId.Id = Guid.NewGuid();
+        }
+    }
+
+    private void SetCreationTime(object targetObject)
+    {
+        if (!(targetObject is ICreationAuditedObject objectWithCreationTime))
+        {
+            return;
+        }
+
+        if (objectWithCreationTime.CreationTime == default)
+        {
+            objectWithCreationTime.CreationTime = DateTime.UtcNow;
+        }
+    }
+
+    private void SetCreatorId(object targetObject)
+    {
+        if (!(targetObject is ICreationAuditedObject objectWithCreatorId))
+        {
+            return;
+        }
+
+        if (objectWithCreatorId.CreatorId == null)
+        {
+            objectWithCreatorId.CreatorId = Guid.NewGuid(); // Todo: CurrentUser => Id
+        }
+        else if (objectWithCreatorId.CreatorId.HasValue && objectWithCreatorId.CreatorId.Value == default)
+        {
+            objectWithCreatorId.CreatorId = Guid.NewGuid(); // Todo: CurrentUser => Id
+        }
+    }
+
+    private void ApplyBaseConceptsForModifiedEntity(object entry)
     {
         // Set Deletion audit properties
     }
 
-    private void ApplyBaseConceptsForModifiedEntity(IEntity entry)
-    {
-        // Set Deletion audit properties
-    }
-
-    private void ApplyBaseConceptsForDeletedEntity(IEntity entry)
+    private void ApplyBaseConceptsForDeletedEntity(object entry)
     {
         // Set Deletion audit properties
     }

@@ -5,7 +5,7 @@ public interface IEntity
     object[] GetKeys();
 }
 
-public interface IEntity<out TKey> : IEntity
+public interface IEntity<TKey> : IEntity
 {
-    TKey Id { get; }
+    TKey Id { get; set; }
 }

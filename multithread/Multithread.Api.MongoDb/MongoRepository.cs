@@ -35,9 +35,11 @@ public sealed class MongoRepository<TDbContext, TEntity>
 
     public async Task InsertAsync(TEntity entity)
     {
-        await _dbContext.AddCommandAsync(async () =>
+        await _dbContext.AddCommandAsync(async (gelen) =>
         {
+            Console.WriteLine(gelen);
             await GetDbSet().InsertOneAsync(entity, new InsertOneOptions { BypassDocumentValidation = false });
+            return Guid.NewGuid();
         }, entity, MongoCommandState.Added);
         await _dbContext.SaveChangesAsync();
 

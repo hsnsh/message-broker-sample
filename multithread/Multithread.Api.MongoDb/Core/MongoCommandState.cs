@@ -5,7 +5,7 @@ namespace Multithread.Api.MongoDb.Core;
 public class MongoEntityEventArgs : EventArgs
 {
     public MongoCommandState CommandState { get; set; }
-    public IEntity EntryEntity { get; set; }
+    public object EntryEntity { get; set; }
 }
 
 public enum MongoCommandState

@@ -8,7 +8,7 @@ namespace Multithread.Api.MongoDb.Core;
 public abstract class MongoDbContext
 {
     private static readonly object DbResourceLock = new();
-    private readonly List<Func<Task>> _commands;
+    private readonly List<Func<string,Task<Guid>>> _commands;
     protected IMongoClient Client { get; private set; }
 
     protected IMongoDatabase Database { get; private set; }
@@ -22,15 +22,15 @@ public abstract class MongoDbContext
         Database = Client.GetDatabase(databaseName);
 
         // Every command will be stored and it'll be processed at SaveChanges
-        _commands = new List<Func<Task>>();
+        _commands = new List<Func<string,Task<Guid>>>();
     }
 
-    public IMongoCollection<TDocument> Collection<TDocument>() where TDocument : class, IEntity
+    public IMongoCollection<TEntity> Collection<TEntity>() where TEntity : class, IEntity
     {
-        return Database.GetCollection<TDocument>(GetCollectionName(typeof(TDocument)));
+        return Database.GetCollection<TEntity>(GetCollectionName(typeof(TEntity)));
     }
 
-    public Task AddCommandAsync<TEntity>(Func<Task> func, TEntity obj, MongoCommandState commandState) where TEntity : class, IEntity
+    public Task AddCommandAsync<TEntity>(Func<string,Task<Guid>> func, TEntity obj, MongoCommandState commandState) where TEntity : class, IEntity
     {
         lock (DbResourceLock)
         {
@@ -51,7 +51,7 @@ public abstract class MongoDbContext
         }
     }
 
-    private async Task<int> SaveChangesAsync(IEnumerable<Func<Task>> commands)
+    private async Task<int> SaveChangesAsync(IEnumerable<Func<string,Task<Guid>>> commands)
     {
         var requestCommandCount = commands.Count();
         if (requestCommandCount < 1) return 0;
@@ -67,7 +67,7 @@ public abstract class MongoDbContext
             isServerSupportTransaction = false;
         }
 
-        var commandTasks = commands.Select(c => c());
+        var commandTasks = commands.Select(c => c(""));
 
         await Task.WhenAll(commandTasks);
 

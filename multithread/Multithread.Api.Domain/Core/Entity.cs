@@ -18,7 +18,7 @@ public abstract class Entity : IEntity
 [Serializable]
 public abstract class Entity<TKey> : Entity, IEntity<TKey>
 {
-    public virtual TKey Id { get; protected set; }
+    public TKey Id { get; set; }
 
     protected Entity()
     {
