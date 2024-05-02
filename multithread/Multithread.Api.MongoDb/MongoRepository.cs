@@ -16,14 +16,14 @@ public sealed class MongoRepository<TDbContext, TEntity>
     public MongoRepository([NotNull] TDbContext dbContext)
     {
         _dbContext = dbContext;
-        _findOptions = new FindOptions<TEntity>()
+        _findOptions = new FindOptions<TEntity>
         {
-            MaxAwaitTime = _dbContext.WaitQueueTimeout,
-            MaxTime = _dbContext.WaitQueueTimeout
+            MaxAwaitTime = _dbContext.ClientWaitQueueTimeout,
+            MaxTime = _dbContext.ClientWaitQueueTimeout
         };
     }
 
-    private IMongoCollection<TEntity> GetDbSet() => _dbContext?.Set<TEntity>();
+    private IMongoCollection<TEntity> GetDbSet() => _dbContext?.Collection<TEntity>();
 
     [ItemCanBeNull]
     public async Task<TEntity> FindAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
@@ -35,7 +35,7 @@ public sealed class MongoRepository<TDbContext, TEntity>
 
     public async Task InsertAsync(TEntity entity)
     {
-        await GetDbSet().InsertOneAsync(entity, new InsertOneOptions() { BypassDocumentValidation = false });
+        await GetDbSet().InsertOneAsync(entity, new InsertOneOptions { BypassDocumentValidation = false });
     }
 
     public async Task<int> DeleteDirect(Expression<Func<TEntity, bool>> predicate)

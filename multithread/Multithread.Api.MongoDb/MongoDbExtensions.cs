@@ -1,12 +1,10 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Bson.Serialization.Serializers;
 using Multithread.Api.MongoDb.ConfigurationMaps;
-using Multithread.Api.MongoDb.Core;
 
 namespace Multithread.Api.MongoDb;
 
@@ -17,12 +15,7 @@ public static class MongoDbExtensions
         MongoConfigure(assemblyReference);
         MongoClassMap.RegisterClassMaps();
 
-        services.Configure<MongoDbSettings>(configuration.GetSection("MongoDbSettings"));
-        services.AddScoped<SampleMongoDbContext>(sp =>
-        {
-            var settings = sp.GetRequiredService<IOptions<MongoDbSettings>>();
-            return new SampleMongoDbContext(settings);
-        });
+        services.AddScoped<SampleMongoDbContext>();
 
         services.AddScoped(typeof(MongoRepository<,>));
 
