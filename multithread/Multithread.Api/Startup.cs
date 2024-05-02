@@ -1,5 +1,5 @@
 using Multithread.Api.Application;
-using Multithread.Api.EntityFrameworkCore;
+using Multithread.Api.MongoDb;
 
 namespace Multithread.Api;
 
@@ -57,8 +57,8 @@ public sealed class Startup
     {
         services.AddScoped<ISampleAppService, SampleAppService>();
 
-        services.AddEfCoreDatabaseConfiguration(typeof(Startup), Configuration);
-        // services.AddMongoDatabaseConfiguration(typeof(Startup), Configuration);
+        //  services.AddEfCoreDatabaseConfiguration(typeof(Startup), Configuration);
+       services.AddMongoDatabaseConfiguration(typeof(Startup), Configuration);
     }
 
     private void OnShutdown()

@@ -1,6 +1,6 @@
 using JetBrains.Annotations;
 using Multithread.Api.Domain;
-using Multithread.Api.EntityFrameworkCore;
+using Multithread.Api.MongoDb;
 
 namespace Multithread.Api.Application;
 
@@ -8,16 +8,17 @@ public sealed class SampleAppService : ISampleAppService
 {
     private readonly ILogger<SampleAppService> _logger;
 
-    // private readonly MongoRepository<SampleMongoDbContext, SampleEntity> _mongoRepository;
-    private readonly EfCoreRepository<SampleEfCoreDbContext, SampleEntity> _efCoreRepository;
+    private readonly MongoRepository<SampleMongoDbContext, SampleEntity> _repository;
+    // private readonly EfCoreRepository<SampleEfCoreDbContext, SampleEntity> _repository;
 
-    public SampleAppService(ILogger<SampleAppService> logger,
-        // MongoRepository<SampleMongoDbContext, SampleEntity> mongoRepository,
-        EfCoreRepository<SampleEfCoreDbContext, SampleEntity> efCoreRepository)
+    public SampleAppService(
+        MongoRepository<SampleMongoDbContext, SampleEntity> repository,
+        // EfCoreRepository<SampleEfCoreDbContext, SampleEntity> repository,
+        ILogger<SampleAppService> logger
+    )
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        // _mongoRepository = mongoRepository;
-        _efCoreRepository = efCoreRepository;
+        _repository = repository;
     }
 
     public async Task<string> InsertOperation(int sampleInput, CancellationToken cancellationToken)
@@ -28,7 +29,7 @@ public sealed class SampleAppService : ISampleAppService
         // var response = Guid.NewGuid().ToString("N").ToUpper();
 
         var sample = new SampleEntity(Guid.NewGuid(), sampleInput.ToString());
-        await _efCoreRepository.InsertAsync(sample);
+        await _repository.InsertAsync(sample);
         var response = sample.Id.ToString("N").ToUpper();
 
         _logger.LogInformation("{Service} | INSERT[{OperationId}] | COMPLETED => ResponseId: {ResponseId}", nameof(SampleAppService), sampleInput, response);
@@ -41,7 +42,7 @@ public sealed class SampleAppService : ISampleAppService
 
         //  Task.Delay(new Random().Next(1, 10) * 1000, cancellationToken).GetAwaiter().GetResult();
 
-        _efCoreRepository.DeleteDirect(x => x.Name.Equals(sampleInput));
+        _repository.DeleteDirect(x => x.Name.Equals(sampleInput));
 
         _logger.LogInformation("{Service} | DELETE[{OperationId}] | COMPLETED => Response: {Response}", nameof(SampleAppService), sampleInput, true);
 
@@ -55,7 +56,7 @@ public sealed class SampleAppService : ISampleAppService
 
         //  Task.Delay(new Random().Next(1, 10) * 1000, cancellationToken).GetAwaiter().GetResult();
 
-        var response = await _efCoreRepository.FindAsync(x => x.Name.Equals(sampleInput), cancellationToken);
+        var response = await _repository.FindAsync(x => x.Name.Equals(sampleInput), cancellationToken);
 
         _logger.LogInformation("{Service} | FIND[{OperationId}] | COMPLETED => Response: {Response}", nameof(SampleAppService), sampleInput, response?.Id.ToString() ?? string.Empty);
 
