@@ -17,7 +17,7 @@ public static class MongoDbExtensions
 
         services.AddScoped<SampleMongoDbContext>();
 
-        services.AddScoped(typeof(MongoRepository<,>));
+        services.AddScoped(typeof(MongoRepository<,,>));
 
 
         return services;
@@ -25,31 +25,38 @@ public static class MongoDbExtensions
 
     private static void MongoConfigure(Type assemblyReference)
     {
-        // MongoDB Guid support
-        BsonDefaults.GuidRepresentation = GuidRepresentation.Standard;
-        // BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
+        try
+        {
+            // MongoDB Guid support
+            BsonDefaults.GuidRepresentation = GuidRepresentation.Standard;
+            // BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
+        }
+        catch { }
 
-        // MongoDB New version 
+        // MongoDB New version
         var objectSerializer = new ObjectSerializer(type =>
         {
             if (type is null) throw new ArgumentNullException();
             var scope = assemblyReference.Namespace;
             return scope != null && type.FullName != null && (ObjectSerializer.DefaultAllowedTypes(type) || type.FullName.StartsWith(scope));
         });
-        BsonSerializer.RegisterSerializer(objectSerializer);
+        try
+        {
+            BsonSerializer.RegisterSerializer(objectSerializer);
+        }
+        catch { }
 
         // Conventions
-        var ignorePack = new ConventionPack
+        ConventionRegistry.Register("IgnoreConventions", new ConventionPack
         {
             new IgnoreExtraElementsConvention(true),
-            new IgnoreIfDefaultConvention(true)
-        };
-        ConventionRegistry.Register("IgnoreConventions", ignorePack, t => true);
+            // new IgnoreIfDefaultConvention(true),
+            new IgnoreIfNullConvention(false)
+        }, t => true);
 
-        var enumPack = new ConventionPack
+        ConventionRegistry.Register("EnumStringConvention", new ConventionPack
         {
             new EnumRepresentationConvention(BsonType.String)
-        };
-        ConventionRegistry.Register("EnumStringConvention", enumPack, t => true);
+        }, t => true);
     }
 }

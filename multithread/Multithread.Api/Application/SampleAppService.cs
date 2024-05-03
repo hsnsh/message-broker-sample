@@ -8,11 +8,11 @@ public sealed class SampleAppService : ISampleAppService
 {
     private readonly ILogger<SampleAppService> _logger;
 
-    private readonly MongoRepository<SampleMongoDbContext, SampleEntity> _repository;
+    private readonly MongoRepository<SampleMongoDbContext, SampleEntity, Guid> _repository;
     // private readonly EfCoreRepository<SampleEfCoreDbContext, SampleEntity> _repository;
 
     public SampleAppService(
-        MongoRepository<SampleMongoDbContext, SampleEntity> repository,
+        MongoRepository<SampleMongoDbContext, SampleEntity, Guid> repository,
         // EfCoreRepository<SampleEfCoreDbContext, SampleEntity> repository,
         ILogger<SampleAppService> logger
     )
@@ -36,17 +36,21 @@ public sealed class SampleAppService : ISampleAppService
         return response;
     }
 
-    public Task<bool> DeleteOperation(string sampleInput, CancellationToken cancellationToken)
+    public async Task<bool> DeleteOperation(string sampleInput, CancellationToken cancellationToken)
     {
         _logger.LogInformation("{Service} | DELETE[{OperationId}] | STARTED", nameof(SampleAppService), sampleInput);
 
         //  Task.Delay(new Random().Next(1, 10) * 1000, cancellationToken).GetAwaiter().GetResult();
 
-        _repository.DeleteDirect(x => x.Name.Equals(sampleInput));
+        var placed = await _repository.FindAsync(x => x.Name.Equals(sampleInput), cancellationToken);
+        if (placed != null && await _repository.DeleteAsync(placed))
+        {
+            _logger.LogInformation("{Service} | DELETE[{OperationId}] | COMPLETED => Response: {Response}", nameof(SampleAppService), sampleInput, true);
+            return true;
+        }
 
-        _logger.LogInformation("{Service} | DELETE[{OperationId}] | COMPLETED => Response: {Response}", nameof(SampleAppService), sampleInput, true);
-
-        return Task.FromResult(true);
+        _logger.LogError("{Service} | DELETE[{OperationId}] | FAILED => NOT FOUND", nameof(SampleAppService), sampleInput);
+        return false;
     }
 
     [ItemCanBeNull]

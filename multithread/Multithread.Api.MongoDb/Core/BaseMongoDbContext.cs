@@ -59,9 +59,9 @@ public abstract class BaseMongoDbContext : MongoDbContext, IScopedDependency
         SetCreatorId(entity);
     }
 
-    private void CheckAndSetId(object entity)
+    private void CheckAndSetId(object targetObject)
     {
-        if (entity is IEntity<Guid> entityWithGuidId)
+        if (targetObject is IEntity<Guid> entityWithGuidId)
         {
             if (entityWithGuidId.Id != default)
             {
@@ -102,13 +102,84 @@ public abstract class BaseMongoDbContext : MongoDbContext, IScopedDependency
         }
     }
 
-    private void ApplyBaseConceptsForModifiedEntity(object entry)
+    private void ApplyBaseConceptsForModifiedEntity(object entity)
     {
-        // Set Deletion audit properties
+        SetModificationTime(entity);
+        SetModifierId(entity);
+    }
+    
+    private void SetModificationTime(object targetObject)
+    {
+        if (!(targetObject is IAuditedObject objectWithCreationTime))
+        {
+            return;
+        }
+
+        if (objectWithCreationTime.LastModificationTime == default)
+        {
+            objectWithCreationTime.LastModificationTime = DateTime.UtcNow;
+        }
     }
 
-    private void ApplyBaseConceptsForDeletedEntity(object entry)
+    private void SetModifierId(object targetObject)
     {
-        // Set Deletion audit properties
+        if (!(targetObject is IAuditedObject objectWithModifierId))
+        {
+            return;
+        }
+
+        if (objectWithModifierId.LastModifierId == null)
+        {
+            objectWithModifierId.LastModifierId = Guid.NewGuid(); // Todo: CurrentUser => Id
+        }
+        else if (objectWithModifierId.LastModifierId.HasValue && objectWithModifierId.LastModifierId.Value == default)
+        {
+            objectWithModifierId.LastModifierId = Guid.NewGuid(); // Todo: CurrentUser => Id
+        }
+    }
+
+    private void ApplyBaseConceptsForDeletedEntity(object entity)
+    {
+        if (!(entity is ISoftDelete objectWithSoftDelete))
+        {
+            return;
+        }
+
+        objectWithSoftDelete.IsDeleted = true;
+        
+        SetModificationTime(entity);
+        SetModifierId(entity);
+        SetDeletionTime(entity);
+        SetDeleterId(entity);
+    }
+    
+    private void SetDeletionTime(object targetObject)
+    {
+        if (!(targetObject is IFullAuditedObject objectWithCreationTime))
+        {
+            return;
+        }
+
+        if (objectWithCreationTime.DeletionTime == default)
+        {
+            objectWithCreationTime.DeletionTime = DateTime.UtcNow;
+        }
+    }
+
+    private void SetDeleterId(object targetObject)
+    {
+        if (!(targetObject is IFullAuditedObject objectWithDeleterId))
+        {
+            return;
+        }
+
+        if (objectWithDeleterId.DeleterId == null)
+        {
+            objectWithDeleterId.DeleterId = Guid.NewGuid(); // Todo: CurrentUser => Id
+        }
+        else if (objectWithDeleterId.DeleterId.HasValue && objectWithDeleterId.DeleterId.Value == default)
+        {
+            objectWithDeleterId.DeleterId = Guid.NewGuid(); // Todo: CurrentUser => Id
+        }
     }
 }

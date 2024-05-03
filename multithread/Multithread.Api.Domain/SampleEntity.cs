@@ -3,8 +3,10 @@ using Multithread.Api.Domain.Core;
 
 namespace Multithread.Api.Domain;
 
-public sealed class SampleEntity : FullAuditedEntity<Guid>
+public sealed class SampleEntity : AuditedEntity<Guid>, ISoftDelete
 {
+    public bool IsDeleted { get; set; }
+
     [NotNull]
     public string Name { get; internal set; }
 
