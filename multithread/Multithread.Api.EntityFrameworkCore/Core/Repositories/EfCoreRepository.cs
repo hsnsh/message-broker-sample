@@ -2,10 +2,11 @@ using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Multithread.Api.Core;
 using Multithread.Api.Domain.Core.Entities;
+using Multithread.Api.Domain.Core.Repositories;
 
 namespace Multithread.Api.EntityFrameworkCore.Core.Repositories;
 
-public class EfCoreRepository<TDbContext, TEntity, TKey> : ManagerEfCoreRepositoryBase<TEntity, TKey>, IManagerEfCoreRepository<TEntity, TKey>
+public class EfCoreRepository<TDbContext, TEntity, TKey> : ManagerBasicRepositoryBase<TEntity, TKey>, IManagerEfCoreRepository<TEntity, TKey>
     where TDbContext : BaseEfCoreDbContext<TDbContext>
     where TEntity : class, IEntity<TKey>
 {
@@ -18,29 +19,31 @@ public class EfCoreRepository<TDbContext, TEntity, TKey> : ManagerEfCoreReposito
         _dbContext = dbContext;
     }
 
-    public override TDbContext GetDbContext() => _dbContext;
-    public override DbSet<TEntity> GetDbSet() => GetDbContext().Set<TEntity>();
+    
+    public DbContext GetDbContext()=> _dbContext;
 
-    public override IQueryable<TEntity> WithDetails()
+    public DbSet<TEntity> GetDbSet()=> GetDbContext().Set<TEntity>();
+
+    public IQueryable<TEntity> WithDetails()
     {
         if (DefaultPropertySelector == null)
         {
-            return base.WithDetails();
+            return GetQueryable();
         }
-
+        
         return WithDetails(DefaultPropertySelector.ToArray());
     }
 
-    public override IQueryable<TEntity> WithDetails(params Expression<Func<TEntity, object>>[] propertySelectors)
+    public IQueryable<TEntity> WithDetails(params Expression<Func<TEntity, object>>[] propertySelectors)
     {
         return IncludeDetails(GetQueryable(), propertySelectors);
     }
 
-    public override IQueryable<TEntity> GetQueryable()
+    public IQueryable<TEntity> GetQueryable()
     {
         return GetDbSet().AsQueryable();
     }
-
+    
     public override async Task<TEntity> FindAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = true, CancellationToken cancellationToken = default)
     {
         return includeDetails
@@ -227,4 +230,6 @@ public class EfCoreRepository<TDbContext, TEntity, TKey> : ManagerEfCoreReposito
 
         entity.Id = Guid.NewGuid();
     }
+
+
 }
