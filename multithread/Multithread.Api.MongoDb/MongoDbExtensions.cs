@@ -6,6 +6,7 @@ using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Bson.Serialization.Serializers;
 using Multithread.Api.Auditing;
 using Multithread.Api.MongoDb.ConfigurationMaps;
+using Multithread.Api.MongoDb.Core.Repositories;
 
 namespace Multithread.Api.MongoDb;
 
@@ -14,13 +15,14 @@ public static class MongoDbExtensions
     public static IServiceCollection AddMongoDatabaseConfiguration(this IServiceCollection services, Type assemblyReference, IConfiguration configuration)
     {
         services.AddBaseAuditingServiceCollection();
-        
+
         MongoConfigure(assemblyReference);
         MongoClassMap.RegisterClassMaps();
-     
+
         services.AddScoped<SampleMongoDbContext>();
 
-        services.AddScoped(typeof(MongoRepository<,,>));
+        services.AddScoped(typeof(IReadOnlyMongoRepository<,,>), typeof(MongoRepository<,,>));
+        services.AddScoped(typeof(IManagerMongoRepository<,,>), typeof(MongoRepository<,,>));
 
         return services;
     }

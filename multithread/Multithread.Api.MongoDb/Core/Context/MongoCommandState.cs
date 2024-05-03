@@ -1,4 +1,4 @@
-namespace Multithread.Api.MongoDb.Core;
+namespace Multithread.Api.MongoDb.Core.Context;
 
 public class MongoEntityEventArgs : EventArgs
 {

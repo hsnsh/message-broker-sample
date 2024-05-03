@@ -2,8 +2,9 @@ using System.Reflection;
 using JetBrains.Annotations;
 using MongoDB.Driver;
 using Multithread.Api.Domain.Core.Entities;
+using Multithread.Api.MongoDb.Core.Attributes;
 
-namespace Multithread.Api.MongoDb.Core;
+namespace Multithread.Api.MongoDb.Core.Context;
 
 public abstract class MongoDbContext
 {

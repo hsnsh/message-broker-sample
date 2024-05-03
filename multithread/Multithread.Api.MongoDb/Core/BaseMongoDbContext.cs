@@ -3,6 +3,7 @@ using MongoDB.Driver.Linq;
 using Multithread.Api.Auditing.Contracts;
 using Multithread.Api.Core;
 using Multithread.Api.Domain.Core.Entities;
+using Multithread.Api.MongoDb.Core.Context;
 
 namespace Multithread.Api.MongoDb.Core;
 

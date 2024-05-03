@@ -1,4 +1,4 @@
-﻿namespace Multithread.Api.MongoDb.Core;
+﻿namespace Multithread.Api.MongoDb.Core.Attributes;
 
 [AttributeUsage(AttributeTargets.Class, Inherited = false)]
 public class BsonCollectionAttribute : Attribute

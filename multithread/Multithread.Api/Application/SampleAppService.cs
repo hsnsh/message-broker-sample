@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Multithread.Api.Domain;
 using Multithread.Api.MongoDb;
+using Multithread.Api.MongoDb.Core.Repositories;
 
 namespace Multithread.Api.Application;
 
@@ -8,11 +9,11 @@ public sealed class SampleAppService : ISampleAppService
 {
     private readonly ILogger<SampleAppService> _logger;
 
-    private readonly MongoRepository<SampleMongoDbContext, SampleEntity, Guid> _repository;
+    private readonly IManagerMongoRepository<SampleMongoDbContext, SampleEntity, Guid> _repository;
     // private readonly EfCoreRepository<SampleEfCoreDbContext, SampleEntity> _repository;
 
     public SampleAppService(
-        MongoRepository<SampleMongoDbContext, SampleEntity, Guid> repository,
+        IManagerMongoRepository<SampleMongoDbContext, SampleEntity, Guid> repository,
         // EfCoreRepository<SampleEfCoreDbContext, SampleEntity> repository,
         ILogger<SampleAppService> logger
     )
@@ -42,7 +43,7 @@ public sealed class SampleAppService : ISampleAppService
 
         //  Task.Delay(new Random().Next(1, 10) * 1000, cancellationToken).GetAwaiter().GetResult();
 
-        var placed = await _repository.FindAsync(x => x.Name.Equals(sampleInput), cancellationToken);
+        var placed = await _repository.FindAsync(x => x.Name.Equals(sampleInput), cancellationToken: cancellationToken);
         if (placed != null && await _repository.DeleteAsync(placed))
         {
             _logger.LogInformation("{Service} | DELETE[{OperationId}] | COMPLETED => Response: {Response}", nameof(SampleAppService), sampleInput, true);
@@ -60,7 +61,7 @@ public sealed class SampleAppService : ISampleAppService
 
         //  Task.Delay(new Random().Next(1, 10) * 1000, cancellationToken).GetAwaiter().GetResult();
 
-        var response = await _repository.FindAsync(x => x.Name.Equals(sampleInput), cancellationToken);
+        var response = await _repository.FindAsync(x => x.Name.Equals(sampleInput), cancellationToken: cancellationToken);
 
         _logger.LogInformation("{Service} | FIND[{OperationId}] | COMPLETED => Response: {Response}", nameof(SampleAppService), sampleInput, response?.Id.ToString() ?? string.Empty);
 

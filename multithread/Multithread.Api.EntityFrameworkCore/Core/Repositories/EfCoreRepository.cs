@@ -194,9 +194,9 @@ public class EfCoreRepository<TDbContext, TEntity, TKey> : ManagerBasicRepositor
         await GetDbContext().SaveChangesAsync(cancellationToken);
     }
 
-    protected override async Task SaveChangesAsync(CancellationToken cancellationToken = default)
+    protected override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        await GetDbContext().SaveChangesAsync(cancellationToken);
+       return await GetDbContext().SaveChangesAsync(cancellationToken);
     }
 
     private static IQueryable<TEntity> IncludeDetails(IQueryable<TEntity> query, Expression<Func<TEntity, object>>[] propertySelectors)

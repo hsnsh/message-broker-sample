@@ -25,7 +25,7 @@ public static class EntityFrameworkExtensions
             }
         );
 
-        services.AddScoped(typeof(EfCoreRepository<,>));
+        services.AddScoped(typeof(ThreadLockEfCoreRepository<,>));
 
 
         return services;

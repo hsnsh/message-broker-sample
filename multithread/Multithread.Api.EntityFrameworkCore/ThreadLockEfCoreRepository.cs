@@ -9,14 +9,14 @@ namespace Multithread.Api.EntityFrameworkCore;
 
 
 
-public sealed class EfCoreRepository<TDbContext, TEntity> : IEfCoreRepository<TEntity>
+public sealed class ThreadLockEfCoreRepository<TDbContext, TEntity> : IEfCoreRepository<TEntity>
     where TDbContext : BaseEfCoreDbContext<TDbContext>
     where TEntity : class, IEntity
 {
     private readonly TDbContext _dbContext;
     private static readonly object DbResourceLock = new();
 
-    public EfCoreRepository([NotNull] TDbContext dbContext)
+    public ThreadLockEfCoreRepository([NotNull] TDbContext dbContext)
     {
         _dbContext = dbContext;
     }

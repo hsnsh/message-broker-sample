@@ -42,7 +42,7 @@ public abstract class ReadOnlyBasicRepositoryBase<TEntity, TKey> : IReadOnlyBasi
     public abstract Task<List<TEntity>> GetPagedListAsync(int skipCount, int maxResultCount, string sorting, bool includeDetails = false, CancellationToken cancellationToken = default);
 
 
-    protected abstract Task SaveChangesAsync(CancellationToken cancellationToken = default);
+    protected abstract Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 
     protected virtual CancellationToken GetCancellationToken(CancellationToken preferredValue = default)
     {
