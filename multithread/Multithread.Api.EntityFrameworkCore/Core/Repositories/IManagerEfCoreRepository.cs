@@ -1,9 +1,10 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 using Multithread.Api.Domain.Core.Entities;
+using Multithread.Api.Domain.Core.Repositories;
 
-namespace Multithread.Api.Domain.Core.Repositories;
+namespace Multithread.Api.EntityFrameworkCore.Core.Repositories;
 
-public interface IReadOnlyEfCoreRepository<TEntity, in TKey> : IReadOnlyBasicRepository<TEntity, TKey>
+public interface IManagerEfCoreRepository<TEntity, in TKey> : IManagerBasicRepository<TEntity, TKey>
     where TEntity : class, IEntity<TKey>
 {
     Task<IQueryable<TEntity>> WithDetailsAsync(); //TODO: CancellationToken

@@ -7,8 +7,9 @@ public abstract class ReadOnlyBasicRepositoryBase<TEntity, TKey> : IReadOnlyBasi
     where TEntity : class, IEntity<TKey>
 {
     public abstract Task<TEntity> FindAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = true, CancellationToken cancellationToken = default);
+    public abstract Task<TEntity> FindAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default);
 
-    public virtual async Task<TEntity> GetAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = true, CancellationToken cancellationToken = default)
+    public async Task<TEntity> GetAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = true, CancellationToken cancellationToken = default)
     {
         var entity = await FindAsync(predicate, includeDetails, cancellationToken);
 
@@ -20,7 +21,7 @@ public abstract class ReadOnlyBasicRepositoryBase<TEntity, TKey> : IReadOnlyBasi
         return entity;
     }
 
-    public virtual async Task<TEntity> GetAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default)
+    public async Task<TEntity> GetAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default)
     {
         var entity = await FindAsync(id, includeDetails, cancellationToken);
 
@@ -31,9 +32,7 @@ public abstract class ReadOnlyBasicRepositoryBase<TEntity, TKey> : IReadOnlyBasi
 
         return entity;
     }
-
-    public abstract Task<TEntity> FindAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default);
-
+    
     public abstract Task<List<TEntity>> GetListAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = false, CancellationToken cancellationToken = default);
 
     public abstract Task<List<TEntity>> GetListAsync(bool includeDetails = false, CancellationToken cancellationToken = default);
@@ -51,7 +50,7 @@ public abstract class ReadOnlyBasicRepositoryBase<TEntity, TKey> : IReadOnlyBasi
         return preferredValue;
     }
 
-    protected virtual TQueryable ApplyDataFilters<TQueryable>(TQueryable query)
+    protected TQueryable ApplyDataFilters<TQueryable>(TQueryable query)
         where TQueryable : IQueryable<TEntity>
     {
         return ApplyDataFilters<TQueryable, TEntity>(query);

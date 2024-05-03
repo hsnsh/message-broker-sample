@@ -35,9 +35,20 @@ public abstract class ManagerBasicRepositoryBase<TEntity, TKey> : ReadOnlyBasicR
             await SaveChangesAsync(cancellationToken);
         }
     }
+    
+    public async Task<bool> DeleteAsync(TKey id, bool autoSave = false, CancellationToken cancellationToken = default)
+    {
+        var entity = await FindAsync(id, cancellationToken: cancellationToken);
+        if (entity == null)
+        {
+            return false;
+        }
 
+        return await DeleteAsync(entity, autoSave, cancellationToken);
+    }
     public abstract Task<bool> DeleteAsync(TEntity entity, bool autoSave = false, CancellationToken cancellationToken = default);
-
+    public abstract Task<bool> DeleteAsync(Expression<Func<TEntity, bool>> predicate, bool autoSave = false, CancellationToken cancellationToken = default);
+    
     public virtual async Task DeleteManyAsync(IEnumerable<TEntity> entities, bool autoSave = false, CancellationToken cancellationToken = default)
     {
         foreach (var entity in entities)
@@ -50,21 +61,8 @@ public abstract class ManagerBasicRepositoryBase<TEntity, TKey> : ReadOnlyBasicR
             await SaveChangesAsync(cancellationToken);
         }
     }
-
-    public abstract Task<bool> DeleteAsync(Expression<Func<TEntity, bool>> predicate, bool autoSave = false, CancellationToken cancellationToken = default);
-
-    public async Task<bool> DeleteAsync(TKey id, bool autoSave = false, CancellationToken cancellationToken = default)
-    {
-        var entity = await FindAsync(id, cancellationToken: cancellationToken);
-        if (entity == null)
-        {
-            return false;
-        }
-
-        return await DeleteAsync(entity, autoSave, cancellationToken);
-    }
-
-    public async Task DeleteManyAsync(IEnumerable<TKey> ids, bool autoSave = false, CancellationToken cancellationToken = default)
+    
+    public virtual async Task DeleteManyAsync(IEnumerable<TKey> ids, bool autoSave = false, CancellationToken cancellationToken = default)
     {
         foreach (var id in ids)
         {
