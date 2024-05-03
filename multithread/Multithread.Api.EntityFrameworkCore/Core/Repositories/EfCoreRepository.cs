@@ -19,10 +19,9 @@ public class EfCoreRepository<TDbContext, TEntity, TKey> : ManagerBasicRepositor
         _dbContext = dbContext;
     }
 
-    
-    public DbContext GetDbContext()=> _dbContext;
+    public DbContext GetDbContext() => _dbContext;
 
-    public DbSet<TEntity> GetDbSet()=> GetDbContext().Set<TEntity>();
+    public DbSet<TEntity> GetDbSet() => GetDbContext().Set<TEntity>();
 
     public IQueryable<TEntity> WithDetails()
     {
@@ -30,7 +29,7 @@ public class EfCoreRepository<TDbContext, TEntity, TKey> : ManagerBasicRepositor
         {
             return GetQueryable();
         }
-        
+
         return WithDetails(DefaultPropertySelector.ToArray());
     }
 
@@ -43,7 +42,7 @@ public class EfCoreRepository<TDbContext, TEntity, TKey> : ManagerBasicRepositor
     {
         return GetDbSet().AsQueryable();
     }
-    
+
     public override async Task<TEntity> FindAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = true, CancellationToken cancellationToken = default)
     {
         return includeDetails
@@ -230,6 +229,4 @@ public class EfCoreRepository<TDbContext, TEntity, TKey> : ManagerBasicRepositor
 
         entity.Id = Guid.NewGuid();
     }
-
-
 }
