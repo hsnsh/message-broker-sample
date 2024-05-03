@@ -49,6 +49,7 @@ public sealed class MongoRepository<TDbContext, TEntity, TKey>
     public async Task<bool> DeleteByIdAsync(TKey id)
     {
         var obj = await (await GetDbSet().FindAsync(Builders<TEntity>.Filter.Eq("_id", id))).SingleAsync();
+        
         return await DeleteAsync(obj);
     }
 

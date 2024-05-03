@@ -17,13 +17,9 @@ public interface IManagerBasicRepository<TEntity, in TKey> : IReadOnlyBasicRepos
 
     Task UpdateManyAsync([NotNull] IEnumerable<TEntity> entities, bool autoSave = false, CancellationToken cancellationToken = default);
 
-    Task<bool> DeleteAsync([NotNull] TEntity entity, bool autoSave = false, CancellationToken cancellationToken = default);
-
-    Task DeleteManyAsync([NotNull] IEnumerable<TEntity> entities, bool autoSave = false, CancellationToken cancellationToken = default);
-
-    Task<bool> DeleteAsync([NotNull] Expression<Func<TEntity, bool>> predicate, bool autoSave = false, CancellationToken cancellationToken = default);
-
-    Task<bool> DeleteAsync(TKey id, bool autoSave = false, CancellationToken cancellationToken = default); //TODO: Return true if deleted
-
-    Task DeleteManyAsync([NotNull] IEnumerable<TKey> ids, bool autoSave = false, CancellationToken cancellationToken = default);
+    Task<bool> DeleteAsync(TKey id, CancellationToken cancellationToken = default);
+    Task<bool> DeleteAsync([NotNull] Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default);
+    Task<bool> DeleteAsync([NotNull] TEntity entity, CancellationToken cancellationToken = default);
+    Task DeleteManyAsync([NotNull] IEnumerable<TKey> ids, CancellationToken cancellationToken = default);
+    Task DeleteManyAsync([NotNull] IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
 }

@@ -3,15 +3,11 @@ using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Multithread.Api.Domain.Core.Entities;
 using Multithread.Api.EntityFrameworkCore.Core;
+using Multithread.Api.EntityFrameworkCore.Core.Repositories;
 
 namespace Multithread.Api.EntityFrameworkCore;
 
-public interface IEfCoreRepository<TEntity> where TEntity : class, IEntity
-{
-    DbContext GetDbContext();
 
-    DbSet<TEntity> GetDbSet();
-}
 
 public sealed class EfCoreRepository<TDbContext, TEntity> : IEfCoreRepository<TEntity>
     where TDbContext : BaseEfCoreDbContext<TDbContext>
@@ -24,15 +20,32 @@ public sealed class EfCoreRepository<TDbContext, TEntity> : IEfCoreRepository<TE
     {
         _dbContext = dbContext;
     }
-
     DbContext IEfCoreRepository<TEntity>.GetDbContext() => GetDbContext();
 
     DbSet<TEntity> IEfCoreRepository<TEntity>.GetDbSet() => GetDbSet();
-
+    
     private TDbContext GetDbContext() => _dbContext;
-    private DbSet<TEntity> GetDbSet() => GetDbContext().Set<TEntity>();
-    private void SaveChanges() => GetDbContext().SaveChanges();
+    private DbSet<TEntity> GetDbSet() => GetDbContext()?.Set<TEntity>();
 
+    private void SaveChanges() => GetDbContext().SaveChanges();
+    
+    public IQueryable<TEntity> WithDetails()
+    {
+        throw new NotImplementedException();
+    }
+
+    public IQueryable<TEntity> WithDetails(params Expression<Func<TEntity, object>>[] propertySelectors)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IQueryable<TEntity> GetQueryable()
+    {
+        throw new NotImplementedException();
+    }
+    
+    
+    
     [ItemCanBeNull]
     public async Task<TEntity> FindAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
     {
@@ -120,4 +133,9 @@ public sealed class EfCoreRepository<TDbContext, TEntity> : IEfCoreRepository<TE
             return GetDbSet().Where(predicate).ExecuteDelete();
         }
     }
+
+
+
+
+
 }

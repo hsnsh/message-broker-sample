@@ -5,7 +5,7 @@ using Multithread.Api.Domain.Core.Entities;
 
 namespace Multithread.Api.EntityFrameworkCore.Core.Repositories;
 
-public class EfCoreRepository<TDbContext, TEntity, TKey> : ManagerEfCoreRepositoryBase<TEntity, TKey>, IEfCoreRepository<TEntity, TKey>
+public class EfCoreRepository<TDbContext, TEntity, TKey> : ManagerEfCoreRepositoryBase<TEntity, TKey>, IManagerEfCoreRepository<TEntity, TKey>
     where TDbContext : BaseEfCoreDbContext<TDbContext>
     where TEntity : class, IEntity<TKey>
 {
@@ -18,42 +18,25 @@ public class EfCoreRepository<TDbContext, TEntity, TKey> : ManagerEfCoreReposito
         _dbContext = dbContext;
     }
 
-    DbContext IEfCoreRepository<TEntity, TKey>.GetDbContext()
-    {
-        return GetDbContext() as DbContext;
-    }
+    public override TDbContext GetDbContext() => _dbContext;
+    public override DbSet<TEntity> GetDbSet() => GetDbContext().Set<TEntity>();
 
-    DbSet<TEntity> IEfCoreRepository<TEntity, TKey>.GetDbSet()
-    {
-        return GetDbSet();
-    }
-
-    protected virtual TDbContext GetDbContext()
-    {
-        return _dbContext;
-    }
-
-    protected DbSet<TEntity> GetDbSet()
-    {
-        return GetDbContext().Set<TEntity>();
-    }
-
-    public override async Task<IQueryable<TEntity>> WithDetailsAsync()
+    public override IQueryable<TEntity> WithDetails()
     {
         if (DefaultPropertySelector == null)
         {
-            return await base.WithDetailsAsync();
+            return base.WithDetails();
         }
 
-        return await WithDetailsAsync(DefaultPropertySelector.ToArray());
+        return WithDetails(DefaultPropertySelector.ToArray());
     }
 
-    public override async Task<IQueryable<TEntity>> WithDetailsAsync(params Expression<Func<TEntity, object>>[] propertySelectors)
+    public override IQueryable<TEntity> WithDetails(params Expression<Func<TEntity, object>>[] propertySelectors)
     {
-        return IncludeDetails(await GetQueryableAsync(), propertySelectors);
+        return IncludeDetails(GetQueryable(), propertySelectors);
     }
 
-    public override async Task<IQueryable<TEntity>> GetQueryableAsync()
+    public override IQueryable<TEntity> GetQueryable()
     {
         return GetDbSet().AsQueryable();
     }
@@ -61,7 +44,7 @@ public class EfCoreRepository<TDbContext, TEntity, TKey> : ManagerEfCoreReposito
     public override async Task<TEntity> FindAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = true, CancellationToken cancellationToken = default)
     {
         return includeDetails
-            ? await (await WithDetailsAsync())
+            ? await WithDetails()
                 .Where(predicate)
                 .SingleOrDefaultAsync(GetCancellationToken(cancellationToken))
             : await GetDbSet()
@@ -72,22 +55,21 @@ public class EfCoreRepository<TDbContext, TEntity, TKey> : ManagerEfCoreReposito
     public override async Task<TEntity> FindAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default)
     {
         return includeDetails
-            ? await (await WithDetailsAsync()).OrderBy(e => e.Id).FirstOrDefaultAsync(e => e.Id.Equals(id), GetCancellationToken(cancellationToken))
+            ? await WithDetails().OrderBy(e => e.Id).FirstOrDefaultAsync(e => e.Id.Equals(id), GetCancellationToken(cancellationToken))
             : await GetDbSet().FindAsync(new object[] { id }, GetCancellationToken(cancellationToken));
     }
-
 
     public override async Task<List<TEntity>> GetListAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = false, CancellationToken cancellationToken = default)
     {
         return includeDetails
-            ? await (await WithDetailsAsync()).Where(predicate).ToListAsync(GetCancellationToken(cancellationToken))
+            ? await WithDetails().Where(predicate).ToListAsync(GetCancellationToken(cancellationToken))
             : await GetDbSet().Where(predicate).ToListAsync(GetCancellationToken(cancellationToken));
     }
 
     public override async Task<List<TEntity>> GetListAsync(bool includeDetails = false, CancellationToken cancellationToken = default)
     {
         return includeDetails
-            ? await (await WithDetailsAsync()).ToListAsync(GetCancellationToken(cancellationToken))
+            ? await WithDetails().ToListAsync(GetCancellationToken(cancellationToken))
             : await GetDbSet().ToListAsync(GetCancellationToken(cancellationToken));
     }
 
@@ -104,7 +86,7 @@ public class EfCoreRepository<TDbContext, TEntity, TKey> : ManagerEfCoreReposito
         CancellationToken cancellationToken = default)
     {
         var queryable = includeDetails
-            ? await WithDetailsAsync()
+            ? WithDetails()
             : GetDbSet();
 
         return await queryable
@@ -172,67 +154,49 @@ public class EfCoreRepository<TDbContext, TEntity, TKey> : ManagerEfCoreReposito
         }
     }
 
-    public override async Task<bool> DeleteAsync(TEntity entity, bool autoSave = false, CancellationToken cancellationToken = default)
+    public override async Task<bool> DeleteAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         GetDbSet().Remove(entity);
 
-        var resultCount = 0;
-        if (autoSave)
-        {
-            resultCount = await GetDbContext().SaveChangesAsync(GetCancellationToken(cancellationToken));
-        }
+        var resultCount = await GetDbContext().SaveChangesAsync(GetCancellationToken(cancellationToken));
 
         return resultCount > 0;
     }
 
-    public override async Task<bool> DeleteAsync(Expression<Func<TEntity, bool>> predicate, bool autoSave = false, CancellationToken cancellationToken = default)
+    public override async Task<bool> DeleteAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
     {
         var entities = await GetDbSet()
             .Where(predicate)
             .ToListAsync(GetCancellationToken(cancellationToken));
 
-        await DeleteManyAsync(entities, autoSave, cancellationToken);
+        await DeleteManyAsync(entities, cancellationToken);
 
-        var resultCount = 0;
-        if (autoSave)
-        {
-            resultCount = await GetDbContext().SaveChangesAsync(GetCancellationToken(cancellationToken));
-        }
+        var resultCount = await GetDbContext().SaveChangesAsync(GetCancellationToken(cancellationToken));
 
         return resultCount > 0;
     }
 
-    public async Task DeleteDirectAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+    public override async Task DeleteManyAsync(IEnumerable<TKey> ids, CancellationToken cancellationToken = default)
     {
-        await GetDbSet().Where(predicate).ExecuteDeleteAsync(GetCancellationToken(cancellationToken));
+        cancellationToken = GetCancellationToken(cancellationToken);
+
+        await GetDbSet().Where(x => ids.Contains(x.Id)).ExecuteDeleteAsync(GetCancellationToken(cancellationToken));
     }
 
-    public override async Task DeleteManyAsync(IEnumerable<TEntity> entities, bool autoSave = false, CancellationToken cancellationToken = default)
+    public override async Task DeleteManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
     {
         cancellationToken = GetCancellationToken(cancellationToken);
 
         GetDbContext().RemoveRange(entities);
 
-        if (autoSave)
-        {
-            await GetDbContext().SaveChangesAsync(cancellationToken);
-        }
+        await GetDbContext().SaveChangesAsync(cancellationToken);
     }
 
-    public override async Task DeleteManyAsync(IEnumerable<TKey> ids, bool autoSave = false, CancellationToken cancellationToken = default)
-    {
-        cancellationToken = GetCancellationToken(cancellationToken);
-
-        var entities = await GetDbSet().Where(x => ids.Contains(x.Id)).ToListAsync(cancellationToken);
-
-        await DeleteManyAsync(entities, autoSave, cancellationToken);
-    }
-    
     protected override async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         await GetDbContext().SaveChangesAsync(cancellationToken);
     }
-    
+
     private static IQueryable<TEntity> IncludeDetails(IQueryable<TEntity> query, Expression<Func<TEntity, object>>[] propertySelectors)
     {
         if (!propertySelectors.IsNullOrEmpty())

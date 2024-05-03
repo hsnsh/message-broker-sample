@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
 using Multithread.Api.Domain.Core.Entities;
 using Multithread.Api.Domain.Core.Repositories;
 
@@ -7,15 +8,25 @@ namespace Multithread.Api.EntityFrameworkCore.Core.Repositories;
 public abstract class ManagerEfCoreRepositoryBase<TEntity, TKey> : ManagerBasicRepositoryBase<TEntity, TKey>, IManagerEfCoreRepository<TEntity, TKey>
     where TEntity : class, IEntity<TKey>
 {
-    public virtual Task<IQueryable<TEntity>> WithDetailsAsync()
+    public IServiceProvider ServiceProvider { get; set; }
+
+    protected ManagerEfCoreRepositoryBase()
     {
-        return GetQueryableAsync();
+    }
+    
+    public abstract DbContext GetDbContext();
+
+    public abstract DbSet<TEntity> GetDbSet();
+
+    public virtual IQueryable<TEntity> WithDetails()
+    {
+        return GetQueryable();
     }
 
-    public virtual Task<IQueryable<TEntity>> WithDetailsAsync(params Expression<Func<TEntity, object>>[] propertySelectors)
+    public virtual IQueryable<TEntity> WithDetails(params Expression<Func<TEntity, object>>[] propertySelectors)
     {
-        return GetQueryableAsync();
+        return GetQueryable();
     }
 
-    public abstract Task<IQueryable<TEntity>> GetQueryableAsync();
+    public abstract IQueryable<TEntity> GetQueryable();
 }
