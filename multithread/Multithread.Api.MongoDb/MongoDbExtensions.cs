@@ -19,7 +19,6 @@ public static class MongoDbExtensions
 
         services.AddScoped(typeof(MongoRepository<,,>));
 
-
         return services;
     }
 
