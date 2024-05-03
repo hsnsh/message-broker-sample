@@ -1,7 +1,7 @@
 using System.Reflection;
 using JetBrains.Annotations;
 using MongoDB.Driver;
-using Multithread.Api.Domain.Core;
+using Multithread.Api.Domain.Core.Entities;
 
 namespace Multithread.Api.MongoDb.Core;
 

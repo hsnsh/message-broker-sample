@@ -1,5 +1,6 @@
 using JetBrains.Annotations;
-using Multithread.Api.Domain.Core;
+using Multithread.Api.Core;
+using Multithread.Api.Domain.Core.Entities.Audit;
 
 namespace Multithread.Api.Domain;
 

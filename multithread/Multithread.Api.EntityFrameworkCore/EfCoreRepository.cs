@@ -1,7 +1,7 @@
 using System.Linq.Expressions;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
-using Multithread.Api.Domain.Core;
+using Multithread.Api.Domain.Core.Entities;
 using Multithread.Api.EntityFrameworkCore.Core;
 
 namespace Multithread.Api.EntityFrameworkCore;

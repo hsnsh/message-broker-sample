@@ -1,7 +1,8 @@
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
-using Multithread.Api.Domain.Core;
-using Multithread.Api.Domain.Core.Audit;
+using Multithread.Api.Auditing.Contracts;
+using Multithread.Api.Core;
+using Multithread.Api.Domain.Core.Entities;
 
 namespace Multithread.Api.MongoDb.Core;
 

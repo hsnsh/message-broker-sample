@@ -37,6 +37,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Multithread.Api.MongoDb", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Multithread.Api.Domain", "multithread\Multithread.Api.Domain\Multithread.Api.Domain.csproj", "{CD412330-F483-48B7-BFFC-0BDF55FFB301}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Multithread.Api.Auditing", "multithread\Multithread.Api.Auditing\Multithread.Api.Auditing.csproj", "{0BD3FD67-05BC-4D9E-8A54-EDF4983C1D85}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Multithread.Api.Core", "multithread\Multithread.Api.Core\Multithread.Api.Core.csproj", "{7ADD3BE3-1E53-4558-9F6B-F557782B67AB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -95,6 +99,14 @@ Global
 		{CD412330-F483-48B7-BFFC-0BDF55FFB301}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CD412330-F483-48B7-BFFC-0BDF55FFB301}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CD412330-F483-48B7-BFFC-0BDF55FFB301}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0BD3FD67-05BC-4D9E-8A54-EDF4983C1D85}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0BD3FD67-05BC-4D9E-8A54-EDF4983C1D85}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0BD3FD67-05BC-4D9E-8A54-EDF4983C1D85}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0BD3FD67-05BC-4D9E-8A54-EDF4983C1D85}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7ADD3BE3-1E53-4558-9F6B-F557782B67AB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7ADD3BE3-1E53-4558-9F6B-F557782B67AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7ADD3BE3-1E53-4558-9F6B-F557782B67AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7ADD3BE3-1E53-4558-9F6B-F557782B67AB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -114,6 +126,8 @@ Global
 		{607BE936-A8C5-4506-A8F1-800C2D2199ED} = {4623D2AC-DCA2-43F9-801E-D3F0479B2628}
 		{D4C7011F-7BDE-4A65-B39F-CFB06FA887B1} = {4623D2AC-DCA2-43F9-801E-D3F0479B2628}
 		{CD412330-F483-48B7-BFFC-0BDF55FFB301} = {4623D2AC-DCA2-43F9-801E-D3F0479B2628}
+		{0BD3FD67-05BC-4D9E-8A54-EDF4983C1D85} = {4623D2AC-DCA2-43F9-801E-D3F0479B2628}
+		{7ADD3BE3-1E53-4558-9F6B-F557782B67AB} = {4623D2AC-DCA2-43F9-801E-D3F0479B2628}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C703DC80-0D51-435C-A25A-ED489A0A20CF}

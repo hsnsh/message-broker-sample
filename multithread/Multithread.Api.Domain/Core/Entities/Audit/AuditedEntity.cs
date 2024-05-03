@@ -1,6 +1,6 @@
-using Multithread.Api.Domain.Core.Audit;
+using Multithread.Api.Auditing.Contracts;
 
-namespace Multithread.Api.Domain.Core;
+namespace Multithread.Api.Domain.Core.Entities.Audit;
 
 [Serializable]
 public abstract class AuditedEntity : CreationAuditedEntity, IAuditedObject

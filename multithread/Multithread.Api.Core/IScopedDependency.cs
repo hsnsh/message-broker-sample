@@ -1,4 +1,4 @@
-namespace Multithread.Api.Domain.Core;
+namespace Multithread.Api.Core;
 
 public interface IScopedDependency
 {

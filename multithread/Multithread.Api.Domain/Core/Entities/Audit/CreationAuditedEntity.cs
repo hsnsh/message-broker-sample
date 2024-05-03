@@ -1,13 +1,13 @@
-using Multithread.Api.Domain.Core.Audit;
+using Multithread.Api.Auditing.Contracts;
 
-namespace Multithread.Api.Domain.Core;
+namespace Multithread.Api.Domain.Core.Entities.Audit;
 
 [Serializable]
 public abstract class CreationAuditedEntity : Entity, ICreationAuditedObject
 {
-    public DateTime CreationTime { get; set; }
+    public DateTime CreationTime { get;  set; }
 
-    public Guid? CreatorId { get; set; }
+    public Guid? CreatorId { get;  set; }
 }
 
 [Serializable]
@@ -22,7 +22,7 @@ public abstract class CreationAuditedEntity<TKey> : Entity<TKey>, ICreationAudit
     {
     }
 
-    public DateTime CreationTime { get; set; }
+    public DateTime CreationTime { get;  set; }
 
-    public Guid? CreatorId { get; set; }
+    public Guid? CreatorId { get;  set; }
 }

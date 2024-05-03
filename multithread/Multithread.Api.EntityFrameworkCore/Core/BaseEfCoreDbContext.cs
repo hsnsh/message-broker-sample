@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
-using Multithread.Api.Domain.Core;
+using Multithread.Api.Core;
 
 namespace Multithread.Api.EntityFrameworkCore.Core;
 

@@ -1,5 +1,3 @@
-using Multithread.Api.Domain.Core;
-
 namespace Multithread.Api.MongoDb.Core;
 
 public class MongoEntityEventArgs : EventArgs

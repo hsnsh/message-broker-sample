@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Multithread.Api.Auditing;
 
 namespace Multithread.Api.EntityFrameworkCore;
 
@@ -8,6 +9,8 @@ public static class EntityFrameworkExtensions
 {
     public static IServiceCollection AddEfCoreDatabaseConfiguration(this IServiceCollection services, Type assemblyReference, IConfiguration configuration)
     {
+        services.AddBaseAuditingServiceCollection();
+        
         services.AddDbContext<SampleEfCoreDbContext>(options =>
             {
                 options.UseNpgsql(configuration.GetConnectionString("SampleDb"), sqlOptions =>

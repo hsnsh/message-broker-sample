@@ -1,4 +1,4 @@
-namespace Multithread.Api.Domain.Core;
+namespace Multithread.Api.Domain.Core.Entities;
 
 public interface IEntity
 {
@@ -7,5 +7,5 @@ public interface IEntity
 
 public interface IEntity<TKey> : IEntity
 {
-    TKey Id { get; set; }
+    TKey Id { get;  set; }
 }

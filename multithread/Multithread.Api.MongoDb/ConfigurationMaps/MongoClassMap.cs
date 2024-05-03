@@ -1,6 +1,6 @@
 using MongoDB.Bson.Serialization;
 using Multithread.Api.Domain;
-using Multithread.Api.Domain.Core;
+using Multithread.Api.Domain.Core.Entities;
 
 namespace Multithread.Api.MongoDb.ConfigurationMaps;
 

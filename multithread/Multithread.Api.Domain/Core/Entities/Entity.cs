@@ -1,4 +1,4 @@
-namespace Multithread.Api.Domain.Core;
+namespace Multithread.Api.Domain.Core.Entities;
 
 [Serializable]
 public abstract class Entity : IEntity

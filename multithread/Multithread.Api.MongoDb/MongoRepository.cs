@@ -1,7 +1,8 @@
 using System.Linq.Expressions;
 using JetBrains.Annotations;
 using MongoDB.Driver;
-using Multithread.Api.Domain.Core;
+using Multithread.Api.Core;
+using Multithread.Api.Domain.Core.Entities;
 using Multithread.Api.MongoDb.Core;
 
 namespace Multithread.Api.MongoDb;
