@@ -46,22 +46,22 @@ public abstract class MongoDbContext
         }
     }
 
-    public int SaveChanges() => SaveChangesAsync().GetAwaiter().GetResult();
+    protected int SaveEntityCommands(CancellationToken cancellationToken = default) => SaveEntityCommandsAsync(cancellationToken).GetAwaiter().GetResult();
 
-    public Task<int> SaveChangesAsync()
+    protected Task<int> SaveEntityCommandsAsync(CancellationToken cancellationToken = default)
     {
         lock (DbResourceLock)
         {
-            return Task.FromResult(SaveChangesAsync(_commands).GetAwaiter().GetResult());
+            return Task.FromResult(SaveEntityCommandsAsync(_commands, cancellationToken).GetAwaiter().GetResult());
         }
     }
 
-    private async Task<int> SaveChangesAsync(IEnumerable<Func<object?, Task<object?>>> commands)
+    private async Task<int> SaveEntityCommandsAsync(IEnumerable<Func<object?, Task<object?>>> commands, CancellationToken cancellationToken = default)
     {
         var requestCommandCount = commands.Count();
         if (requestCommandCount < 1) return int.MaxValue; // for success result
 
-        using var session = await Client.StartSessionAsync();
+        using var session = await Client.StartSessionAsync(cancellationToken: cancellationToken);
         var isServerSupportTransaction = true;
         try
         {
@@ -78,7 +78,7 @@ public abstract class MongoDbContext
 
         if (isServerSupportTransaction)
         {
-            await session.CommitTransactionAsync();
+            await session.CommitTransactionAsync(cancellationToken: cancellationToken);
         }
 
         var resultCommandCount = commands.Count();

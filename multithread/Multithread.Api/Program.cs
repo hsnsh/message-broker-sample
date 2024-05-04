@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore;
 using Multithread.Api.Application;
-using Multithread.Api.Workers;
 
 namespace Multithread.Api;
 

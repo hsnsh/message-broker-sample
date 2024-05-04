@@ -1,6 +1,7 @@
+using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
-using Multithread.Api.Auditing.Contracts;
+using Multithread.Api.Auditing;
 using Multithread.Api.Core;
 using Multithread.Api.Domain.Core.Entities;
 using Multithread.Api.MongoDb.Core.Context;
@@ -10,6 +11,10 @@ namespace Multithread.Api.MongoDb.Core;
 public abstract class BaseMongoDbContext : MongoDbContext, IScopedDependency
 {
     public TimeSpan ClientWaitQueueTimeout => Client.Settings.WaitQueueTimeout;
+
+    public IServiceProvider ServiceProvider { get; set; }
+
+    public IAuditPropertySetter AuditPropertySetter => ServiceProvider?.GetRequiredService<IAuditPropertySetter>();
 
     protected BaseMongoDbContext(MongoClientSettings clientSettings, string databaseName) : base(clientSettings, databaseName)
     {
@@ -57,8 +62,27 @@ public abstract class BaseMongoDbContext : MongoDbContext, IScopedDependency
     private void ApplyBaseConceptsForAddedEntity(object entity)
     {
         CheckAndSetId(entity);
-        SetCreationTime(entity);
-        SetCreatorId(entity);
+        AuditPropertySetter?.SetCreationProperties(entity);
+    }
+
+    private void ApplyBaseConceptsForModifiedEntity(object entity)
+    {
+        AuditPropertySetter?.SetModificationProperties(entity);
+        if (entity is ISoftDelete && ((ISoftDelete)entity).IsDeleted)
+        {
+            AuditPropertySetter?.SetDeletionProperties(entity);
+        }
+    }
+
+    private void ApplyBaseConceptsForDeletedEntity(object entity)
+    {
+        if (!(entity is ISoftDelete))
+        {
+            return;
+        }
+
+        ((ISoftDelete)entity).IsDeleted = true;
+        AuditPropertySetter?.SetDeletionProperties(entity);
     }
 
     private void CheckAndSetId(object targetObject)
@@ -74,114 +98,8 @@ public abstract class BaseMongoDbContext : MongoDbContext, IScopedDependency
         }
     }
 
-    private void SetCreationTime(object targetObject)
+    public Task<int> SaveSaveEntityCommandsIfExistChangesAsync(CancellationToken cancellationToken = default)
     {
-        if (!(targetObject is ICreationAuditedObject objectWithCreationTime))
-        {
-            return;
-        }
-
-        if (objectWithCreationTime.CreationTime == default)
-        {
-            objectWithCreationTime.CreationTime = DateTime.UtcNow;
-        }
-    }
-
-    private void SetCreatorId(object targetObject)
-    {
-        if (!(targetObject is ICreationAuditedObject objectWithCreatorId))
-        {
-            return;
-        }
-
-        if (objectWithCreatorId.CreatorId == null)
-        {
-            objectWithCreatorId.CreatorId = Guid.NewGuid(); // Todo: CurrentUser => Id
-        }
-        else if (objectWithCreatorId.CreatorId.HasValue && objectWithCreatorId.CreatorId.Value == default)
-        {
-            objectWithCreatorId.CreatorId = Guid.NewGuid(); // Todo: CurrentUser => Id
-        }
-    }
-
-    private void ApplyBaseConceptsForModifiedEntity(object entity)
-    {
-        SetModificationTime(entity);
-        SetModifierId(entity);
-    }
-    
-    private void SetModificationTime(object targetObject)
-    {
-        if (!(targetObject is IAuditedObject objectWithCreationTime))
-        {
-            return;
-        }
-
-        if (objectWithCreationTime.LastModificationTime == default)
-        {
-            objectWithCreationTime.LastModificationTime = DateTime.UtcNow;
-        }
-    }
-
-    private void SetModifierId(object targetObject)
-    {
-        if (!(targetObject is IAuditedObject objectWithModifierId))
-        {
-            return;
-        }
-
-        if (objectWithModifierId.LastModifierId == null)
-        {
-            objectWithModifierId.LastModifierId = Guid.NewGuid(); // Todo: CurrentUser => Id
-        }
-        else if (objectWithModifierId.LastModifierId.HasValue && objectWithModifierId.LastModifierId.Value == default)
-        {
-            objectWithModifierId.LastModifierId = Guid.NewGuid(); // Todo: CurrentUser => Id
-        }
-    }
-
-    private void ApplyBaseConceptsForDeletedEntity(object entity)
-    {
-        if (!(entity is ISoftDelete objectWithSoftDelete))
-        {
-            return;
-        }
-
-        objectWithSoftDelete.IsDeleted = true;
-        
-        SetModificationTime(entity);
-        SetModifierId(entity);
-        SetDeletionTime(entity);
-        SetDeleterId(entity);
-    }
-    
-    private void SetDeletionTime(object targetObject)
-    {
-        if (!(targetObject is IFullAuditedObject objectWithCreationTime))
-        {
-            return;
-        }
-
-        if (objectWithCreationTime.DeletionTime == default)
-        {
-            objectWithCreationTime.DeletionTime = DateTime.UtcNow;
-        }
-    }
-
-    private void SetDeleterId(object targetObject)
-    {
-        if (!(targetObject is IFullAuditedObject objectWithDeleterId))
-        {
-            return;
-        }
-
-        if (objectWithDeleterId.DeleterId == null)
-        {
-            objectWithDeleterId.DeleterId = Guid.NewGuid(); // Todo: CurrentUser => Id
-        }
-        else if (objectWithDeleterId.DeleterId.HasValue && objectWithDeleterId.DeleterId.Value == default)
-        {
-            objectWithDeleterId.DeleterId = Guid.NewGuid(); // Todo: CurrentUser => Id
-        }
+        return SaveEntityCommandsAsync(cancellationToken);
     }
 }
