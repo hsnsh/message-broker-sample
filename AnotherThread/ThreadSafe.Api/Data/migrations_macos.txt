@@ -1,0 +1,8 @@
+
+dotnet ef migrations add InitialCreate --context ThreadSafe.Api.Data.BookContext -o Migrations/Book
+
+dotnet ef database update --context ThreadSafe.Api.Data.BookContext
+
+
+dotnet ef database remove --context ThreadSafe.Api.Data.BookContext
+
