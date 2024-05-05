@@ -9,7 +9,7 @@ public sealed class SampleMongoDbContext : BaseMongoDbContext
 {
     public IMongoCollection<SampleEntity> Samples => Collection<SampleEntity>();
 
-    public SampleMongoDbContext(IConfiguration configuration) : base(configuration.GetConnectionString("SampleMongoDb"))
+    public SampleMongoDbContext(IServiceProvider provider, IConfiguration configuration) : base(provider, configuration.GetConnectionString("SampleMongoDb"))
     {
     }
 }

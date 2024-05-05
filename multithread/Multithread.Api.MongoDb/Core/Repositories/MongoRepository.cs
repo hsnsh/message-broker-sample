@@ -178,7 +178,7 @@ public class MongoRepository<TDbContext, TEntity, TKey> : ManagerBasicRepository
 
     protected override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        return await _dbContext.SaveSaveEntityCommandsIfExistChangesAsync(GetCancellationToken(cancellationToken));
+        return await _dbContext.SaveSaveEntityCommandsIfExistChangesAsync();
     }
 
     protected void CheckAndSetId(TEntity entity)

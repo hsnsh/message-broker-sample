@@ -46,22 +46,22 @@ public abstract class MongoDbContext
         }
     }
 
-    protected int SaveEntityCommands(CancellationToken cancellationToken = default) => SaveEntityCommandsAsync(cancellationToken).GetAwaiter().GetResult();
+    protected int SaveEntityCommands() => SaveEntityCommandsAsync().GetAwaiter().GetResult();
 
-    protected Task<int> SaveEntityCommandsAsync(CancellationToken cancellationToken = default)
+    protected Task<int> SaveEntityCommandsAsync()
     {
         lock (DbResourceLock)
         {
-            return Task.FromResult(SaveEntityCommandsAsync(_commands, cancellationToken).GetAwaiter().GetResult());
+            return Task.FromResult(SaveEntityCommandsAsync(_commands).GetAwaiter().GetResult());
         }
     }
 
-    private async Task<int> SaveEntityCommandsAsync(IEnumerable<Func<object?, Task<object?>>> commands, CancellationToken cancellationToken = default)
+    private async Task<int> SaveEntityCommandsAsync(IEnumerable<Func<object?, Task<object?>>> commands)
     {
         var requestCommandCount = commands.Count();
         if (requestCommandCount < 1) return int.MaxValue; // for success result
 
-        using var session = await Client.StartSessionAsync(cancellationToken: cancellationToken);
+        using var session = await Client.StartSessionAsync();
         var isServerSupportTransaction = true;
         try
         {
@@ -78,7 +78,7 @@ public abstract class MongoDbContext
 
         if (isServerSupportTransaction)
         {
-            await session.CommitTransactionAsync(cancellationToken: cancellationToken);
+            await session.CommitTransactionAsync();
         }
 
         var resultCommandCount = commands.Count();

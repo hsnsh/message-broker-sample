@@ -8,9 +8,8 @@ public sealed class SampleEfCoreDbContext : BaseEfCoreDbContext<SampleEfCoreDbCo
 {
     public DbSet<SampleEntity> Samples { get; set; }
 
-    public SampleEfCoreDbContext(DbContextOptions<SampleEfCoreDbContext> options) : base(options)
+    public SampleEfCoreDbContext(IServiceProvider provider, DbContextOptions<SampleEfCoreDbContext> options) : base(provider, options)
     {
-        
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

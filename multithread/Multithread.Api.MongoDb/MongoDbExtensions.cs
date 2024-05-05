@@ -19,10 +19,10 @@ public static class MongoDbExtensions
         MongoConfigure(assemblyReference);
         MongoClassMap.RegisterClassMaps();
 
-        services.AddScoped<SampleMongoDbContext>();
+        services.AddSingleton<SampleMongoDbContext>();
 
-        services.AddScoped(typeof(IReadOnlyMongoRepository<,,>), typeof(MongoRepository<,,>));
-        services.AddScoped(typeof(IManagerMongoRepository<,,>), typeof(MongoRepository<,,>));
+        services.AddSingleton(typeof(IReadOnlyMongoRepository<,,>), typeof(MongoRepository<,,>));
+        services.AddSingleton(typeof(IManagerMongoRepository<,,>), typeof(MongoRepository<,,>));
 
         return services;
     }

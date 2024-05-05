@@ -55,7 +55,7 @@ public sealed class Startup
 
     private void AddContentServiceInfrastructures(IServiceCollection services)
     {
-        services.AddScoped<ISampleAppService, SampleAppService>();
+        services.AddSingleton<ISampleAppService, SampleAppService>();
 
         //  services.AddEfCoreDatabaseConfiguration(typeof(Startup), Configuration);
        services.AddMongoDatabaseConfiguration(typeof(Startup), Configuration);

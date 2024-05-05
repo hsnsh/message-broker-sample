@@ -12,16 +12,17 @@ public abstract class BaseMongoDbContext : MongoDbContext, IScopedDependency
 {
     public TimeSpan ClientWaitQueueTimeout => Client.Settings.WaitQueueTimeout;
 
-    public IServiceProvider ServiceProvider { get; set; }
+    private IServiceProvider ServiceProvider { get; set; }
 
     public IAuditPropertySetter AuditPropertySetter => ServiceProvider?.GetRequiredService<IAuditPropertySetter>();
 
-    protected BaseMongoDbContext(MongoClientSettings clientSettings, string databaseName) : base(clientSettings, databaseName)
+    protected BaseMongoDbContext(IServiceProvider provider, MongoClientSettings clientSettings, string databaseName) : base(clientSettings, databaseName)
     {
+        ServiceProvider = provider;
         CommandTrackerEvent += CommandTrackerEvent_Tracked;
     }
 
-    protected BaseMongoDbContext(string connectionString) : this(CreateClientSettings(connectionString), MongoUrl.Create(connectionString).DatabaseName)
+    protected BaseMongoDbContext(IServiceProvider provider, string connectionString) : this(provider, CreateClientSettings(connectionString), MongoUrl.Create(connectionString).DatabaseName)
     {
     }
 
@@ -98,8 +99,8 @@ public abstract class BaseMongoDbContext : MongoDbContext, IScopedDependency
         }
     }
 
-    public Task<int> SaveSaveEntityCommandsIfExistChangesAsync(CancellationToken cancellationToken = default)
+    public Task<int> SaveSaveEntityCommandsIfExistChangesAsync()
     {
-        return SaveEntityCommandsAsync(cancellationToken);
+        return SaveEntityCommandsAsync();
     }
 }

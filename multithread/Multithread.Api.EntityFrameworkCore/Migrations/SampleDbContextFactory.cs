@@ -14,6 +14,6 @@ internal sealed class SampleDbContextFactory : IDesignTimeDbContextFactory<Sampl
                     b.MigrationsHistoryTable("__EFMigrationsHistory");
                 });
 
-        return new SampleEfCoreDbContext(builder.Options);
+        return new SampleEfCoreDbContext(null, builder.Options);
     }
 }

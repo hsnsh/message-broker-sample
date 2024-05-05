@@ -7,13 +7,17 @@ public sealed class InsertWorkerService : BaseHostedService<InsertWorkerService>
     private readonly ILogger _logger;
 
     public InsertWorkerService(ILogger<InsertWorkerService> logger, IServiceScopeFactory serviceScopeFactory)
-        : base(logger, serviceScopeFactory, workerCount: 3)
+        : base(logger, serviceScopeFactory, workerCount: 100)
     {
         _logger = logger;
     }
 
     protected override async Task DoSomethingAsync(IServiceScope scope, int workerId, CancellationToken stopToken)
-    {
+    {  ThreadPool.GetMaxThreads(out var maxWt, out var _);
+
+        _logger.LogWarning("GetMaxThreads | {GetMaxThreads}",  maxWt);
+
+        
         Thread.Sleep(50);
         _logger.LogDebug("{Worker} | WORKER[{WorkerId}] | PROCESSING...", nameof(InsertWorkerService), workerId);
 

@@ -7,9 +7,12 @@ namespace Multithread.Api.EntityFrameworkCore.Core;
 public abstract class BaseEfCoreDbContext<TDbContext> : DbContext, IScopedDependency
     where TDbContext : DbContext
 {
-    protected BaseEfCoreDbContext(DbContextOptions<TDbContext> options)
+    private IServiceProvider ServiceProvider { get; set; }
+    
+    protected BaseEfCoreDbContext(IServiceProvider provider,DbContextOptions<TDbContext> options)
         : base(options)
     {
+        ServiceProvider = provider;
         Initialize();
     }
 

@@ -7,8 +7,8 @@ public static class BaseAuditingServiceCollectionExtensions
 {
     public static IServiceCollection AddBaseAuditingServiceCollection(this IServiceCollection services)
     {
-        services.AddScoped<ICurrentUser, CurrentUser>();
-        services.AddScoped<IAuditPropertySetter, AuditPropertySetter>();
+        services.AddTransient<ICurrentUser, CurrentUser>();
+        services.AddTransient<IAuditPropertySetter, AuditPropertySetter>();
 
         return services;
     }
