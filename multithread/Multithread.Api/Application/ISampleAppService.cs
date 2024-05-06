@@ -4,9 +4,9 @@ namespace Multithread.Api.Application;
 
 public interface ISampleAppService
 {
-    Task<string> InsertOperation(int sampleInput, CancellationToken cancellationToken);
-    Task<bool> DeleteOperation(string sampleInput, CancellationToken cancellationToken);
-    Task<bool> UpdateOperation(string sampleInput, CancellationToken cancellationToken);
+    Task<string> InsertOperation(int sampleInput);
+    Task<bool> DeleteOperation(string sampleInput);
+    Task<bool> UpdateOperation(string sampleInput);
     
-    Task<SampleEntity> FindOperation(string sampleInput, CancellationToken cancellationToken);
+    Task<SampleEntity> FindOperation(string sampleInput);
 }

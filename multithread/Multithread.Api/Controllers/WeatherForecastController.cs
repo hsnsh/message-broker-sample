@@ -27,7 +27,7 @@ public class WeatherForecastController : ControllerBase
         for (var i = 1; i <= 1000; i++)
         {
             // await _sampleAppService.InsertOperation(i, cancellationToken);
-            var res = await _sampleAppService.FindOperation(i.ToString(), cancellationToken);
+            var res = await _sampleAppService.FindOperation(i.ToString());
             Console.WriteLine("Find: {0} {1}", i, res?.Id.ToString().ToUpper());
         }
 

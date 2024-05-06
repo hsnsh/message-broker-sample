@@ -18,28 +18,24 @@ public sealed class SampleAppService : ISampleAppService
         _genericRepository = genericRepository;
     }
 
-    public async Task<string> InsertOperation(int sampleInput, CancellationToken cancellationToken)
+    public async Task<string> InsertOperation(int sampleInput)
     {
         _logger.LogDebug("{Service} | INSERT[{OperationId}] | STARTED", nameof(SampleAppService), sampleInput);
-
-        // await Task.Delay(new Random().Next(1, 10) * 1000, cancellationToken);
-        // var response = Guid.NewGuid().ToString("N").ToUpper();
 
         var sample = new SampleEntity(Guid.NewGuid(), sampleInput.ToString());
         await _genericRepository.InsertAsync(sample);
         var response = sample.Id.ToString("N").ToUpper();
 
         _logger.LogInformation("{Service} | INSERT[{OperationId}] | COMPLETED => ResponseId: {ResponseId}", nameof(SampleAppService), sampleInput, response);
+        await Task.Delay(new Random().Next(1, 5) * 1000);
         return response;
     }
 
-    public async Task<bool> UpdateOperation(string sampleInput, CancellationToken cancellationToken)
+    public async Task<bool> UpdateOperation(string sampleInput)
     {
         _logger.LogDebug("{Service} | UPDATE[{OperationId}] | STARTED", nameof(SampleAppService), sampleInput);
 
-        //  Task.Delay(new Random().Next(1, 10) * 1000, cancellationToken).GetAwaiter().GetResult();
-
-        var res = await _genericRepository.GetListAsync(x => x.Name.Equals(sampleInput), cancellationToken: cancellationToken);
+        var res = await _genericRepository.GetListAsync(x => x.Name.Equals(sampleInput));
         if (res is { Count: > 0 })
         {
             foreach (var item in res)
@@ -51,34 +47,32 @@ public sealed class SampleAppService : ISampleAppService
         }
 
         _logger.LogInformation("{Service} | UPDATE[{OperationId}] | COMPLETED => Response: {Response}", nameof(SampleAppService), sampleInput, true);
+        await Task.Delay(new Random().Next(1, 5) * 1000);
         return true;
     }
 
-    public async Task<bool> DeleteOperation(string sampleInput, CancellationToken cancellationToken)
+    public async Task<bool> DeleteOperation(string sampleInput)
     {
         _logger.LogDebug("{Service} | DELETE[{OperationId}] | STARTED", nameof(SampleAppService), sampleInput);
 
-        //  Task.Delay(new Random().Next(1, 10) * 1000, cancellationToken).GetAwaiter().GetResult();
-
         sampleInput = $"{sampleInput} updated";
-        var res = await _genericRepository.GetListAsync(x => x.Name.Equals(sampleInput), cancellationToken: cancellationToken);
+        var res = await _genericRepository.GetListAsync(x => x.Name.Equals(sampleInput));
         if (res is { Count: > 0 })
         {
             await _genericRepository.DeleteManyAsync(res);
         }
 
         _logger.LogInformation("{Service} | DELETE[{OperationId}] | COMPLETED => Response: {Response}", nameof(SampleAppService), sampleInput, true);
+        await Task.Delay(new Random().Next(1, 5) * 1000);
         return true;
     }
 
     [ItemCanBeNull]
-    public async Task<SampleEntity> FindOperation(string sampleInput, CancellationToken cancellationToken)
+    public async Task<SampleEntity> FindOperation(string sampleInput)
     {
         _logger.LogDebug("{Service} | FIND[{OperationId}] | STARTED", nameof(SampleAppService), sampleInput);
 
-        //  Task.Delay(new Random().Next(1, 10) * 1000, cancellationToken).GetAwaiter().GetResult();
-
-        var response = await _genericRepository.GetListAsync(x => x.Name.Equals(sampleInput), cancellationToken: cancellationToken);
+        var response = await _genericRepository.GetListAsync(x => x.Name.Equals(sampleInput));
 
         _logger.LogDebug("{Service} | FIND[{OperationId}] | COMPLETED => Response: {Response}", nameof(SampleAppService), sampleInput, response?.FirstOrDefault()?.Id.ToString() ?? string.Empty);
 
