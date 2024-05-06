@@ -5,9 +5,11 @@ using Multithread.Api.Domain.Core.Repositories;
 
 namespace Multithread.Api.EntityFrameworkCore.Core.Repositories;
 
-public interface IEfCoreRepository<TEntity> where TEntity : class, IEntity
+public interface IEfCoreRepository<TDbContext, TEntity>
+    where TDbContext : BaseEfCoreDbContext<TDbContext>
+    where TEntity : class, IEntity
 {
-    DbContext GetDbContext();
+    TDbContext GetDbContext();
 
     DbSet<TEntity> GetDbSet();
 
@@ -18,12 +20,14 @@ public interface IEfCoreRepository<TEntity> where TEntity : class, IEntity
     IQueryable<TEntity> GetQueryable(); //TODO: CancellationToken
 }
 
-public interface IReadOnlyEfCoreRepository<TEntity, in TKey> : IReadOnlyBasicRepository<TEntity, TKey>, IEfCoreRepository<TEntity>
+public interface IReadOnlyEfCoreRepository<TDbContext, TEntity, in TKey> : IReadOnlyBasicRepository<TEntity, TKey>, IEfCoreRepository<TDbContext, TEntity>
+    where TDbContext : BaseEfCoreDbContext<TDbContext>
     where TEntity : class, IEntity<TKey>
 {
 }
 
-public interface IManagerEfCoreRepository<TEntity, in TKey> : IManagerBasicRepository<TEntity, TKey>, IEfCoreRepository<TEntity>
+public interface IManagerEfCoreRepository<TDbContext, TEntity, in TKey> : IManagerBasicRepository<TEntity, TKey>, IEfCoreRepository<TDbContext, TEntity>
+    where TDbContext : BaseEfCoreDbContext<TDbContext>
     where TEntity : class, IEntity<TKey>
 {
 }

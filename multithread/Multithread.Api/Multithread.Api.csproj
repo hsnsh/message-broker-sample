@@ -10,8 +10,8 @@
     </ItemGroup>
 
     <ItemGroup>
-<!--      <ProjectReference Include="..\Multithread.Api.EntityFrameworkCore\Multithread.Api.EntityFrameworkCore.csproj" />-->
-      <ProjectReference Include="..\Multithread.Api.MongoDb\Multithread.Api.MongoDb.csproj" />
+      <ProjectReference Include="..\Multithread.Api.EntityFrameworkCore\Multithread.Api.EntityFrameworkCore.csproj" />
+<!--      <ProjectReference Include="..\Multithread.Api.MongoDb\Multithread.Api.MongoDb.csproj" />-->
     </ItemGroup>
     
 </Project>

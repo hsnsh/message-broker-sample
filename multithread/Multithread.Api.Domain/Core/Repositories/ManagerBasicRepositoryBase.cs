@@ -6,34 +6,28 @@ namespace Multithread.Api.Domain.Core.Repositories;
 public abstract class ManagerBasicRepositoryBase<TEntity, TKey> : ReadOnlyBasicRepositoryBase<TEntity, TKey>, IManagerBasicRepository<TEntity, TKey>
     where TEntity : class, IEntity<TKey>
 {
-    public abstract Task<TEntity> InsertAsync(TEntity entity, bool autoSave = false, CancellationToken cancellationToken = default);
+    public abstract Task<TEntity> InsertAsync(TEntity entity, CancellationToken cancellationToken = default);
 
-    public virtual async Task InsertManyAsync(IEnumerable<TEntity> entities, bool autoSave = false, CancellationToken cancellationToken = default)
+    public virtual async Task InsertManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
     {
         foreach (var entity in entities)
         {
             await InsertAsync(entity, cancellationToken: cancellationToken);
         }
 
-        if (autoSave)
-        {
-            await SaveChangesAsync(cancellationToken);
-        }
+        await SaveChangesAsync(cancellationToken);
     }
 
-    public abstract Task<TEntity> UpdateAsync(TEntity entity, bool autoSave = false, CancellationToken cancellationToken = default);
+    public abstract Task<TEntity> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default);
 
-    public virtual async Task UpdateManyAsync(IEnumerable<TEntity> entities, bool autoSave = false, CancellationToken cancellationToken = default)
+    public virtual async Task UpdateManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
     {
         foreach (var entity in entities)
         {
             await UpdateAsync(entity, cancellationToken: cancellationToken);
         }
 
-        if (autoSave)
-        {
-            await SaveChangesAsync(cancellationToken);
-        }
+        await SaveChangesAsync(cancellationToken);
     }
 
     public async Task<bool> DeleteAsync(TKey id, CancellationToken cancellationToken = default)

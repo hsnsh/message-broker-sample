@@ -5,6 +5,7 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Bson.Serialization.Serializers;
 using Multithread.Api.Auditing;
+using Multithread.Api.Domain;
 using Multithread.Api.MongoDb.ConfigurationMaps;
 using Multithread.Api.MongoDb.Core.Repositories;
 
@@ -12,11 +13,11 @@ namespace Multithread.Api.MongoDb;
 
 public static class MongoDbExtensions
 {
-    public static IServiceCollection AddMongoDatabaseConfiguration(this IServiceCollection services, Type assemblyReference, IConfiguration configuration)
+    public static IServiceCollection AddMongoDatabaseConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddBaseAuditingServiceCollection();
 
-        MongoConfigure(assemblyReference);
+        MongoConfigure();
         MongoClassMap.RegisterClassMaps();
 
         services.AddSingleton<SampleMongoDbContext>();
@@ -27,7 +28,7 @@ public static class MongoDbExtensions
         return services;
     }
 
-    private static void MongoConfigure(Type assemblyReference)
+    private static void MongoConfigure()
     {
         try
         {
@@ -41,7 +42,7 @@ public static class MongoDbExtensions
         var objectSerializer = new ObjectSerializer(type =>
         {
             if (type is null) throw new ArgumentNullException();
-            var scope = assemblyReference.Namespace;
+            var scope = typeof(DomainAssemblyMarker).Namespace;
             return scope != null && type.FullName != null && (ObjectSerializer.DefaultAllowedTypes(type) || type.FullName.StartsWith(scope));
         });
         try

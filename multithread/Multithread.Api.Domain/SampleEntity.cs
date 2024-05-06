@@ -10,6 +10,8 @@ public sealed class SampleEntity : AuditedEntity<Guid>, ISoftDelete
 
     [NotNull]
     public string Name { get; internal set; }
+    
+    public string Desc { get;  set; }
 
     private SampleEntity()
     {

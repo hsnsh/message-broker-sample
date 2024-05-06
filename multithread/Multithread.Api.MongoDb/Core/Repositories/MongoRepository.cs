@@ -85,7 +85,7 @@ public class MongoRepository<TDbContext, TEntity, TKey> : ManagerBasicRepository
         throw new NotImplementedException();
     }
 
-    public override async Task<TEntity> InsertAsync(TEntity entity, bool autoSave = false, CancellationToken cancellationToken = default)
+    public override async Task<TEntity> InsertAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         CheckAndSetId(entity);
 
@@ -100,17 +100,17 @@ public class MongoRepository<TDbContext, TEntity, TKey> : ManagerBasicRepository
         return entity;
     }
 
-    public override async Task InsertManyAsync(IEnumerable<TEntity> entities, bool autoSave = false, CancellationToken cancellationToken = default)
+    public override async Task InsertManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public override async Task<TEntity> UpdateAsync(TEntity entity, bool autoSave = false, CancellationToken cancellationToken = default)
+    public override async Task<TEntity> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public override async Task UpdateManyAsync(IEnumerable<TEntity> entities, bool autoSave = false, CancellationToken cancellationToken = default)
+    public override async Task UpdateManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

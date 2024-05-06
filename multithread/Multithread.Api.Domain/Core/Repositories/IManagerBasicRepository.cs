@@ -8,14 +8,14 @@ public interface IManagerBasicRepository<TEntity, in TKey> : IReadOnlyBasicRepos
     where TEntity : class, IEntity<TKey>
 {
     [NotNull]
-    Task<TEntity> InsertAsync([NotNull] TEntity entity, bool autoSave = false, CancellationToken cancellationToken = default);
+    Task<TEntity> InsertAsync([NotNull] TEntity entity, CancellationToken cancellationToken = default);
 
-    Task InsertManyAsync([NotNull] IEnumerable<TEntity> entities, bool autoSave = false, CancellationToken cancellationToken = default);
+    Task InsertManyAsync([NotNull] IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
 
     [NotNull]
-    Task<TEntity> UpdateAsync([NotNull] TEntity entity, bool autoSave = false, CancellationToken cancellationToken = default);
+    Task<TEntity> UpdateAsync([NotNull] TEntity entity, CancellationToken cancellationToken = default);
 
-    Task UpdateManyAsync([NotNull] IEnumerable<TEntity> entities, bool autoSave = false, CancellationToken cancellationToken = default);
+    Task UpdateManyAsync([NotNull] IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
 
     Task<bool> DeleteAsync(TKey id, CancellationToken cancellationToken = default);
     Task<bool> DeleteAsync([NotNull] Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default);

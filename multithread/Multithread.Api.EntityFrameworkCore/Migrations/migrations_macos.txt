@@ -1,8 +1,12 @@
 
-dotnet ef migrations add InitialCreate --context Multithread.Api.Infrastructure.SampleDbContext -o Migrations/Sample
+dotnet ef migrations add InitialCreate --context Multithread.Api.EntityFrameworkCore.SampleEfCoreDbContext -o Migrations/Sample
 
-dotnet ef database update --context Multithread.Api.Infrastructure.SampleDbContext
+dotnet ef database update --context Multithread.Api.EntityFrameworkCore.SampleEfCoreDbContext
 
 
-dotnet ef database remove --context Multithread.Api.Infrastructure.SampleDbContext
+dotnet ef database remove --context Multithread.Api.EntityFrameworkCore.SampleEfCoreDbContext
+
+
+
+dotnet ef migrations add AddDesc --context Multithread.Api.EntityFrameworkCore.SampleEfCoreDbContext -o Migrations/Sample
 

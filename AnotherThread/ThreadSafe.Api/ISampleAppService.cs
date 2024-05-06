@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Npgsql.Replication.PgOutput;
 using ThreadSafe.Api.Data;
 using ThreadSafe.Api.Models;
 using ThreadSafe.Api.Services;

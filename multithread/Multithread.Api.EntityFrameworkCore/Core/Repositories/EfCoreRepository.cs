@@ -6,7 +6,7 @@ using Multithread.Api.Domain.Core.Repositories;
 
 namespace Multithread.Api.EntityFrameworkCore.Core.Repositories;
 
-public class EfCoreRepository<TDbContext, TEntity, TKey> : ManagerBasicRepositoryBase<TEntity, TKey>, IManagerEfCoreRepository<TEntity, TKey>
+public class EfCoreRepository<TDbContext, TEntity, TKey> : ManagerBasicRepositoryBase<TEntity, TKey>, IManagerEfCoreRepository<TDbContext, TEntity, TKey>
     where TDbContext : BaseEfCoreDbContext<TDbContext>
     where TEntity : class, IEntity<TKey>
 {
@@ -19,7 +19,7 @@ public class EfCoreRepository<TDbContext, TEntity, TKey> : ManagerBasicRepositor
         _dbContext = dbContext;
     }
 
-    public DbContext GetDbContext() => _dbContext;
+    public TDbContext GetDbContext() => _dbContext;
 
     public DbSet<TEntity> GetDbSet() => GetDbContext().Set<TEntity>();
 
@@ -97,21 +97,18 @@ public class EfCoreRepository<TDbContext, TEntity, TKey> : ManagerBasicRepositor
             .ToListAsync(GetCancellationToken(cancellationToken));
     }
 
-    public override async Task<TEntity> InsertAsync(TEntity entity, bool autoSave = false, CancellationToken cancellationToken = default)
+    public override async Task<TEntity> InsertAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         CheckAndSetId(entity);
 
         var savedEntity = (await GetDbSet().AddAsync(entity, GetCancellationToken(cancellationToken))).Entity;
 
-        if (autoSave)
-        {
-            await GetDbContext().SaveChangesAsync(GetCancellationToken(cancellationToken));
-        }
+        await GetDbContext().SaveChangesAsync(GetCancellationToken(cancellationToken));
 
         return savedEntity;
     }
 
-    public override async Task InsertManyAsync(IEnumerable<TEntity> entities, bool autoSave = false, CancellationToken cancellationToken = default)
+    public override async Task InsertManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
     {
         var entityArray = entities.ToArray();
         cancellationToken = GetCancellationToken(cancellationToken);
@@ -123,37 +120,28 @@ public class EfCoreRepository<TDbContext, TEntity, TKey> : ManagerBasicRepositor
 
         await GetDbSet().AddRangeAsync(entityArray, cancellationToken);
 
-        if (autoSave)
-        {
-            await GetDbContext().SaveChangesAsync(cancellationToken);
-        }
+        await GetDbContext().SaveChangesAsync(cancellationToken);
     }
 
-    public override async Task<TEntity> UpdateAsync(TEntity entity, bool autoSave = false, CancellationToken cancellationToken = default)
+    public override async Task<TEntity> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         var dbContext = GetDbContext();
         dbContext.Attach(entity);
 
         var updatedEntity = dbContext.Update(entity).Entity;
 
-        if (autoSave)
-        {
-            await dbContext.SaveChangesAsync(GetCancellationToken(cancellationToken));
-        }
+        await dbContext.SaveChangesAsync(GetCancellationToken(cancellationToken));
 
         return updatedEntity;
     }
 
-    public override async Task UpdateManyAsync(IEnumerable<TEntity> entities, bool autoSave = false, CancellationToken cancellationToken = default)
+    public override async Task UpdateManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
     {
         cancellationToken = GetCancellationToken(cancellationToken);
 
         GetDbSet().UpdateRange(entities);
 
-        if (autoSave)
-        {
-            await GetDbContext().SaveChangesAsync(cancellationToken);
-        }
+        await GetDbContext().SaveChangesAsync(cancellationToken);
     }
 
     public override async Task<bool> DeleteAsync(TEntity entity, CancellationToken cancellationToken = default)
@@ -196,7 +184,7 @@ public class EfCoreRepository<TDbContext, TEntity, TKey> : ManagerBasicRepositor
 
     protected override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-       return await GetDbContext().SaveChangesAsync(cancellationToken);
+        return await GetDbContext().SaveChangesAsync(cancellationToken);
     }
 
     private static IQueryable<TEntity> IncludeDetails(IQueryable<TEntity> query, Expression<Func<TEntity, object>>[] propertySelectors)

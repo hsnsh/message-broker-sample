@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore;
+using Microsoft.EntityFrameworkCore;
 using Multithread.Api.Application;
-using Multithread.Api.Auditing;
+using Multithread.Api.EntityFrameworkCore;
+using Multithread.Api.EntityFrameworkCore.Migrations;
 using Multithread.Api.Workers;
 
 namespace Multithread.Api;
@@ -19,12 +21,34 @@ internal class Program
 
             using (var scope = host.Services.CreateScope())
             {
-                // var sampleAppService = scope.ServiceProvider.GetRequiredService<ISampleAppService>();
-                // for (var i = 1; i <= 1000; i++)
-                // {
-                //     await sampleAppService.InsertOperation(i, default);
-                //     Console.WriteLine("Published: {0}", i);
-                // }
+                var dbContext = scope.ServiceProvider.GetRequiredService<SampleEfCoreDbContext>();
+                try
+                {
+                    if (dbContext.Database.CanConnectAsync().GetAwaiter().GetResult())
+                    {
+                        if ((await dbContext.Database.GetPendingMigrationsAsync()).Any())
+                        {
+                            // apply pending migrations
+                            await dbContext.Database.MigrateAsync();
+                        }
+                    }
+                    else
+                    {
+                        // first creation
+                        await dbContext.Database.MigrateAsync();
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+
+                var sampleAppService = scope.ServiceProvider.GetRequiredService<ISampleAppService>();
+                for (var i = 1; i <= 100; i++)
+                {
+                    await sampleAppService.InsertOperation(i, default);
+                    Console.WriteLine("Published: {0}", i);
+                }
             }
 
             Console.WriteLine("Starting web host ({0})...", AppName);
@@ -57,7 +81,7 @@ internal class Program
             })
             .ConfigureServices(x =>
             {
-                 x.AddHostedService<InsertWorkerService>();
+                //  x.AddHostedService<InsertWorkerService>();
                 // x.AddHostedService<DeleteWorkerService>();
             })
             .Build();

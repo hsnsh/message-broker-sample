@@ -1,6 +1,4 @@
 using Microsoft.AspNetCore;
-using Microsoft.EntityFrameworkCore;
-using ThreadSafe.Api.Data;
 using ThreadSafe.Api.Workers;
 
 namespace ThreadSafe.Api;

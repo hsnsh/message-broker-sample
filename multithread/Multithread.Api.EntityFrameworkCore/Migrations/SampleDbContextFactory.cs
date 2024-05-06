@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Design;
 
 namespace Multithread.Api.EntityFrameworkCore.Migrations;
 
-internal sealed class SampleDbContextFactory : IDesignTimeDbContextFactory<SampleEfCoreDbContext>
+public class SampleDbContextFactory : IDesignTimeDbContextFactory<SampleEfCoreDbContext>
 {
     public SampleEfCoreDbContext CreateDbContext(string[] args)
     {

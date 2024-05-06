@@ -7,9 +7,7 @@ using Multithread.Api.EntityFrameworkCore.Core.Repositories;
 
 namespace Multithread.Api.EntityFrameworkCore;
 
-
-
-public sealed class ThreadLockEfCoreRepository<TDbContext, TEntity> : IEfCoreRepository<TEntity>
+public sealed class ThreadLockEfCoreRepository<TDbContext, TEntity> : IEfCoreRepository<TDbContext, TEntity>
     where TDbContext : BaseEfCoreDbContext<TDbContext>
     where TEntity : class, IEntity
 {
@@ -20,15 +18,12 @@ public sealed class ThreadLockEfCoreRepository<TDbContext, TEntity> : IEfCoreRep
     {
         _dbContext = dbContext;
     }
-    DbContext IEfCoreRepository<TEntity>.GetDbContext() => GetDbContext();
 
-    DbSet<TEntity> IEfCoreRepository<TEntity>.GetDbSet() => GetDbSet();
-    
-    private TDbContext GetDbContext() => _dbContext;
-    private DbSet<TEntity> GetDbSet() => GetDbContext()?.Set<TEntity>();
 
+    public TDbContext GetDbContext() => _dbContext;
+    public DbSet<TEntity> GetDbSet() => GetDbContext()?.Set<TEntity>();
     private void SaveChanges() => GetDbContext().SaveChanges();
-    
+
     public IQueryable<TEntity> WithDetails()
     {
         throw new NotImplementedException();
@@ -43,9 +38,8 @@ public sealed class ThreadLockEfCoreRepository<TDbContext, TEntity> : IEfCoreRep
     {
         throw new NotImplementedException();
     }
-    
-    
-    
+
+
     [ItemCanBeNull]
     public async Task<TEntity> FindAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
     {
@@ -133,9 +127,4 @@ public sealed class ThreadLockEfCoreRepository<TDbContext, TEntity> : IEfCoreRep
             return GetDbSet().Where(predicate).ExecuteDelete();
         }
     }
-
-
-
-
-
 }
