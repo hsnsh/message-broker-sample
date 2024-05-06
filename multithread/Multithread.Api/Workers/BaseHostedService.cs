@@ -37,7 +37,7 @@ public abstract class BaseHostedService<TService> : BackgroundService
                         var stopWatch = Stopwatch.StartNew();
 
                         // SOME OPERATION
-                        SyncOperation(processId, stopToken); // WAIT OPERATION COMPLETED
+                        SyncOperation(processId); // WAIT OPERATION COMPLETED
 
                         stopWatch.Stop();
                         var timespan = stopWatch.Elapsed;
@@ -65,7 +65,7 @@ public abstract class BaseHostedService<TService> : BackgroundService
         }
     }
 
-    protected abstract void SyncOperation(int workerId, CancellationToken stopToken);
+    protected abstract void SyncOperation(int workerId);
 
     public override void Dispose()
     {

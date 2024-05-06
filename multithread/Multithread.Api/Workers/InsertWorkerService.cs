@@ -14,7 +14,7 @@ public sealed class InsertWorkerService : BaseHostedService<InsertWorkerService>
         _serviceScopeFactory = serviceScopeFactory;
     }
 
-    protected override void SyncOperation(int workerId, CancellationToken stopToken)
+    protected override void SyncOperation(int workerId)
     {
         Thread.Sleep(50);
         _logger.LogDebug("{Worker} | WORKER[{WorkerId}] | PROCESSING...", nameof(InsertWorkerService), workerId);
