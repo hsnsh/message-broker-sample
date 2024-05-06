@@ -25,7 +25,7 @@ public interface IReadOnlyMongoRepository<TDbContext, TEntity, in TKey> : IReadO
 {
 }
 
-public interface IManagerMongoRepository<TDbContext, TEntity, in TKey> : IManagerBasicRepository<TEntity, TKey>, IMongoRepository<TDbContext, TEntity>
+public interface IMongoRepository<TDbContext, TEntity, in TKey> : IGenericRepository<TEntity, TKey>, IMongoRepository<TDbContext, TEntity>
     where TDbContext : BaseMongoDbContext
     where TEntity : class, IEntity<TKey>
 {

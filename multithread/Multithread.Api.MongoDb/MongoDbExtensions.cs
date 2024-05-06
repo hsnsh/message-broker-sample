@@ -23,7 +23,7 @@ public static class MongoDbExtensions
         services.AddSingleton<SampleMongoDbContext>();
 
         services.AddSingleton(typeof(IReadOnlyMongoRepository<,,>), typeof(MongoRepository<,,>));
-        services.AddSingleton(typeof(IManagerMongoRepository<,,>), typeof(MongoRepository<,,>));
+        services.AddSingleton(typeof(IMongoRepository<,,>), typeof(MongoRepository<,,>));
 
         return services;
     }

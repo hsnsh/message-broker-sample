@@ -10,16 +10,16 @@ public sealed class SampleAppService : ISampleAppService
     private readonly ILogger<SampleAppService> _logger;
 
     // private readonly IManagerMongoRepository<SampleMongoDbContext, SampleEntity, Guid> _repository;
-    private readonly IManagerEfCoreRepository<SampleEfCoreDbContext, SampleEntity, Guid> _repository;
+    private readonly IContentGenericRepository<SampleEntity> _genericRepository;
 
     public SampleAppService(
         // IManagerMongoRepository<SampleMongoDbContext, SampleEntity, Guid> repository,
-        IManagerEfCoreRepository<SampleEfCoreDbContext, SampleEntity, Guid> repository,
+        IContentGenericRepository<SampleEntity> genericRepository,
         ILogger<SampleAppService> logger
     )
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _repository = repository;
+        _genericRepository = genericRepository;
     }
 
     public async Task<string> InsertOperation(int sampleInput, CancellationToken cancellationToken)
@@ -30,7 +30,7 @@ public sealed class SampleAppService : ISampleAppService
         // var response = Guid.NewGuid().ToString("N").ToUpper();
 
         var sample = new SampleEntity(Guid.NewGuid(), sampleInput.ToString());
-        await _repository.InsertAsync(sample);
+        await _genericRepository.InsertAsync(sample);
         var response = sample.Id.ToString("N").ToUpper();
 
         _logger.LogInformation("{Service} | INSERT[{OperationId}] | COMPLETED => ResponseId: {ResponseId}", nameof(SampleAppService), sampleInput, response);
@@ -43,8 +43,8 @@ public sealed class SampleAppService : ISampleAppService
 
         //  Task.Delay(new Random().Next(1, 10) * 1000, cancellationToken).GetAwaiter().GetResult();
 
-        var placed = await _repository.FindAsync(x => x.Name.Equals(sampleInput), cancellationToken: cancellationToken);
-        if (placed != null && await _repository.DeleteAsync(placed))
+        var placed = await _genericRepository.FindAsync(x => x.Name.Equals(sampleInput), cancellationToken: cancellationToken);
+        if (placed != null && await _genericRepository.DeleteAsync(placed))
         {
             _logger.LogInformation("{Service} | DELETE[{OperationId}] | COMPLETED => Response: {Response}", nameof(SampleAppService), sampleInput, true);
             return true;
@@ -61,7 +61,7 @@ public sealed class SampleAppService : ISampleAppService
 
         //  Task.Delay(new Random().Next(1, 10) * 1000, cancellationToken).GetAwaiter().GetResult();
 
-        var response = await _repository.FindAsync(x => x.Name.Equals(sampleInput), cancellationToken: cancellationToken);
+        var response = await _genericRepository.FindAsync(x => x.Name.Equals(sampleInput), cancellationToken: cancellationToken);
 
         _logger.LogInformation("{Service} | FIND[{OperationId}] | COMPLETED => Response: {Response}", nameof(SampleAppService), sampleInput, response?.Id.ToString() ?? string.Empty);
 

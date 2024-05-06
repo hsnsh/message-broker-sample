@@ -6,7 +6,7 @@ using Multithread.Api.Domain.Core.Repositories;
 
 namespace Multithread.Api.EntityFrameworkCore.Core.Repositories;
 
-public class EfCoreRepository<TDbContext, TEntity, TKey> : ManagerBasicRepositoryBase<TEntity, TKey>, IManagerEfCoreRepository<TDbContext, TEntity, TKey>
+public class EfCoreGenericRepository<TDbContext, TEntity, TKey> : GenericRepositoryBase<TEntity, TKey>, IEfCoreGenericRepository<TDbContext, TEntity, TKey>
     where TDbContext : BaseEfCoreDbContext<TDbContext>
     where TEntity : class, IEntity<TKey>
 {
@@ -14,7 +14,7 @@ public class EfCoreRepository<TDbContext, TEntity, TKey> : ManagerBasicRepositor
 
     public List<Expression<Func<TEntity, object>>> DefaultPropertySelector = null;
 
-    public EfCoreRepository(TDbContext dbContext)
+    public EfCoreGenericRepository(TDbContext dbContext)
     {
         _dbContext = dbContext;
     }
@@ -43,6 +43,13 @@ public class EfCoreRepository<TDbContext, TEntity, TKey> : ManagerBasicRepositor
         return GetDbSet().AsQueryable();
     }
 
+    public override async Task<TEntity> FindAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default)
+    {
+        return includeDetails
+            ? await WithDetails().OrderBy(e => e.Id).FirstOrDefaultAsync(e => e.Id.Equals(id), GetCancellationToken(cancellationToken))
+            : await GetDbSet().FindAsync(new object[] { id }, GetCancellationToken(cancellationToken));
+    }
+
     public override async Task<TEntity> FindAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = true, CancellationToken cancellationToken = default)
     {
         return includeDetails
@@ -52,13 +59,6 @@ public class EfCoreRepository<TDbContext, TEntity, TKey> : ManagerBasicRepositor
             : await GetDbSet()
                 .Where(predicate)
                 .SingleOrDefaultAsync(GetCancellationToken(cancellationToken));
-    }
-
-    public override async Task<TEntity> FindAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default)
-    {
-        return includeDetails
-            ? await WithDetails().OrderBy(e => e.Id).FirstOrDefaultAsync(e => e.Id.Equals(id), GetCancellationToken(cancellationToken))
-            : await GetDbSet().FindAsync(new object[] { id }, GetCancellationToken(cancellationToken));
     }
 
     public override async Task<List<TEntity>> GetListAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = false, CancellationToken cancellationToken = default)
@@ -142,6 +142,17 @@ public class EfCoreRepository<TDbContext, TEntity, TKey> : ManagerBasicRepositor
         GetDbSet().UpdateRange(entities);
 
         await GetDbContext().SaveChangesAsync(cancellationToken);
+    }
+
+    public override async Task<bool> DeleteAsync(TKey id, CancellationToken cancellationToken = default)
+    {
+        var entity = await FindAsync(id, cancellationToken: cancellationToken);
+        if (entity == null)
+        {
+            return false;
+        }
+
+        return await DeleteAsync(entity, cancellationToken);
     }
 
     public override async Task<bool> DeleteAsync(TEntity entity, CancellationToken cancellationToken = default)

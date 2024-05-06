@@ -1,8 +1,10 @@
+using System.CodeDom;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Multithread.Api.Auditing;
+using Multithread.Api.Domain;
 using Multithread.Api.EntityFrameworkCore.Core.Repositories;
 
 namespace Multithread.Api.EntityFrameworkCore;
@@ -30,8 +32,8 @@ public static class EntityFrameworkExtensions
             , ServiceLifetime.Transient
         );
 
-        services.AddTransient(typeof(IReadOnlyEfCoreRepository<,,>), typeof(EfCoreRepository<,,>));
-        services.AddTransient(typeof(IManagerEfCoreRepository<,,>), typeof(EfCoreRepository<,,>));
+        // services.AddTransient(typeof(IEfCoreGenericRepository<,,>), typeof(EfCoreGenericRepository<,,>));
+        services.AddTransient(typeof(IContentGenericRepository<>), typeof(EfCoreContentGenericRepository<>));
         // services.AddScoped(typeof(ThreadLockEfCoreRepository<,>));
 
         return services;

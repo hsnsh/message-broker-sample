@@ -8,7 +8,7 @@ using Multithread.Api.MongoDb.Core.Context;
 
 namespace Multithread.Api.MongoDb.Core.Repositories;
 
-public class MongoRepository<TDbContext, TEntity, TKey> : ManagerBasicRepositoryBase<TEntity, TKey>, IManagerMongoRepository<TDbContext, TEntity, TKey>
+public class MongoRepository<TDbContext, TEntity, TKey> : GenericRepositoryBase<TEntity, TKey>, IMongoRepository<TDbContext, TEntity, TKey>
     where TDbContext : BaseMongoDbContext
     where TEntity : class, IEntity<TKey>
 {
