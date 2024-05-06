@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 using Multithread.Api.Auditing;
+using Multithread.Api.Auditing.Contracts;
 using Multithread.Api.Core;
 using Multithread.Api.Domain.Core.Entities;
 using Multithread.Api.MongoDb.Core.Context;
@@ -84,6 +85,12 @@ public abstract class BaseMongoDbContext : MongoDbContext, IScopedDependency
 
         ((ISoftDelete)entity).IsDeleted = true;
         AuditPropertySetter?.SetDeletionProperties(entity);
+        
+        // SoftDeletion Active and DeletionProperties not found then Set modification properties
+        if (!(entity is IHasDeletionTime) && !(entity is IDeletionAuditedObject))
+        {
+            AuditPropertySetter?.SetModificationProperties(entity);
+        }
     }
 
     private void CheckAndSetId(object targetObject)

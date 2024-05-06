@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 using Multithread.Api.Auditing;
+using Multithread.Api.Auditing.Contracts;
 using Multithread.Api.Core;
 using Multithread.Api.Domain.Core.Entities;
 
@@ -89,6 +90,12 @@ public abstract class BaseEfCoreDbContext<TDbContext> : DbContext, IScopedDepend
         entry.Reload();
         ((ISoftDelete)entry.Entity).IsDeleted = true;
         AuditPropertySetter?.SetDeletionProperties(entry.Entity);
+
+        // SoftDeletion Active and DeletionProperties not found then Set modification properties
+        if (!(entry.Entity is IHasDeletionTime) && !(entry.Entity is IDeletionAuditedObject))
+        {
+            AuditPropertySetter?.SetModificationProperties(entry.Entity);
+        }
     }
 
     protected virtual void CheckAndSetId(EntityEntry entry)

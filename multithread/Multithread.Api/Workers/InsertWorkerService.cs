@@ -7,7 +7,7 @@ public sealed class InsertWorkerService : BaseHostedService<InsertWorkerService>
     private readonly ILogger _logger;
 
     public InsertWorkerService(ILogger<InsertWorkerService> logger, IServiceScopeFactory serviceScopeFactory)
-        : base(logger, serviceScopeFactory, workerCount: 100)
+        : base(logger, serviceScopeFactory, workerCount: 5)
     {
         _logger = logger;
     }

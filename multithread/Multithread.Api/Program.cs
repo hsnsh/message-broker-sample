@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore;
+using Microsoft.EntityFrameworkCore;
 using Multithread.Api.Application;
+using Multithread.Api.EntityFrameworkCore;
+using Multithread.Api.Workers;
 
 namespace Multithread.Api;
 
@@ -17,27 +20,27 @@ internal class Program
 
             using (var scope = host.Services.CreateScope())
             {
-                // var dbContext = scope.ServiceProvider.GetRequiredService<SampleEfCoreDbContext>();
-                // try
-                // {
-                //     if (dbContext.Database.CanConnectAsync().GetAwaiter().GetResult())
-                //     {
-                //         if ((await dbContext.Database.GetPendingMigrationsAsync()).Any())
-                //         {
-                //             // apply pending migrations
-                //             await dbContext.Database.MigrateAsync();
-                //         }
-                //     }
-                //     else
-                //     {
-                //         // first creation
-                //         await dbContext.Database.MigrateAsync();
-                //     }
-                // }
-                // catch (Exception e)
-                // {
-                //     Console.WriteLine(e.Message);
-                // }
+                var dbContext = scope.ServiceProvider.GetRequiredService<SampleEfCoreDbContext>();
+                try
+                {
+                    if (dbContext.Database.CanConnectAsync().GetAwaiter().GetResult())
+                    {
+                        if ((await dbContext.Database.GetPendingMigrationsAsync()).Any())
+                        {
+                            // apply pending migrations
+                            await dbContext.Database.MigrateAsync();
+                        }
+                    }
+                    else
+                    {
+                        // first creation
+                        await dbContext.Database.MigrateAsync();
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                }
 
                 var sampleAppService = scope.ServiceProvider.GetRequiredService<ISampleAppService>();
                 for (var i = 1; i <= 100; i++)
@@ -77,8 +80,8 @@ internal class Program
             })
             .ConfigureServices(x =>
             {
-                //  x.AddHostedService<InsertWorkerService>();
-                // x.AddHostedService<DeleteWorkerService>();
+                // x.AddHostedService<InsertWorkerService>();
+                x.AddHostedService<DeleteWorkerService>();
             })
             .Build();
 
