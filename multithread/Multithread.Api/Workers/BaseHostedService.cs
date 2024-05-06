@@ -7,7 +7,7 @@ public abstract class BaseHostedService<TService> : BackgroundService
     private readonly ILogger _logger;
     private readonly List<Task> _messageProcessorTasks;
     private readonly int _workerCount;
-    private readonly int _maxTerminatingWaitPeriodForAllWorker = 30;
+    private readonly int _maxWaitPeriodSecondsForTerminating = 30;
 
     protected BaseHostedService(ILogger logger, int workerCount = 10)
     {
@@ -73,7 +73,7 @@ public abstract class BaseHostedService<TService> : BackgroundService
 
         var waitCounter = 0;
         _messageProcessorTasks.RemoveAll(x => x.IsCompleted);
-        while (_messageProcessorTasks.Count > 0 && waitCounter < _maxTerminatingWaitPeriodForAllWorker)
+        while (_messageProcessorTasks.Count > 0 && waitCounter < _maxWaitPeriodSecondsForTerminating)
         {
             _logger.LogInformation("{Worker} | Wait Background Worker Count [ {ProcessorTasks} ]", typeof(TService).Name, _messageProcessorTasks.Count);
 
