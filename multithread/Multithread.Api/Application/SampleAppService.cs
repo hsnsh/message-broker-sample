@@ -1,7 +1,5 @@
 using JetBrains.Annotations;
 using Multithread.Api.Domain;
-using Multithread.Api.EntityFrameworkCore;
-using Multithread.Api.EntityFrameworkCore.Core.Repositories;
 
 namespace Multithread.Api.Application;
 
@@ -9,11 +7,9 @@ public sealed class SampleAppService : ISampleAppService
 {
     private readonly ILogger<SampleAppService> _logger;
 
-    // private readonly IManagerMongoRepository<SampleMongoDbContext, SampleEntity, Guid> _repository;
     private readonly IContentGenericRepository<SampleEntity> _genericRepository;
 
     public SampleAppService(
-        // IManagerMongoRepository<SampleMongoDbContext, SampleEntity, Guid> repository,
         IContentGenericRepository<SampleEntity> genericRepository,
         ILogger<SampleAppService> logger
     )

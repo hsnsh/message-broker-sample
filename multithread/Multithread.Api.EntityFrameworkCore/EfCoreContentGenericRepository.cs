@@ -1,3 +1,4 @@
+using Multithread.Api.Domain;
 using Multithread.Api.Domain.Core.Entities;
 using Multithread.Api.EntityFrameworkCore.Core.Repositories;
 

@@ -7,7 +7,6 @@ using MongoDB.Bson.Serialization.Serializers;
 using Multithread.Api.Auditing;
 using Multithread.Api.Domain;
 using Multithread.Api.MongoDb.ConfigurationMaps;
-using Multithread.Api.MongoDb.Core.Repositories;
 
 namespace Multithread.Api.MongoDb;
 
@@ -22,8 +21,7 @@ public static class MongoDbExtensions
 
         services.AddSingleton<SampleMongoDbContext>();
 
-        services.AddSingleton(typeof(IReadOnlyMongoRepository<,,>), typeof(MongoRepository<,,>));
-        services.AddSingleton(typeof(IMongoRepository<,,>), typeof(MongoRepository<,,>));
+        services.AddSingleton(typeof(IContentGenericRepository<>), typeof(MongoContentGenericRepository<>));
 
         return services;
     }

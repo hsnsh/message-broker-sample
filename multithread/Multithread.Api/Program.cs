@@ -1,9 +1,5 @@
 using Microsoft.AspNetCore;
-using Microsoft.EntityFrameworkCore;
 using Multithread.Api.Application;
-using Multithread.Api.EntityFrameworkCore;
-using Multithread.Api.EntityFrameworkCore.Migrations;
-using Multithread.Api.Workers;
 
 namespace Multithread.Api;
 

@@ -8,14 +8,14 @@ using Multithread.Api.MongoDb.Core.Context;
 
 namespace Multithread.Api.MongoDb.Core.Repositories;
 
-public class MongoRepository<TDbContext, TEntity, TKey> : GenericRepositoryBase<TEntity, TKey>, IMongoRepository<TDbContext, TEntity, TKey>
+public class MongoGenericRepository<TDbContext, TEntity, TKey> : GenericRepositoryBase<TEntity, TKey>, IMongoGenericRepository<TDbContext, TEntity, TKey>
     where TDbContext : BaseMongoDbContext
     where TEntity : class, IEntity<TKey>
 {
     private readonly TDbContext _dbContext;
     private readonly FindOptions<TEntity> _findOptions;
 
-    public MongoRepository(TDbContext dbContext)
+    public MongoGenericRepository(TDbContext dbContext)
     {
         _dbContext = dbContext;
         _findOptions = new FindOptions<TEntity>
@@ -24,6 +24,8 @@ public class MongoRepository<TDbContext, TEntity, TKey> : GenericRepositoryBase<
             MaxTime = _dbContext.ClientWaitQueueTimeout
         };
     }
+
+    public TDbContext GetDbContext() => _dbContext;
 
     public IMongoCollection<TEntity> GetCollection() => _dbContext?.Collection<TEntity>();
 

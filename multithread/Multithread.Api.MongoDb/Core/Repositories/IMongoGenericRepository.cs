@@ -6,10 +6,12 @@ using Multithread.Api.Domain.Core.Repositories;
 
 namespace Multithread.Api.MongoDb.Core.Repositories;
 
-public interface IMongoRepository<TDbContext, TEntity>
+public interface IMongoGenericRepository<out TDbContext, TEntity, in TKey> : IGenericRepository<TEntity, TKey>
     where TDbContext : BaseMongoDbContext
-    where TEntity : class, IEntity
+    where TEntity : class, IEntity<TKey>
 {
+    TDbContext GetDbContext();
+
     IMongoCollection<TEntity> GetCollection();
 
     IMongoQueryable<TEntity> WithDetails(); //TODO: CancellationToken
@@ -17,16 +19,4 @@ public interface IMongoRepository<TDbContext, TEntity>
     IMongoQueryable<TEntity> WithDetails(params Expression<Func<TEntity, object>>[] propertySelectors); //TODO: CancellationToken
 
     IMongoQueryable<TEntity> GetQueryable(); //TODO: CancellationToken
-}
-
-public interface IReadOnlyMongoRepository<TDbContext, TEntity, in TKey> : IReadOnlyBasicRepository<TEntity, TKey>, IMongoRepository<TDbContext, TEntity>
-    where TDbContext : BaseMongoDbContext
-    where TEntity : class, IEntity<TKey>
-{
-}
-
-public interface IMongoRepository<TDbContext, TEntity, in TKey> : IGenericRepository<TEntity, TKey>, IMongoRepository<TDbContext, TEntity>
-    where TDbContext : BaseMongoDbContext
-    where TEntity : class, IEntity<TKey>
-{
 }

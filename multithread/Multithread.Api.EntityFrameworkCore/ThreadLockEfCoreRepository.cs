@@ -1,10 +1,3 @@
-using System.Linq.Expressions;
-using JetBrains.Annotations;
-using Microsoft.EntityFrameworkCore;
-using Multithread.Api.Domain.Core.Entities;
-using Multithread.Api.EntityFrameworkCore.Core;
-using Multithread.Api.EntityFrameworkCore.Core.Repositories;
-
 namespace Multithread.Api.EntityFrameworkCore;
 
 // public sealed class ThreadLockEfCoreRepository<TDbContext, TEntity> : IEfCoreRepository<TDbContext, TEntity>
