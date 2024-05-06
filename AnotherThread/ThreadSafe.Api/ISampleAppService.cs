@@ -33,11 +33,11 @@ public class SampleAppService : ISampleAppService
         var author = await GetRandomAuthorAsync(_context);
         var book = GetRandomBook(author);
         var addedBook = await _context.Books.AddAsync(book);
-        _context.SaveChangesAsync().GetAwaiter().GetResult();
+        await _context.SaveChangesAsync();
 
         // Remove the book
         _context.Remove(addedBook.Entity);
-        _context.SaveChangesAsync().GetAwaiter().GetResult();
+        await _context.SaveChangesAsync();
 
         return "OK";
     }
