@@ -2,7 +2,7 @@ using Multithread.Api.Application;
 
 namespace Multithread.Api.Workers;
 
-public sealed class DeleteWorkerService : BaseHostedService<DeleteWorkerService>
+public sealed class DeleteWorkerService : BaseWorkerService<DeleteWorkerService>
 {
     private readonly ILogger _logger;
     private readonly IServiceScopeFactory _serviceScopeFactory;

@@ -2,7 +2,7 @@ using Multithread.Api.Application;
 
 namespace Multithread.Api.Workers;
 
-public sealed class InsertWorkerService : BaseHostedService<InsertWorkerService>
+public sealed class InsertWorkerService : BaseWorkerService<InsertWorkerService>
 {
     private readonly ILogger _logger;
     private readonly IServiceScopeFactory _serviceScopeFactory;

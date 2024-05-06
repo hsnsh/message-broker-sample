@@ -2,18 +2,18 @@ using System.Diagnostics;
 
 namespace Multithread.Api.Workers;
 
-public abstract class BaseHostedService<TService> : BackgroundService
+public abstract class BaseWorkerService<TService> : BackgroundService
 {
     private readonly ILogger _logger;
-    private readonly List<Task> _messageProcessorTasks;
+    private readonly List<Task> _workers;
     private readonly int _workerCount;
     private readonly int _maxWaitPeriodSecondsForTerminating = 30;
 
-    protected BaseHostedService(ILogger logger, int workerCount = 10)
+    protected BaseWorkerService(ILogger logger, int workerCount = 10)
     {
         _logger = logger;
         _workerCount = workerCount < 1 ? 1 : workerCount;
-        _messageProcessorTasks = new List<Task>();
+        _workers = new List<Task>();
     }
 
     protected override async Task ExecuteAsync(CancellationToken stopToken)
@@ -28,7 +28,7 @@ public abstract class BaseHostedService<TService> : BackgroundService
 
             for (var i = 1; i <= _workerCount; i++)
             {
-                _messageProcessorTasks.Add(new Task(
+                _workers.Add(new Task(
                     action: o =>
                     {
                         var processId = (o as ProcessModel)?.ProcessId ?? 0;
@@ -50,12 +50,12 @@ public abstract class BaseHostedService<TService> : BackgroundService
 
             Parallel.For(0, _workerCount, i =>
             {
-                _messageProcessorTasks[i].Start();
+                _workers[i].Start();
             });
 
-            await Task.WhenAll(_messageProcessorTasks).ContinueWith(_ =>
+            await Task.WhenAll(_workers).ContinueWith(_ =>
             {
-                _messageProcessorTasks.RemoveAll(t => t.IsCompleted);
+                _workers.RemoveAll(t => t.IsCompleted);
             }, stopToken);
 
             _logger.LogDebug("{Worker} | ALL WORKER IS AVAILABLE", typeof(TService).Name);
@@ -72,13 +72,13 @@ public abstract class BaseHostedService<TService> : BackgroundService
         _logger.LogInformation("{Worker} | STOPPING...", typeof(TService).Name);
 
         var waitCounter = 0;
-        _messageProcessorTasks.RemoveAll(x => x.IsCompleted);
-        while (_messageProcessorTasks.Count > 0 && waitCounter < _maxWaitPeriodSecondsForTerminating)
+        _workers.RemoveAll(x => x.IsCompleted);
+        while (_workers.Count > 0 && waitCounter < _maxWaitPeriodSecondsForTerminating)
         {
-            _logger.LogInformation("{Worker} | Wait Background Worker Count [ {ProcessorTasks} ]", typeof(TService).Name, _messageProcessorTasks.Count);
+            _logger.LogInformation("{Worker} | Wait Background Worker Count [ {Count} ]", typeof(TService).Name, _workers.Count);
 
             Thread.Sleep(1000);
-            _messageProcessorTasks.RemoveAll(x => x.IsCompleted);
+            _workers.RemoveAll(x => x.IsCompleted);
             waitCounter++;
         }
 
