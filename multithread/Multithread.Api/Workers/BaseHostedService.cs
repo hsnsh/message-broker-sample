@@ -29,7 +29,6 @@ public abstract class BaseHostedService<TService> : BackgroundService
             {
                 _logger.LogInformation("{Worker} | WORKER COUNT IS {WorkerCount}", typeof(TService).Name, _workerCount);
 
-
                 for (var i = 1; i <= _workerCount; i++)
                 {
                     _messageProcessorTasks.Add(new Task(

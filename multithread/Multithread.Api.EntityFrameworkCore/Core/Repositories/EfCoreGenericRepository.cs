@@ -55,10 +55,10 @@ public class EfCoreGenericRepository<TDbContext, TEntity, TKey> : GenericReposit
         return includeDetails
             ? await WithDetails()
                 .Where(predicate)
-                .SingleOrDefaultAsync(GetCancellationToken(cancellationToken))
+                .FirstOrDefaultAsync(GetCancellationToken(cancellationToken))
             : await GetDbSet()
                 .Where(predicate)
-                .SingleOrDefaultAsync(GetCancellationToken(cancellationToken));
+                .FirstOrDefaultAsync(GetCancellationToken(cancellationToken));
     }
 
     public override async Task<List<TEntity>> GetListAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = false, CancellationToken cancellationToken = default)

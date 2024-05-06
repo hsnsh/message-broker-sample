@@ -20,7 +20,7 @@ public sealed class SampleAppService : ISampleAppService
 
     public async Task<string> InsertOperation(int sampleInput, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("{Service} | INSERT[{OperationId}] | STARTED", nameof(SampleAppService), sampleInput);
+        _logger.LogDebug("{Service} | INSERT[{OperationId}] | STARTED", nameof(SampleAppService), sampleInput);
 
         // await Task.Delay(new Random().Next(1, 10) * 1000, cancellationToken);
         // var response = Guid.NewGuid().ToString("N").ToUpper();
@@ -33,34 +33,55 @@ public sealed class SampleAppService : ISampleAppService
         return response;
     }
 
-    public async Task<bool> DeleteOperation(string sampleInput, CancellationToken cancellationToken)
+    public async Task<bool> UpdateOperation(string sampleInput, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("{Service} | DELETE[{OperationId}] | STARTED", nameof(SampleAppService), sampleInput);
+        _logger.LogDebug("{Service} | UPDATE[{OperationId}] | STARTED", nameof(SampleAppService), sampleInput);
 
         //  Task.Delay(new Random().Next(1, 10) * 1000, cancellationToken).GetAwaiter().GetResult();
 
-        var placed = await _genericRepository.FindAsync(x => x.Name.Equals(sampleInput), cancellationToken: cancellationToken);
-        if (placed != null && await _genericRepository.DeleteAsync(placed))
+        var res = await _genericRepository.GetListAsync(x => x.Name.Equals(sampleInput), cancellationToken: cancellationToken);
+        if (res is { Count: > 0 })
         {
-            _logger.LogInformation("{Service} | DELETE[{OperationId}] | COMPLETED => Response: {Response}", nameof(SampleAppService), sampleInput, true);
-            return true;
+            foreach (var item in res)
+            {
+                item.Name = $"{item.Name} updated";
+            }
+
+            await _genericRepository.UpdateManyAsync(res);
         }
 
-        _logger.LogError("{Service} | DELETE[{OperationId}] | FAILED => NOT FOUND", nameof(SampleAppService), sampleInput);
-        return false;
+        _logger.LogInformation("{Service} | UPDATE[{OperationId}] | COMPLETED => Response: {Response}", nameof(SampleAppService), sampleInput, true);
+        return true;
+    }
+
+    public async Task<bool> DeleteOperation(string sampleInput, CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("{Service} | DELETE[{OperationId}] | STARTED", nameof(SampleAppService), sampleInput);
+
+        //  Task.Delay(new Random().Next(1, 10) * 1000, cancellationToken).GetAwaiter().GetResult();
+
+        sampleInput = $"{sampleInput} updated";
+        var res = await _genericRepository.GetListAsync(x => x.Name.Equals(sampleInput), cancellationToken: cancellationToken);
+        if (res is { Count: > 0 })
+        {
+            await _genericRepository.DeleteManyAsync(res);
+        }
+
+        _logger.LogInformation("{Service} | DELETE[{OperationId}] | COMPLETED => Response: {Response}", nameof(SampleAppService), sampleInput, true);
+        return true;
     }
 
     [ItemCanBeNull]
     public async Task<SampleEntity> FindOperation(string sampleInput, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("{Service} | FIND[{OperationId}] | STARTED", nameof(SampleAppService), sampleInput);
+        _logger.LogDebug("{Service} | FIND[{OperationId}] | STARTED", nameof(SampleAppService), sampleInput);
 
         //  Task.Delay(new Random().Next(1, 10) * 1000, cancellationToken).GetAwaiter().GetResult();
 
-        var response = await _genericRepository.FindAsync(x => x.Name.Equals(sampleInput), cancellationToken: cancellationToken);
+        var response = await _genericRepository.GetListAsync(x => x.Name.Equals(sampleInput), cancellationToken: cancellationToken);
 
-        _logger.LogInformation("{Service} | FIND[{OperationId}] | COMPLETED => Response: {Response}", nameof(SampleAppService), sampleInput, response?.Id.ToString() ?? string.Empty);
+        _logger.LogDebug("{Service} | FIND[{OperationId}] | COMPLETED => Response: {Response}", nameof(SampleAppService), sampleInput, response?.FirstOrDefault()?.Id.ToString() ?? string.Empty);
 
-        return response;
+        return response is { Count: > 0 } ? response.First() : null;
     }
 }

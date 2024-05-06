@@ -7,7 +7,7 @@ public sealed class DeleteWorkerService : BaseHostedService<DeleteWorkerService>
     private readonly ILogger _logger;
 
     public DeleteWorkerService(ILogger<DeleteWorkerService> logger, IServiceScopeFactory serviceScopeFactory)
-        : base(logger, serviceScopeFactory, workerCount: 5)
+        : base(logger, serviceScopeFactory, workerCount: 50)
     {
         _logger = logger;
     }

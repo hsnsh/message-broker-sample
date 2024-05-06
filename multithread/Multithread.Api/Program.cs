@@ -43,7 +43,7 @@ internal class Program
                 }
 
                 var sampleAppService = scope.ServiceProvider.GetRequiredService<ISampleAppService>();
-                for (var i = 1; i <= 100; i++)
+                for (var i = 1; i <= 1000; i++)
                 {
                     await sampleAppService.InsertOperation(i, default);
                     Console.WriteLine("Published: {0}", i);
@@ -80,8 +80,9 @@ internal class Program
             })
             .ConfigureServices(x =>
             {
-                // x.AddHostedService<InsertWorkerService>();
+                x.AddHostedService<InsertWorkerService>();
                 x.AddHostedService<DeleteWorkerService>();
+                x.AddHostedService<UpdateWorkerService>();
             })
             .Build();
 

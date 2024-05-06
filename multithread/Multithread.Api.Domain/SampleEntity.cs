@@ -9,7 +9,7 @@ public sealed class SampleEntity : AuditedEntity<Guid>, ISoftDelete
     public bool IsDeleted { get; set; }
 
     [NotNull]
-    public string Name { get; internal set; }
+    public string Name { get;  set; }
     
     public string Desc { get;  set; }
 
