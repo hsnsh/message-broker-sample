@@ -1,3 +1,4 @@
+using HsnSoft.Base.AspNetCore;
 using Multithread.Api.Application;
 using Multithread.Api.EntityFrameworkCore;
 
@@ -16,6 +17,8 @@ public sealed class Startup
 
     public void ConfigureServices(IServiceCollection services)
     {
+        services.AddBaseAspNetCoreContextCollection();
+        
         services.AddControllers();
 
         AddContentServiceInfrastructures(services);

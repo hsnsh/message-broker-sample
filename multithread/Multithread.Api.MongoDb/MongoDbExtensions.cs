@@ -1,10 +1,11 @@
+using HsnSoft.Base.Auditing;
+using HsnSoft.Base.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Bson.Serialization.Serializers;
-using Multithread.Api.Auditing;
 using Multithread.Api.Domain;
 using Multithread.Api.MongoDb.ConfigurationMaps;
 
@@ -15,6 +16,7 @@ public static class MongoDbExtensions
     public static IServiceCollection AddMongoDatabaseConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddBaseAuditingServiceCollection();
+        services.AddBaseDataServiceCollection();
 
         MongoConfigure();
         MongoClassMap.RegisterClassMaps();

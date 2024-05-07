@@ -1,6 +1,6 @@
+using HsnSoft.Base.Domain.Entities;
+using HsnSoft.Base.Domain.Repositories.EntityFrameworkCore;
 using Multithread.Api.Domain;
-using Multithread.Api.Domain.Core.Entities;
-using Multithread.Api.MongoDb.Core.Repositories;
 
 namespace Multithread.Api.MongoDb;
 

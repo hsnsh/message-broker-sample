@@ -1,5 +1,5 @@
-using Multithread.Api.Domain.Core.Entities;
-using Multithread.Api.Domain.Core.Repositories;
+using HsnSoft.Base.Domain.Entities;
+using HsnSoft.Base.Domain.Repositories;
 
 namespace Multithread.Api.Domain;
 

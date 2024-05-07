@@ -1,6 +1,6 @@
+using HsnSoft.Base.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Multithread.Api.Domain;
-using Multithread.Api.EntityFrameworkCore.Core;
 
 namespace Multithread.Api.EntityFrameworkCore;
 

@@ -1,6 +1,6 @@
+using HsnSoft.Base;
+using HsnSoft.Base.Domain.Entities.Auditing;
 using JetBrains.Annotations;
-using Multithread.Api.Core;
-using Multithread.Api.Domain.Core.Entities.Audit;
 
 namespace Multithread.Api.Domain;
 

@@ -1,7 +1,7 @@
+using HsnSoft.Base.MongoDB;
 using Microsoft.Extensions.Configuration;
 using MongoDB.Driver;
 using Multithread.Api.Domain;
-using Multithread.Api.MongoDb.Core;
 
 namespace Multithread.Api.MongoDb;
 

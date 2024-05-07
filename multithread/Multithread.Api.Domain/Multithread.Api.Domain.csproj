@@ -5,10 +5,8 @@
         <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
 
-
-
     <ItemGroup>
-      <ProjectReference Include="..\Multithread.Api.Auditing\Multithread.Api.Auditing.csproj" />
+        <ProjectReference Include="..\..\..\..\..\org\hsn-soft\base-framework\src\HsnSoft.Base.Ddd.Domain\HsnSoft.Base.Ddd.Domain.csproj"/>
     </ItemGroup>
-
+    
 </Project>
