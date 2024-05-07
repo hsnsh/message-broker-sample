@@ -9,17 +9,17 @@ using Multithread.Api.MongoDb.Core.Context;
 
 namespace Multithread.Api.MongoDb.Core;
 
-public abstract class BaseMongoDbContext : MongoDbContext, IScopedDependency
+public abstract class BaseMongoDbContext : MongoDbContext
 {
     public TimeSpan ClientWaitQueueTimeout => Client.Settings.WaitQueueTimeout;
 
-    private IServiceProvider ServiceProvider { get; set; }
+    private readonly IServiceProvider _serviceProvider;
 
-    public IAuditPropertySetter AuditPropertySetter => ServiceProvider?.GetRequiredService<IAuditPropertySetter>();
+    public IAuditPropertySetter AuditPropertySetter => _serviceProvider?.GetRequiredService<IAuditPropertySetter>();
 
     protected BaseMongoDbContext(IServiceProvider provider, MongoClientSettings clientSettings, string databaseName) : base(clientSettings, databaseName)
     {
-        ServiceProvider = provider;
+        _serviceProvider = provider;
         CommandTrackerEvent += CommandTrackerEvent_Tracked;
     }
 

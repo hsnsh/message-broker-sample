@@ -14,7 +14,7 @@ public class EfCoreGenericRepository<TDbContext, TEntity, TKey> : GenericReposit
 
     public List<Expression<Func<TEntity, object>>> DefaultPropertySelector = null;
 
-    public EfCoreGenericRepository(TDbContext dbContext)
+    public EfCoreGenericRepository(IServiceProvider provider, TDbContext dbContext) : base(provider)
     {
         _dbContext = dbContext;
     }

@@ -15,7 +15,7 @@ public class MongoGenericRepository<TDbContext, TEntity, TKey> : GenericReposito
     private readonly TDbContext _dbContext;
     private readonly FindOptions<TEntity> _findOptions;
 
-    public MongoGenericRepository(TDbContext dbContext)
+    public MongoGenericRepository(IServiceProvider provider, TDbContext dbContext) : base(provider)
     {
         _dbContext = dbContext;
         _findOptions = new FindOptions<TEntity>

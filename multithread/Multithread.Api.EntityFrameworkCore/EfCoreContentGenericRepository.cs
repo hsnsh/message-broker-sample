@@ -7,7 +7,7 @@ namespace Multithread.Api.EntityFrameworkCore;
 public sealed class EfCoreContentGenericRepository<TEntity> : EfCoreGenericRepository<SampleEfCoreDbContext, TEntity, Guid>, IContentGenericRepository<TEntity>
     where TEntity : class, IEntity<Guid>
 {
-    public EfCoreContentGenericRepository(SampleEfCoreDbContext dbContext) : base(dbContext)
+    public EfCoreContentGenericRepository(IServiceProvider provider, SampleEfCoreDbContext dbContext) : base(provider, dbContext)
     {
     }
 }

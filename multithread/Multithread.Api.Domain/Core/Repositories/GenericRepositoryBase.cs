@@ -1,4 +1,6 @@
 using System.Linq.Expressions;
+using Microsoft.Extensions.DependencyInjection;
+using Multithread.Api.Core;
 using Multithread.Api.Domain.Core.Entities;
 
 namespace Multithread.Api.Domain.Core.Repositories;
@@ -6,6 +8,18 @@ namespace Multithread.Api.Domain.Core.Repositories;
 public abstract class GenericRepositoryBase<TEntity, TKey> : IGenericRepository<TEntity, TKey>
     where TEntity : class, IEntity<TKey>
 {
+    
+    private readonly IServiceProvider _serviceProvider;
+    
+    public IDataFilter DataFilter => _serviceProvider?.GetRequiredService<IDataFilter>();
+
+    public ICurrentTenant CurrentTenant => _serviceProvider?.GetRequiredService<ICurrentTenant>();
+    
+    public GenericRepositoryBase(IServiceProvider provider)
+    {
+        _serviceProvider = provider;
+    }
+    
     public abstract Task<TEntity> FindAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default);
 
     public abstract Task<TEntity> FindAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = true, CancellationToken cancellationToken = default);
@@ -117,16 +131,16 @@ public abstract class GenericRepositoryBase<TEntity, TKey> : IGenericRepository<
     protected virtual TQueryable ApplyDataFilters<TQueryable, TOtherEntity>(TQueryable query)
         where TQueryable : IQueryable<TOtherEntity>
     {
-        // if (typeof(ISoftDelete).IsAssignableFrom(typeof(TOtherEntity)))
-        // {
-        //     query = (TQueryable)query.WhereIf(DataFilter.IsEnabled<ISoftDelete>(), e => ((ISoftDelete)e).IsDeleted == false);
-        // }
-        //
-        // if (typeof(IMultiTenant).IsAssignableFrom(typeof(TOtherEntity)))
-        // {
-        //     var tenantId = CurrentTenant.Id;
-        //     query = (TQueryable)query.WhereIf(DataFilter.IsEnabled<IMultiTenant>(), e => ((IMultiTenant)e).TenantId == tenantId);
-        // }
+        if (typeof(ISoftDelete).IsAssignableFrom(typeof(TOtherEntity)))
+        {
+            query = (TQueryable)query.WhereIf(DataFilter.IsEnabled<ISoftDelete>(), e => ((ISoftDelete)e).IsDeleted == false);
+        }
+
+        if (typeof(IMultiTenant).IsAssignableFrom(typeof(TOtherEntity)))
+        {
+            var tenantId = CurrentTenant.Id;
+            query = (TQueryable)query.WhereIf(DataFilter.IsEnabled<IMultiTenant>(), e => ((IMultiTenant)e).TenantId == tenantId);
+        }
 
         return query;
     }
