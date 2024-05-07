@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Multithread.Api.EntityFrameworkCore.Migrations.Sample
 {
     [DbContext(typeof(SampleEfCoreDbContext))]
-    [Migration("20240507124332_InitialCreate")]
+    [Migration("20240507191147_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -37,6 +37,14 @@ namespace Multithread.Api.EntityFrameworkCore.Migrations.Sample
                     b.Property<Guid?>("CreatorId")
                         .HasColumnType("uuid")
                         .HasColumnName("CreatorId");
+
+                    b.Property<Guid?>("DeleterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("DeleterId");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DeletionTime");
 
                     b.Property<string>("Desc")
                         .HasColumnType("text");

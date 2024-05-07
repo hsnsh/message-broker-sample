@@ -18,7 +18,7 @@ public sealed class Startup
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddBaseAspNetCoreContextCollection();
-        
+
         services.AddControllers();
 
         AddContentServiceInfrastructures(services);
@@ -61,7 +61,7 @@ public sealed class Startup
         services.AddTransient<ISampleAppService, SampleAppService>();
 
         services.AddEfCoreDatabaseConfiguration(Configuration);
-        //  services.AddMongoDatabaseConfiguration( Configuration);
+        //   services.AddMongoDatabaseConfiguration( Configuration);
     }
 
     private void OnShutdown()

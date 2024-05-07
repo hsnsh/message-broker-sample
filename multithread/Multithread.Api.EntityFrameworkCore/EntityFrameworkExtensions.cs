@@ -3,7 +3,6 @@ using HsnSoft.Base.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Multithread.Api.Domain;
 
 namespace Multithread.Api.EntityFrameworkCore;

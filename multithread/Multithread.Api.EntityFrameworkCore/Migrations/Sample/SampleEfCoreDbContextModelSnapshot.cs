@@ -35,6 +35,14 @@ namespace Multithread.Api.EntityFrameworkCore.Migrations.Sample
                         .HasColumnType("uuid")
                         .HasColumnName("CreatorId");
 
+                    b.Property<Guid?>("DeleterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("DeleterId");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DeletionTime");
+
                     b.Property<string>("Desc")
                         .HasColumnType("text");
 

@@ -26,8 +26,9 @@ public sealed class SampleAppService : ISampleAppService
         await _genericRepository.InsertAsync(sample);
         var response = sample.Id.ToString("N").ToUpper();
 
-        _logger.LogInformation("{Service} | INSERT[{OperationId}] | COMPLETED => ResponseId: {ResponseId}", nameof(SampleAppService), sampleInput, response);
         await Task.Delay(new Random().Next(1, 5) * 1000);
+        _logger.LogInformation("{Service} | INSERT[{OperationId}] | COMPLETED => ResponseId: {ResponseId}", nameof(SampleAppService), sampleInput, response);
+
         return response;
     }
 
@@ -46,8 +47,9 @@ public sealed class SampleAppService : ISampleAppService
             await _genericRepository.UpdateManyAsync(res);
         }
 
-        _logger.LogInformation("{Service} | UPDATE[{OperationId}] | COMPLETED => Response: {Response}", nameof(SampleAppService), sampleInput, true);
         await Task.Delay(new Random().Next(1, 5) * 1000);
+        _logger.LogInformation("{Service} | UPDATE[{OperationId}] | COMPLETED => Response: {Response}", nameof(SampleAppService), sampleInput, true);
+
         return true;
     }
 
@@ -62,8 +64,9 @@ public sealed class SampleAppService : ISampleAppService
             await _genericRepository.DeleteManyAsync(res);
         }
 
-        _logger.LogInformation("{Service} | DELETE[{OperationId}] | COMPLETED => Response: {Response}", nameof(SampleAppService), sampleInput, true);
         await Task.Delay(new Random().Next(1, 5) * 1000);
+        _logger.LogInformation("{Service} | DELETE[{OperationId}] | COMPLETED => Response: {Response}", nameof(SampleAppService), sampleInput, true);
+
         return true;
     }
 

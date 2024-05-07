@@ -1,13 +1,10 @@
-using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities.Auditing;
 using JetBrains.Annotations;
 
 namespace Multithread.Api.Domain;
 
-public sealed class SampleEntity : AuditedEntity<Guid>, ISoftDelete
+public sealed class SampleEntity : FullAuditedEntity<Guid>
 {
-    public bool IsDeleted { get; set; }
-
     [NotNull]
     public string Name { get;  set; }
     

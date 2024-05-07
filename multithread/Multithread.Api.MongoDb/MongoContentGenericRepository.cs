@@ -9,5 +9,6 @@ public sealed class MongoContentGenericRepository<TEntity> : MongoGenericReposit
 {
     public MongoContentGenericRepository(IServiceProvider provider, SampleMongoDbContext dbContext) : base(provider, dbContext)
     {
+       
     }
 }
