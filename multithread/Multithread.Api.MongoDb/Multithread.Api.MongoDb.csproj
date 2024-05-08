@@ -1,12 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+    <Import Project="..\..\common.version.props"/>
+    
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="HsnSoft.Base.MongoDB" Version="2024.6.33"/>
+        <PackageReference Include="HsnSoft.Base.MongoDB" Version="$(HsnSoftFrameworkVersion)"/>
         <!--<ProjectReference Include="..\..\..\..\..\org\hsn-soft\base-framework\src\HsnSoft.Base.MongoDB\HsnSoft.Base.MongoDB.csproj"/>-->
     </ItemGroup>
 

@@ -1,13 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+    <Import Project="..\..\common.version.props"/>
+    
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.18"/>
-        <PackageReference Include="HsnSoft.Base.EntityFrameworkCore.PostgreSql" Version="2024.6.33"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="$(MicrosoftEntityFrameworkCorePackageVersion)"/>
+        <PackageReference Include="HsnSoft.Base.EntityFrameworkCore.PostgreSql" Version="$(HsnSoftFrameworkVersion)"/>
         <!--<ProjectReference Include="..\..\..\..\..\org\hsn-soft\base-framework\src\HsnSoft.Base.EntityFrameworkCore.PostgreSql\HsnSoft.Base.EntityFrameworkCore.PostgreSql.csproj"/>-->
     </ItemGroup>
 
