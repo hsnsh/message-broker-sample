@@ -21,9 +21,9 @@ public static class MongoDbExtensions
         MongoConfigure();
         MongoClassMap.RegisterClassMaps();
 
-        services.AddTransient<SampleMongoDbContext>();
+        services.AddSingleton<SampleMongoDbContext>();
 
-        services.AddTransient(typeof(IContentGenericRepository<>), typeof(MongoContentGenericRepository<>));
+        services.AddSingleton(typeof(IContentGenericRepository<>), typeof(MongoContentGenericRepository<>));
 
         return services;
     }
