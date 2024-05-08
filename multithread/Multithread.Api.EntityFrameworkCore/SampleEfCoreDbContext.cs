@@ -8,7 +8,7 @@ public sealed class SampleEfCoreDbContext : BaseEfCoreDbContext<SampleEfCoreDbCo
 {
     public DbSet<SampleEntity> Samples { get; set; }
 
-    public SampleEfCoreDbContext(IServiceProvider provider, DbContextOptions<SampleEfCoreDbContext> options) : base(provider, options)
+    public SampleEfCoreDbContext(IServiceProvider provider, DbContextOptions<SampleEfCoreDbContext> options) : base(options, provider)
     {
     }
 

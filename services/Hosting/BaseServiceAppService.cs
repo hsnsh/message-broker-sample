@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 
 namespace Hosting;
 
-public abstract class BaseServiceAppService : BaseApplicationService, IEventApplicationService
+public abstract class BaseServiceAppService : ApplicationService, IEventApplicationService
 {
     [NotNull]
     protected ILogger Logger { get; }
@@ -21,9 +21,7 @@ public abstract class BaseServiceAppService : BaseApplicationService, IEventAppl
 
     protected BaseServiceAppService(IServiceProvider provider)
     {
-        var loggerFactory = provider.GetRequiredService<ILoggerFactory>();
-        Logger = loggerFactory.CreateLogger("MessageBrokerSample");
-
+        Logger = LoggerFactory.CreateLogger("MessageBrokerSample");
         EventBus = provider.GetRequiredService<IEventBus>();
     }
 
