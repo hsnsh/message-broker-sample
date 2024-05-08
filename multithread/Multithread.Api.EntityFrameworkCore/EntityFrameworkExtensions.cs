@@ -16,7 +16,6 @@ public static class EntityFrameworkExtensions
 
         services.AddDbContext<SampleEfCoreDbContext>(options =>
             {
-                // options.EnableThreadSafetyChecks(false);
                 options.UseNpgsql(configuration.GetConnectionString("SampleDb"), sqlOptions =>
                 {
                     sqlOptions.MigrationsHistoryTable("__EFMigrationsHistory");
@@ -29,10 +28,11 @@ public static class EntityFrameworkExtensions
                 // options.UseLoggerFactory(LoggerFactory.Create(builder => builder.AddConsole()));
                 // options.EnableSensitiveDataLogging(true);
             }
-            , ServiceLifetime.Transient
+            , contextLifetime: ServiceLifetime.Scoped
+            , optionsLifetime: ServiceLifetime.Singleton
         );
 
-        // Must be Scoped or Transient => Cannot consume scoped service 'Microsoft.EntityFrameworkCore.DbContextOptions`
+        // Must be Scoped or Transient => Cannot consume any scoped service
         services.AddScoped(typeof(IContentGenericRepository<>), typeof(EfCoreContentGenericRepository<>));
 
         return services;
