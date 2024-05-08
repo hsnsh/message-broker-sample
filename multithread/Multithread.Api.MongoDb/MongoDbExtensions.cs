@@ -21,7 +21,7 @@ public static class MongoDbExtensions
         MongoConfigure();
         MongoClassMap.RegisterClassMaps();
 
-        services.AddSingleton<SampleMongoDbContext>();
+        services.AddScoped<SampleMongoDbContext>();
 
         // Must be Scoped or Transient => Cannot consume any scoped service
         services.AddScoped(typeof(IContentGenericRepository<>), typeof(MongoContentGenericRepository<>));

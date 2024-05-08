@@ -58,7 +58,8 @@ public sealed class Startup
 
     private void AddContentServiceInfrastructures(IServiceCollection services)
     {
-        services.AddTransient<ISampleAppService, SampleAppService>(); // must be transient because service dependencies MultiThread IServiceProvider object
+        // Must be Scoped or Transient => Cannot consume any scoped service
+        services.AddScoped<ISampleAppService, SampleAppService>();
 
         services.AddEfCoreDatabaseConfiguration(Configuration);
         //   services.AddMongoDatabaseConfiguration( Configuration);

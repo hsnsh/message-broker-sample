@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore;
 using Microsoft.EntityFrameworkCore;
+using Multithread.Api.Application;
 using Multithread.Api.EntityFrameworkCore;
 using Multithread.Api.Workers;
 
@@ -41,12 +42,12 @@ internal class Program
                     Console.WriteLine(e.Message);
                 }
 
-                // var sampleAppService = scope.ServiceProvider.GetRequiredService<ISampleAppService>();
-                // for (var i = 1; i <= 10; i++)
-                // {
-                //     await sampleAppService.InsertOperation(i);
-                //     Console.WriteLine("Published: {0}", i);
-                // }
+                var sampleAppService = scope.ServiceProvider.GetRequiredService<ISampleAppService>();
+                for (var i = 1; i <= 100; i++)
+                {
+                    await sampleAppService.InsertOperation(i);
+                    Console.WriteLine("Published: {0}", i);
+                }
             }
 
             Console.WriteLine("Starting web host ({0})...", AppName);

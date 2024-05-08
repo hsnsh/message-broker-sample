@@ -8,7 +8,7 @@ public sealed class InsertWorkerService : BaseWorkerService<InsertWorkerService>
     private readonly IServiceScopeFactory _serviceScopeFactory;
 
     public InsertWorkerService(ILogger<InsertWorkerService> logger, IServiceScopeFactory serviceScopeFactory)
-        : base(logger, workerCount: 50)
+        : base(logger, workerCount: 20)
     {
         _logger = logger;
         _serviceScopeFactory = serviceScopeFactory;
