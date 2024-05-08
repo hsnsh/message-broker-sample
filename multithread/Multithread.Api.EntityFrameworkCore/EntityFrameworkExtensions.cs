@@ -16,6 +16,7 @@ public static class EntityFrameworkExtensions
 
         services.AddDbContext<SampleEfCoreDbContext>(options =>
             {
+                // options.EnableThreadSafetyChecks(false);
                 options.UseNpgsql(configuration.GetConnectionString("SampleDb"), sqlOptions =>
                 {
                     sqlOptions.MigrationsHistoryTable("__EFMigrationsHistory");
@@ -24,9 +25,9 @@ public static class EntityFrameworkExtensions
                     sqlOptions.CommandTimeout(30000);
                     sqlOptions.MaxBatchSize(100);
                 });
+                options.EnableSensitiveDataLogging(false);
                 // options.UseLoggerFactory(LoggerFactory.Create(builder => builder.AddConsole()));
-                options.EnableSensitiveDataLogging(true);
-                // options.EnableThreadSafetyChecks(false);
+                // options.EnableSensitiveDataLogging(true);
             }
             , ServiceLifetime.Transient
         );
