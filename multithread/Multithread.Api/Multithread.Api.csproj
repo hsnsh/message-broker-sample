@@ -7,13 +7,13 @@
 
     <ItemGroup>
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3"/>
-        <ProjectReference Include="..\..\..\..\..\org\hsn-soft\base-framework\src\HsnSoft.Base.AspNetCore.Serilog\HsnSoft.Base.AspNetCore.Serilog.csproj"/>
-
+        <PackageReference Include="HsnSoft.Base.AspNetCore.Serilog" Version="2024.6.33"/>
+        <!--<ProjectReference Include="..\..\..\..\..\org\hsn-soft\base-framework\src\HsnSoft.Base.AspNetCore.Serilog\HsnSoft.Base.AspNetCore.Serilog.csproj"/>-->
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Multithread.Api.EntityFrameworkCore\Multithread.Api.EntityFrameworkCore.csproj" />
-<!--      <ProjectReference Include="..\Multithread.Api.MongoDb\Multithread.Api.MongoDb.csproj" />-->
+        <ProjectReference Include="..\Multithread.Api.EntityFrameworkCore\Multithread.Api.EntityFrameworkCore.csproj"/>
+        <!--<ProjectReference Include="..\Multithread.Api.MongoDb\Multithread.Api.MongoDb.csproj" />-->
     </ItemGroup>
-    
+
 </Project>

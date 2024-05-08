@@ -7,11 +7,8 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.18"/>
-<!--        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.18"/>-->
-<!--        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="7.0.18"/>-->
-<!--        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.11"/>-->
-
-        <ProjectReference Include="..\..\..\..\..\org\hsn-soft\base-framework\src\HsnSoft.Base.EntityFrameworkCore.PostgreSql\HsnSoft.Base.EntityFrameworkCore.PostgreSql.csproj"/>
+        <PackageReference Include="HsnSoft.Base.EntityFrameworkCore.PostgreSql" Version="2024.6.33"/>
+        <!--<ProjectReference Include="..\..\..\..\..\org\hsn-soft\base-framework\src\HsnSoft.Base.EntityFrameworkCore.PostgreSql\HsnSoft.Base.EntityFrameworkCore.PostgreSql.csproj"/>-->
     </ItemGroup>
 
     <ItemGroup>

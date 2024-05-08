@@ -28,11 +28,11 @@ public static class EntityFrameworkExtensions
                 // options.UseLoggerFactory(LoggerFactory.Create(builder => builder.AddConsole()));
                 // options.EnableSensitiveDataLogging(true);
             }
-            , contextLifetime: ServiceLifetime.Scoped
+            , contextLifetime: ServiceLifetime.Scoped   // Must be Scoped => Cannot consume any scoped service and CurrentUser object creation on constructor
             , optionsLifetime: ServiceLifetime.Singleton
         );
 
-        // Must be Scoped or Transient => Cannot consume any scoped service
+        // Must be Scoped => Cannot consume any scoped service and CurrentUser object creation on constructor
         services.AddScoped(typeof(IContentGenericRepository<>), typeof(EfCoreContentGenericRepository<>));
 
         return services;

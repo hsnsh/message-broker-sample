@@ -6,8 +6,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-<!--        <PackageReference Include="MongoDB.Driver" Version="2.25.0"/>-->
-        <ProjectReference Include="..\..\..\..\..\org\hsn-soft\base-framework\src\HsnSoft.Base.MongoDB\HsnSoft.Base.MongoDB.csproj"/>
+        <PackageReference Include="HsnSoft.Base.MongoDB" Version="2024.6.33"/>
+        <!--<ProjectReference Include="..\..\..\..\..\org\hsn-soft\base-framework\src\HsnSoft.Base.MongoDB\HsnSoft.Base.MongoDB.csproj"/>-->
     </ItemGroup>
 
     <ItemGroup>

@@ -21,9 +21,10 @@ public static class MongoDbExtensions
         MongoConfigure();
         MongoClassMap.RegisterClassMaps();
 
+        // Must be Scoped => Cannot consume any scoped service and CurrentUser object creation on constructor
         services.AddScoped<SampleMongoDbContext>();
 
-        // Must be Scoped or Transient => Cannot consume any scoped service
+        // Must be Scoped => Cannot consume any scoped service and CurrentUser object creation on constructor
         services.AddScoped(typeof(IContentGenericRepository<>), typeof(MongoContentGenericRepository<>));
 
         return services;
