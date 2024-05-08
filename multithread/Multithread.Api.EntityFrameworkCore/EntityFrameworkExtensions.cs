@@ -19,7 +19,7 @@ public static class EntityFrameworkExtensions
                 options.UseNpgsql(configuration.GetConnectionString("SampleDb"), sqlOptions =>
                 {
                     sqlOptions.MigrationsHistoryTable("__EFMigrationsHistory");
-                    sqlOptions.MigrationsAssembly(typeof(SampleEfCoreDbContext).Namespace);
+                    sqlOptions.MigrationsAssembly(typeof(SampleEfCoreDbContext).Assembly.GetName().Name);
                     sqlOptions.EnableRetryOnFailure(10, TimeSpan.FromSeconds(6), null);
                     sqlOptions.CommandTimeout(30000);
                     sqlOptions.MaxBatchSize(100);
