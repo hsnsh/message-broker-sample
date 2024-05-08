@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.version.props"/>
+    
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3"/>
+        <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="8.0.0"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <!--<ProjectReference Include="..\..\..\..\..\org\hsn-soft\base-framework\src\HsnSoft.Base.AspNetCore\HsnSoft.Base.AspNetCore.csproj"/>-->
+        <!--<ProjectReference Include="..\..\..\..\..\org\hsn-soft\base-framework\src\HsnSoft.Base.EventBus.Kafka\HsnSoft.Base.EventBus.Kafka.csproj"/>-->
+        <!--<ProjectReference Include="..\..\..\..\..\org\hsn-soft\base-framework\src\HsnSoft.Base.EventBus.RabbitMQ\HsnSoft.Base.EventBus.RabbitMQ.csproj"/>-->
+        <!--<ProjectReference Include="..\..\..\..\..\org\hsn-soft\base-framework\src\HsnSoft.Base.Ddd.Application\HsnSoft.Base.Ddd.Application.csproj"/>-->
+        <PackageReference Include="HsnSoft.Base.AspNetCore" Version="$(HsnSoftFrameworkVersion)"/>
+        <PackageReference Include="HsnSoft.Base.EventBus.Kafka" Version="$(HsnSoftFrameworkVersion)"/>
+        <PackageReference Include="HsnSoft.Base.EventBus.RabbitMQ" Version="$(HsnSoftFrameworkVersion)"/>
+        <PackageReference Include="HsnSoft.Base.Ddd.Application" Version="$(HsnSoftFrameworkVersion)"/>
+    </ItemGroup>
+
+</Project>

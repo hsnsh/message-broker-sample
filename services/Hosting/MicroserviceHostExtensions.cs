@@ -26,18 +26,11 @@ public static class MicroserviceHostExtensions
 {
     public static IServiceCollection ConfigureMicroserviceHost(this IServiceCollection services)
     {
-        services.AddOptions();
-
-        services.AddBaseMultiTenancyServiceCollection();
-        services.AddBaseSecurityServiceCollection();
-        services.AddBaseTimingServiceCollection();
-        services.AddBaseAuditingServiceCollection();
-        services.AddBaseDataServiceCollection();
-        services.AddBaseAspNetCoreServiceCollection();
+        services.AddBaseAspNetCoreContextCollection();
         services.AddBaseAspNetCoreJsonLocalization();
+        services.AddBaseMultiTenancyServiceCollection();
+        services.AddBaseTimingServiceCollection();
         services.AddEndpointsApiExplorer();
-        services.AddHttpContextAccessor();
-        
         services.AddControllers();
 
         return services;
