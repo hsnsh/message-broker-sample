@@ -19,9 +19,9 @@ public static class EntityFrameworkExtensions
                 options.UseNpgsql(configuration.GetConnectionString("SampleDb"), sqlOptions =>
                 {
                     sqlOptions.MigrationsHistoryTable("__EFMigrationsHistory");
-                    // sqlOptions.MigrationsAssembly(assemblyReference.Assembly.GetName().Name);
                     sqlOptions.MigrationsAssembly(typeof(SampleEfCoreDbContext).Namespace);
-                    sqlOptions.EnableRetryOnFailure(30, TimeSpan.FromSeconds(6), null);
+                    sqlOptions.EnableRetryOnFailure(10, TimeSpan.FromSeconds(6), null);
+                    sqlOptions.CommandTimeout(30000);
                     sqlOptions.MaxBatchSize(100);
                 });
                 // options.UseLoggerFactory(LoggerFactory.Create(builder => builder.AddConsole()));
@@ -31,9 +31,8 @@ public static class EntityFrameworkExtensions
             , ServiceLifetime.Transient
         );
 
-        // services.AddTransient(typeof(IEfCoreGenericRepository<,,>), typeof(EfCoreGenericRepository<,,>));
-        services.AddTransient(typeof(IContentGenericRepository<>), typeof(EfCoreContentGenericRepository<>));
-        // services.AddScoped(typeof(ThreadLockEfCoreRepository<,>));
+        // Must be Scoped or Transient => Cannot consume scoped service 'Microsoft.EntityFrameworkCore.DbContextOptions`
+        services.AddScoped(typeof(IContentGenericRepository<>), typeof(EfCoreContentGenericRepository<>));
 
         return services;
     }

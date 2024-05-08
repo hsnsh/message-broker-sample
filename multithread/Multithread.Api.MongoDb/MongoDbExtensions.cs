@@ -23,7 +23,8 @@ public static class MongoDbExtensions
 
         services.AddSingleton<SampleMongoDbContext>();
 
-        services.AddSingleton(typeof(IContentGenericRepository<>), typeof(MongoContentGenericRepository<>));
+        // Must be Scoped or Transient => Cannot consume any scoped service
+        services.AddScoped(typeof(IContentGenericRepository<>), typeof(MongoContentGenericRepository<>));
 
         return services;
     }
