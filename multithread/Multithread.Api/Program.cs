@@ -42,12 +42,12 @@ internal class Program
                     Console.WriteLine(e.Message);
                 }
 
-                var sampleAppService = scope.ServiceProvider.GetRequiredService<ISampleAppService>();
-                for (var i = 1; i <= 100; i++)
-                {
-                    await sampleAppService.InsertOperation(i);
-                    Console.WriteLine("Published: {0}", i);
-                }
+                // var sampleAppService = scope.ServiceProvider.GetRequiredService<ISampleAppService>();
+                // for (var i = 1; i <= 100; i++)
+                // {
+                //     await sampleAppService.InsertOperation(i);
+                //     Console.WriteLine("Published: {0}", i);
+                // }
             }
 
             Console.WriteLine("Starting web host ({0})...", AppName);
@@ -81,8 +81,8 @@ internal class Program
             .ConfigureServices(x =>
             {
                 x.AddHostedService<InsertWorkerService>();
-                x.AddHostedService<UpdateWorkerService>();
-                x.AddHostedService<DeleteWorkerService>();
+                // x.AddHostedService<UpdateWorkerService>();
+                // x.AddHostedService<DeleteWorkerService>();
             })
             .Build();
 

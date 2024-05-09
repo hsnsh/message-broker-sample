@@ -12,6 +12,7 @@ public class SampleDbContextFactory : IDesignTimeDbContextFactory<SampleEfCoreDb
                 b =>
                 {
                     b.MigrationsHistoryTable("__EFMigrationsHistory");
+                    b.MigrationsAssembly(typeof(SampleEfCoreDbContext).Assembly.GetName().Name);
                 });
 
         return new SampleEfCoreDbContext(null, builder.Options);
