@@ -154,31 +154,39 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         var eventName = eventType.Name;
         eventName = TrimEventName(eventName);
 
-        if (!_subsManager.HasSubscriptionsForEvent(eventName))
-        {
-            if (!_persistentConnection.IsConnected)
-            {
-                _persistentConnection.TryConnect();
-            }
-
-            _consumerChannel?.QueueDeclare(queue: GetConsumerQueueName(eventName), //Ensure queue exists while consuming
-                durable: true,
-                exclusive: false,
-                autoDelete: false,
-                arguments: null);
-
-            // take thread count message per consumer
-            _consumerChannel?.BasicQos(0, _rabbitMqEventBusConfig.ConsumerMaxFetchCount, false);
-
-            _consumerChannel?.QueueBind(queue: GetConsumerQueueName(eventName),
-                exchange: _rabbitMqEventBusConfig.ExchangeName,
-                routingKey: eventName);
-        }
-
+        AddQueueBindForEventSubscription(eventName);
+        
         _logger.LogInformation("RabbitMQ | Subscribing to event {EventName} with {EventHandler}", eventName, eventHandlerType.Name);
 
         _subsManager.AddSubscription(eventType, eventHandlerType);
         StartBasicConsume(eventName);
+    }
+
+    private void AddQueueBindForEventSubscription(string eventName)
+    {
+        var containsKey = _subsManager.HasSubscriptionsForEvent(eventName);
+        if (containsKey)
+        {
+            return;
+        }
+
+        if (!_persistentConnection.IsConnected)
+        {
+            _persistentConnection.TryConnect();
+        }
+
+        _consumerChannel?.QueueDeclare(queue: GetConsumerQueueName(eventName), //Ensure queue exists while consuming
+            durable: true,
+            exclusive: false,
+            autoDelete: false,
+            arguments: null);
+
+        // take thread count message per consumer
+        _consumerChannel?.BasicQos(0, _rabbitMqEventBusConfig.ConsumerMaxFetchCount, false);
+
+        _consumerChannel?.QueueBind(queue: GetConsumerQueueName(eventName),
+            exchange: _rabbitMqEventBusConfig.ExchangeName,
+            routingKey: eventName);
     }
 
     public void Unsubscribe<T, TH>() where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>

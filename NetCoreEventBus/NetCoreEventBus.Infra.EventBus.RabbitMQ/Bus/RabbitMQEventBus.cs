@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System.Collections.Concurrent;
+using Microsoft.Extensions.Logging;
 using NetCoreEventBus.Infra.EventBus.Bus;
 using NetCoreEventBus.Infra.EventBus.Events;
 using NetCoreEventBus.Infra.EventBus.RabbitMQ.Connection;
@@ -8,22 +9,12 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
 using System.Net.Sockets;
-using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace NetCoreEventBus.Infra.EventBus.RabbitMQ.Bus;
 
-/// <summary>
-/// Event Bus implementation that uses RabbitMQ as the message broker.
-/// The implementation is based on eShopOnContainers (Microsoft's tutorial about microservices in .NET Core), but it implements some features I have found that are based in different libraries.
-/// 
-/// References:
-/// - https://docs.microsoft.com/en-us/dotnet/architecture/microservices/multi-container-microservice-net-applications/integration-event-based-microservice-communications
-/// - https://docs.microsoft.com/en-us/dotnet/architecture/microservices/multi-container-microservice-net-applications/rabbitmq-event-bus-development-test-environment
-/// - https://github.com/ojdev/RabbitMQ.EventBus.AspNetCore
-/// </summary>
 public class RabbitMQEventBus : IEventBus
 {
     private readonly string _exchangeName;
@@ -37,7 +28,12 @@ public class RabbitMQEventBus : IEventBus
 
     private readonly ILogger<RabbitMQEventBus> _logger;
 
-    private IModel _consumerChannel;
+    // private IModel _consumerChannel;
+    private readonly ConcurrentDictionary<string, IModel> consumerChannels;
+    private readonly List<Task> _consumerTasks;
+
+    private const int prefetchCount = 2;
+    private readonly SemaphoreSlim consumerPrefetchSemaphore;
 
     public RabbitMQEventBus(
         IPersistentConnection persistentConnection,
@@ -54,7 +50,12 @@ public class RabbitMQEventBus : IEventBus
         _exchangeName = brokerName ?? throw new ArgumentNullException(nameof(brokerName));
         _queueName = queueName ?? throw new ArgumentNullException(nameof(queueName));
 
-        ConfigureMessageBroker();
+        _subscriptionsManager.OnEventRemoved += SubscriptionManager_OnEventRemoved;
+        // _persistentConnection.OnReconnectedAfterConnectionFailure += PersistentConnection_OnReconnectedAfterConnectionFailure;
+
+        consumerChannels = new ConcurrentDictionary<string, IModel>();
+        _consumerTasks = new List<Task>();
+        consumerPrefetchSemaphore = new SemaphoreSlim(prefetchCount);
     }
 
     public void Publish<TEvent>(TEvent @event)
@@ -117,9 +118,36 @@ public class RabbitMQEventBus : IEventBus
         _logger.LogInformation("Subscribing to event {EventName} with {EventHandler}...", eventName, eventHandlerName);
 
         _subscriptionsManager.AddSubscription<TEvent, TEventHandler>();
-        StartBasicConsume();
+
+        for (int i = 0; i < 1; i++)
+        {
+            StartBasicConsume();
+        }
 
         _logger.LogInformation("Subscribed to event {EventName} with {EvenHandler}.", eventName, eventHandlerName);
+    }
+
+    private void AddQueueBindForEventSubscription(string eventName)
+    {
+        var containsKey = _subscriptionsManager.HasSubscriptionsForEvent(eventName);
+        if (containsKey)
+        {
+            return;
+        }
+
+        using (var channel = CreateConsumerChannel())
+        {
+            channel.QueueDeclare
+            (
+                queue: _queueName,
+                durable: true,
+                exclusive: false,
+                autoDelete: false,
+                arguments: null
+            );
+
+            channel.QueueBind(queue: _queueName, exchange: _exchangeName, routingKey: eventName);
+        }
     }
 
     public void Unsubscribe<TEvent, TEventHandler>()
@@ -135,13 +163,6 @@ public class RabbitMQEventBus : IEventBus
         _logger.LogInformation("Unsubscribed from event {EventName}.", eventName);
     }
 
-    private void ConfigureMessageBroker()
-    {
-        _consumerChannel = CreateConsumerChannel();
-        _subscriptionsManager.OnEventRemoved += SubscriptionManager_OnEventRemoved;
-        _persistentConnection.OnReconnectedAfterConnectionFailure += PersistentConnection_OnReconnectedAfterConnectionFailure;
-    }
-
     private IModel CreateConsumerChannel()
     {
         if (!_persistentConnection.IsConnected)
@@ -155,93 +176,74 @@ public class RabbitMQEventBus : IEventBus
 
         channel.ExchangeDeclare(exchange: _exchangeName, type: "direct");
 
-        // take thread count message per consumer
-        channel.BasicQos(0, 1, false);
-
-        channel.QueueDeclare
-        (
-            queue: _queueName,
-            durable: true,
-            exclusive: false,
-            autoDelete: false,
-            arguments: null
-        );
-
-        channel.CallbackException += (sender, ea) =>
-        {
-            _logger.LogWarning(ea.Exception, "Recreating RabbitMQ consumer channel...");
-            DoCreateConsumerChannel();
-        };
-
-        _logger.LogTrace("Created RabbitMQ consumer channel.");
-
-
         return channel;
     }
 
     private void StartBasicConsume()
     {
-        _logger.LogTrace("Starting RabbitMQ basic consume...");
+        _logger.LogTrace("Creating RabbitMQ consumer channel...");
 
-        if (_consumerChannel == null)
+        var channel = CreateConsumerChannel();
+        if (channel == null)
         {
             _logger.LogError("Could not start basic consume because consumer channel is null.");
             return;
         }
 
-        var consumer = new AsyncEventingBasicConsumer(_consumerChannel);
-        consumer.Received += Consumer_Received;
+        _logger.LogTrace("Starting RabbitMQ basic consume...");
+        channel.BasicQos(0, prefetchCount, false);
+        var consumer = new AsyncEventingBasicConsumer(channel);
+        consumer.Received += ConsumerReceived;
+        channel.BasicConsume(queue: _queueName, autoAck: false, consumer: consumer);
 
-        _consumerChannel.BasicConsume
-        (
-            queue: _queueName,
-            autoAck: false,
-            consumer: consumer
-        );
-
-        _logger.LogTrace("Started RabbitMQ basic consume.");
+        consumerChannels.TryAdd(_queueName + "_" + channel.ChannelNumber, channel);
     }
 
-    private async Task Consumer_Received(object sender, BasicDeliverEventArgs eventArgs)
+    private async Task ConsumerReceived(object sender, BasicDeliverEventArgs eventArgs)
     {
+        await consumerPrefetchSemaphore.WaitAsync();
+
         var eventName = eventArgs.RoutingKey;
         var message = Encoding.UTF8.GetString(eventArgs.Body.Span);
 
-        bool isAcknowledged = false;
-
-        try
+        _consumerTasks.Add(Task.Run(() =>
         {
+            bool isAcknowledged = false;
+
             _logger.LogInformation($"[ConsumerTag: {(sender as AsyncEventingBasicConsumer).ConsumerTags.FirstOrDefault() ?? string.Empty}]");
-
-            //Console.WriteLine($"[ConsumerTag: {(ch as EventingBasicConsumer).ConsumerTag}]  [{DateTime.Now}]  [Message: {message}]  [Thread Name: {Thread.CurrentThread.Name}]  [Thread Number: {Thread.CurrentThread.ManagedThreadId}]");
-
-
-            await ProcessEvent(eventName, message);
-
-            _consumerChannel.BasicAck(eventArgs.DeliveryTag, multiple: false);
-            isAcknowledged = true;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Error processing the following message: {Message}.", message);
-        }
-        finally
-        {
-            if (!isAcknowledged)
+            try
             {
-                await TryEnqueueMessageAgainAsync(eventArgs);
+                //Console.WriteLine($"[ConsumerTag: {(ch as EventingBasicConsumer).ConsumerTag}]  [{DateTime.Now}]  [Message: {message}]  [Thread Name: {Thread.CurrentThread.Name}]  [Thread Number: {Thread.CurrentThread.ManagedThreadId}]");
+
+                ProcessEvent(eventName, message).GetAwaiter().GetResult();
+
+                (sender as AsyncEventingBasicConsumer).Model.BasicAck(eventArgs.DeliveryTag, multiple: false);
+                isAcknowledged = true;
             }
-        }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error processing the following message: {Message}.", message);
+            }
+            finally
+            {
+                if (!isAcknowledged)
+                {
+                    TryEnqueueMessageAgainAsync((sender as AsyncEventingBasicConsumer).Model, eventArgs).GetAwaiter().GetResult();
+                }
+
+                consumerPrefetchSemaphore.Release();
+            }
+        }));
     }
 
-    private async Task TryEnqueueMessageAgainAsync(BasicDeliverEventArgs eventArgs)
+    private async Task TryEnqueueMessageAgainAsync(IModel consumerChannel, BasicDeliverEventArgs eventArgs)
     {
         try
         {
             _logger.LogWarning("Adding message to queue again with {Time} seconds delay...", $"{_subscribeRetryTime.TotalSeconds:n1}");
 
             await Task.Delay(_subscribeRetryTime);
-            _consumerChannel.BasicNack(eventArgs.DeliveryTag, false, true);
+            consumerChannel.BasicNack(eventArgs.DeliveryTag, false, true);
 
             _logger.LogTrace("Message added to queue again.");
         }
@@ -297,58 +299,39 @@ public class RabbitMQEventBus : IEventBus
 
             if (_subscriptionsManager.IsEmpty)
             {
-                _consumerChannel.Close();
+                // TODO:  _consumerChannel.Close();
             }
         }
     }
 
-    private void AddQueueBindForEventSubscription(string eventName)
-    {
-        var containsKey = _subscriptionsManager.HasSubscriptionsForEvent(eventName);
-        if (containsKey)
-        {
-            return;
-        }
+    // private void PersistentConnection_OnReconnectedAfterConnectionFailure(object sender, EventArgs e)
+    // {
+    //     DoCreateConsumerChannel();
+    //     RecreateSubscriptions();
+    // }
+    //
+    // private void DoCreateConsumerChannel()
+    // {
+    //     _consumerChannel.Dispose();
+    //     _consumerChannel = CreateConsumerChannel();
+    //     StartBasicConsume();
+    // }
 
-        if (!_persistentConnection.IsConnected)
-        {
-            _persistentConnection.TryConnect();
-        }
-
-        using (var channel = _persistentConnection.CreateModel())
-        {
-            channel.QueueBind(queue: _queueName, exchange: _exchangeName, routingKey: eventName);
-        }
-    }
-
-    private void PersistentConnection_OnReconnectedAfterConnectionFailure(object sender, EventArgs e)
-    {
-        DoCreateConsumerChannel();
-        RecreateSubscriptions();
-    }
-
-    private void DoCreateConsumerChannel()
-    {
-        _consumerChannel.Dispose();
-        _consumerChannel = CreateConsumerChannel();
-        StartBasicConsume();
-    }
-
-    private void RecreateSubscriptions()
-    {
-        var subscriptions = _subscriptionsManager.GetAllSubscriptions();
-        _subscriptionsManager.Clear();
-
-        Type eventBusType = this.GetType();
-        MethodInfo genericSubscribe;
-
-        foreach (var entry in subscriptions)
-        {
-            foreach (var subscription in entry.Value)
-            {
-                genericSubscribe = eventBusType.GetMethod("Subscribe").MakeGenericMethod(subscription.EventType, subscription.HandlerType);
-                genericSubscribe.Invoke(this, null);
-            }
-        }
-    }
+    // private void RecreateSubscriptions()
+    // {
+    //     var subscriptions = _subscriptionsManager.GetAllSubscriptions();
+    //     _subscriptionsManager.Clear();
+    //
+    //     Type eventBusType = this.GetType();
+    //     MethodInfo genericSubscribe;
+    //
+    //     foreach (var entry in subscriptions)
+    //     {
+    //         foreach (var subscription in entry.Value)
+    //         {
+    //             genericSubscribe = eventBusType.GetMethod("Subscribe").MakeGenericMethod(subscription.EventType, subscription.HandlerType);
+    //             genericSubscribe.Invoke(this, null);
+    //         }
+    //     }
+    // }
 }
