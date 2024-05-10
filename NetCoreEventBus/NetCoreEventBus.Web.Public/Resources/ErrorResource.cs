@@ -1,4 +1,4 @@
-﻿namespace NetCoreEventBus.Web.Resources;
+﻿namespace NetCoreEventBus.Web.Public.Resources;
 
 public class ErrorResource
 {

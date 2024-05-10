@@ -1,4 +1,4 @@
-namespace NetCoreEventBus.Web.Dtos;
+namespace NetCoreEventBus.Web.Public.Dtos;
 
 public sealed class TestDto
 {

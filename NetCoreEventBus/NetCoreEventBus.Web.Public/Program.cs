@@ -1,4 +1,4 @@
-namespace NetCoreEventBus.Web;
+namespace NetCoreEventBus.Web.Public;
 
 public class Program
 {

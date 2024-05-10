@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using NetCoreEventBus.Infra.EventBus.Bus;
-using NetCoreEventBus.Web.Dtos;
-using NetCoreEventBus.Web.IntegrationEvents.Events;
+using NetCoreEventBus.Web.Public.Dtos;
+using NetCoreEventBus.Web.Public.IntegrationEvents.Events;
 
-namespace NetCoreEventBus.Web.Controllers;
+namespace NetCoreEventBus.Web.Public.Controllers;
 
 [ApiController]
 [Route("api/event-bus")]

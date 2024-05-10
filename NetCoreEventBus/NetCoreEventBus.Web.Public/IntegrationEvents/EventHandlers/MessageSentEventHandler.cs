@@ -1,7 +1,7 @@
 ﻿using NetCoreEventBus.Infra.EventBus.Events;
-using NetCoreEventBus.Web.IntegrationEvents.Events;
+using NetCoreEventBus.Web.Public.IntegrationEvents.Events;
 
-namespace NetCoreEventBus.Web.IntegrationEvents.EventHandlers;
+namespace NetCoreEventBus.Web.Public.IntegrationEvents.EventHandlers;
 
 public class MessageSentEventHandler : IEventHandler<MessageSentEvent>
 {

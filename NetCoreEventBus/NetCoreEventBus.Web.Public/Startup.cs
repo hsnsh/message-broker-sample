@@ -1,12 +1,12 @@
+using System.Reflection;
 using Microsoft.OpenApi.Models;
 using NetCoreEventBus.Infra.EventBus.Bus;
 using NetCoreEventBus.Infra.EventBus.RabbitMQ.Extensions;
-using NetCoreEventBus.Web.Controllers.Configurations;
-using NetCoreEventBus.Web.IntegrationEvents.EventHandlers;
-using NetCoreEventBus.Web.IntegrationEvents.Events;
-using System.Reflection;
+using NetCoreEventBus.Web.Public.Controllers.Configurations;
+using NetCoreEventBus.Web.Public.IntegrationEvents.EventHandlers;
+using NetCoreEventBus.Web.Public.IntegrationEvents.Events;
 
-namespace NetCoreEventBus.Web;
+namespace NetCoreEventBus.Web.Public;
 
 public class Startup
 {

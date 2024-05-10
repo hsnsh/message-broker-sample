@@ -1,6 +1,6 @@
 ﻿using NetCoreEventBus.Infra.EventBus.Events;
 
-namespace NetCoreEventBus.Web.IntegrationEvents.Events;
+namespace NetCoreEventBus.Web.Public.IntegrationEvents.Events;
 
 // Integration Events notes (from eShopOnContainers sample code): 
 // An Event is “something that has happened in the past”. An Integration Event is an event that can cause side effects to other microsrvices, 

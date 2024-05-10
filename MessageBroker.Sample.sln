@@ -45,7 +45,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetCoreEventBus.Infra.Event
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetCoreEventBus.Infra.EventBus.Subscriptions.InMemory", "NetCoreEventBus\NetCoreEventBus.Infra.EventBus.Subscriptions.InMemory\NetCoreEventBus.Infra.EventBus.Subscriptions.InMemory.csproj", "{CF32AE2D-EABB-4965-BA99-E1D79102D218}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetCoreEventBus.Web", "NetCoreEventBus\NetCoreEventBus.Web\NetCoreEventBus.Web.csproj", "{14A937EE-FE8E-40AB-9C3B-76BFA816209B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetCoreEventBus.Web.Public", "NetCoreEventBus\NetCoreEventBus.Web.Public\NetCoreEventBus.Web.Public.csproj", "{14A937EE-FE8E-40AB-9C3B-76BFA816209B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

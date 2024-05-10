@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace NetCoreEventBus.Web.Extensions;
+namespace NetCoreEventBus.Web.Public.Extensions;
 
 public static class ModelStateExtensions
 {

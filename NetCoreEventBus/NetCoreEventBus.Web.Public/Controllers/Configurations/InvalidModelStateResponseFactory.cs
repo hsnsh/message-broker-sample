@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using NetCoreEventBus.Web.Extensions;
-using NetCoreEventBus.Web.Resources;
+using NetCoreEventBus.Web.Public.Extensions;
+using NetCoreEventBus.Web.Public.Resources;
 
-namespace NetCoreEventBus.Web.Controllers.Configurations;
+namespace NetCoreEventBus.Web.Public.Controllers.Configurations;
 
 public static class InvalidModelStateResponseFactory
 {
