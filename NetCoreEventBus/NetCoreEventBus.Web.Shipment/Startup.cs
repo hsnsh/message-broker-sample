@@ -1,5 +1,8 @@
 using NetCoreEventBus.Infra.EventBus.Bus;
 using NetCoreEventBus.Infra.EventBus.RabbitMQ.Extensions;
+using NetCoreEventBus.Shared.Events;
+using NetCoreEventBus.Web.Shipment.IntegrationEvents.EventHandlers;
+using NetCoreEventBus.Web.Shipment.Services;
 
 namespace NetCoreEventBus.Web.Shipment;
 
@@ -24,6 +27,9 @@ public class Startup
             services.AddSwaggerGen();
         }
 
+        // Must be Scoped or Transient => Cannot consume any scoped service
+        services.AddScoped<IShipmentService, ShipmentService>();
+        
         // Here we configure the event bus
         ConfigureEventBusDependencies(services);
     }
@@ -56,11 +62,12 @@ public class Startup
         (
             connectionUrl: rabbitMQSection["ConnectionUrl"],
             brokerName: "netCoreEventBusBroker",
-            queueName: "netCoreEventBusQueue",
+            queueName: "netCoreEventBusShipmentQueue",
             timeoutBeforeReconnecting: 15
         );
 
-        // services.AddTransient<MessageSentEventHandler>();
+        services.AddTransient<OrderShippingStartedEtoHandler>();
+        services.AddTransient<ShipmentStartedEtoHandler>();
     }
 
     private void ConfigureEventBusHandlers(IApplicationBuilder app)
@@ -68,6 +75,7 @@ public class Startup
         var eventBus = app.ApplicationServices.GetRequiredService<IEventBus>();
 
         // Here you add the event handlers for each intergration event.
-        // eventBus.Subscribe<MessageSentEvent, MessageSentEventHandler>();
+        eventBus.Subscribe<OrderShippingStartedEto, OrderShippingStartedEtoHandler>();
+        eventBus.Subscribe<ShipmentStartedEto, ShipmentStartedEtoHandler>();
     }
 }

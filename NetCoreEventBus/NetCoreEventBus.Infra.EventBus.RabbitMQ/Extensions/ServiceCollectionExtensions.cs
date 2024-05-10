@@ -4,7 +4,6 @@ using NetCoreEventBus.Infra.EventBus.Bus;
 using NetCoreEventBus.Infra.EventBus.RabbitMQ.Bus;
 using NetCoreEventBus.Infra.EventBus.RabbitMQ.Connection;
 using NetCoreEventBus.Infra.EventBus.Subscriptions;
-using NetCoreEventBus.Infra.EventBus.Subscriptions.InMemory;
 using RabbitMQ.Client;
 
 namespace NetCoreEventBus.Infra.EventBus.RabbitMQ.Extensions;

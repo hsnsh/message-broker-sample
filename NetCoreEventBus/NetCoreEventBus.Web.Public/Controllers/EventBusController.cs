@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using NetCoreEventBus.Infra.EventBus.Bus;
+using NetCoreEventBus.Shared.Events;
 using NetCoreEventBus.Web.Public.Dtos;
-using NetCoreEventBus.Web.Public.IntegrationEvents.Events;
 
 namespace NetCoreEventBus.Web.Public.Controllers;
 
@@ -26,8 +26,14 @@ public class EventBusController : Controller
     [ProducesResponseType(typeof(string), 200)]
     public IActionResult SendMessage([FromBody] TestDto input)
     {
-        input ??= new TestDto() { TestMessage = "" };
-        _eventBus.Publish(new MessageSentEvent { Message = input.TestMessage });
+        input ??= new TestDto();
+        if (input.TestCount < 1) input.TestCount = 1;
+
+        for (var i = 0; i < input.TestCount; i++)
+        {
+            _eventBus.Publish(new OrderStartedEto(Guid.NewGuid()));
+        }
+
         return Ok("Message sent.");
     }
 }

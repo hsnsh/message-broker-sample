@@ -12,9 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\NetCoreEventBus.Infra.EventBus.RabbitMQ\NetCoreEventBus.Infra.EventBus.RabbitMQ.csproj" />
-        <ProjectReference Include="..\NetCoreEventBus.Infra.EventBus.Subscriptions.InMemory\NetCoreEventBus.Infra.EventBus.Subscriptions.InMemory.csproj" />
-        <ProjectReference Include="..\NetCoreEventBus.Infra.EventBus\NetCoreEventBus.Infra.EventBus.csproj" />
+        <ProjectReference Include="..\NetCoreEventBus.Shared\NetCoreEventBus.Shared.csproj" />
     </ItemGroup>
 
 </Project>

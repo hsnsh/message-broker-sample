@@ -1,6 +1,6 @@
 ﻿using NetCoreEventBus.Infra.EventBus.Events;
 
-namespace NetCoreEventBus.Infra.EventBus.Subscriptions.InMemory;
+namespace NetCoreEventBus.Infra.EventBus.Subscriptions;
 
 public class InMemoryEventBusSubscriptionManager : IEventBusSubscriptionManager
 {
