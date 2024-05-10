@@ -31,7 +31,7 @@ public class EventBusController : Controller
 
         for (var i = 0; i < input.TestCount; i++)
         {
-            _eventBus.Publish(new OrderStartedEto(Guid.NewGuid()));
+            _eventBus.Publish(new OrderStartedEto(Guid.NewGuid(), i + 1));
         }
 
         return Ok("Message sent.");

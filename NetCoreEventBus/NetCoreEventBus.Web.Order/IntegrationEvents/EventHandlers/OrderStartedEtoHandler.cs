@@ -17,7 +17,8 @@ public class OrderStartedEtoHandler : IEventHandler<OrderStartedEto>
 
     public async Task HandleAsync(OrderStartedEto @event)
     {
-        _logger.LogInformation("OrderStarted BEGIN => OrderId{OrderId}", @event.OrderId.ToString());
+        _logger.LogInformation("OrderStarted BEGIN => OrderNo{OrderNo}", @event.OrderNo.ToString());
         await _orderService.OrderStartedAsync(@event);
+        _logger.LogInformation("OrderStarted END => OrderNo{OrderNo}", @event.OrderNo.ToString());
     }
 }

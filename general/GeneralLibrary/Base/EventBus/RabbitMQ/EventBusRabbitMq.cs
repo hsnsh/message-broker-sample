@@ -284,6 +284,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
     private void ConsumerReceived([CanBeNull] object sender, BasicDeliverEventArgs eventArgs)
     {
         if (_disposed) return;
+        semaphore.Wait();
         _consuming = true;
 
         var eventName = eventArgs.RoutingKey;
@@ -295,8 +296,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         eventName = TrimEventName(eventName);
 
         _logger.LogDebug("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Consume STARTED", _rabbitMqEventBusConfig.ClientInfo, eventName);
-
-        semaphore.Wait();
+       
         var message = Encoding.UTF8.GetString(eventArgs.Body.ToArray());
         Task.Run(() =>
         {
