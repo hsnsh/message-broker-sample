@@ -35,11 +35,12 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<IEventBus, RabbitMQEventBus>(sp =>
         {
+            var factory = sp.GetService<IServiceScopeFactory>();
             var persistentConnection = sp.GetService<IPersistentConnection>();
             var subscriptionManager = sp.GetService<IEventBusSubscriptionManager>();
             var logger = sp.GetService<ILogger<RabbitMQEventBus>>();
 
-            return new RabbitMQEventBus(sp, persistentConnection, subscriptionManager, logger, brokerName, queueName);
+            return new RabbitMQEventBus(factory, persistentConnection, subscriptionManager, logger, brokerName, queueName);
         });
     }
 }

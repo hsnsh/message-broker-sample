@@ -13,26 +13,27 @@ namespace NetCoreEventBus.Infra.EventBus.RabbitMQ.Bus;
 public sealed class RabbitMqConsumer : IDisposable
 {
     private const int MaxWaitDisposeTime = 30000;
-    private const int prefetchCount = 1;
+    private const int prefetchCount = 10;
     private readonly TimeSpan _subscribeRetryTime = TimeSpan.FromSeconds(5);
 
-    private readonly IServiceProvider _serviceProvider;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly IPersistentConnection _persistentConnection;
     private readonly IEventBusSubscriptionManager _subscriptionsManager;
     private readonly ILogger _logger;
     private readonly string _queueName;
     private readonly string _exchangeName;
 
+    private static readonly object ChannelAckResourceLock = new();
     private readonly SemaphoreSlim consumerPrefetchSemaphore;
     private readonly IModel _consumerChannel;
     private bool _disposed;
 
-    public RabbitMqConsumer(IServiceProvider serviceProvider, IPersistentConnection persistentConnection,
+    public RabbitMqConsumer(IServiceScopeFactory serviceScopeFactory, IPersistentConnection persistentConnection,
         IEventBusSubscriptionManager subscriptionsManager,
         ILogger logger,
         string queueName, string exchangeName)
     {
-        _serviceProvider = serviceProvider;
+        _serviceScopeFactory = serviceScopeFactory;
         _persistentConnection = persistentConnection;
         _subscriptionsManager = subscriptionsManager;
         _logger = logger;
@@ -43,31 +44,6 @@ public sealed class RabbitMqConsumer : IDisposable
         consumerPrefetchSemaphore = new SemaphoreSlim(prefetchCount);
     }
 
-    public void Dispose()
-    {
-        if (_disposed) return;
-        _disposed = true;
-
-        var consumerChannelNumber = _consumerChannel.ChannelNumber.ToString();
-        _logger.LogInformation("Consumer channel [{ChannelNo}] queue [{QueueName}] shutting down...", consumerChannelNumber, _queueName);
-
-        var waitCounter = 0;
-        while (waitCounter * 1000 < MaxWaitDisposeTime && consumerPrefetchSemaphore.CurrentCount < prefetchCount)
-        {
-            _logger.LogInformation("Consumers channel [{ChannelNo}] queue [{QueueName}] Fetch Count [ {Done}/{All} ] => waiting...",
-                consumerChannelNumber, _queueName, consumerPrefetchSemaphore.CurrentCount, prefetchCount);
-            Thread.Sleep(1000);
-            waitCounter++;
-        }
-
-        _logger.LogInformation("Consumers channel [{ChannelNo}] queue [{QueueName}] Fetch Count [ {Done}/{All} ] => all fetching done",
-            consumerChannelNumber, _queueName, consumerPrefetchSemaphore.CurrentCount, prefetchCount);
-
-        consumerPrefetchSemaphore.Dispose();
-        _consumerChannel?.Dispose();
-
-        _logger.LogInformation("Consumer channel [{ChannelNo}] queue [{QueueName}] terminated", consumerChannelNumber, _queueName);
-    }
 
     public void StartBasicConsume()
     {
@@ -109,8 +85,10 @@ public sealed class RabbitMqConsumer : IDisposable
                 //Console.WriteLine($"[ConsumerTag: {(ch as EventingBasicConsumer).ConsumerTag}]  [{DateTime.Now}]  [Message: {message}]  [Thread Name: {Thread.CurrentThread.Name}]  [Thread Number: {Thread.CurrentThread.ManagedThreadId}]");
 
                 ProcessEvent(eventName, message);
-
-                (sender as AsyncEventingBasicConsumer).Model.BasicAck(eventArgs.DeliveryTag, multiple: false);
+                lock (ChannelAckResourceLock)
+                {
+                    _consumerChannel.BasicAck(eventArgs.DeliveryTag, multiple: false);
+                }
                 isAcknowledged = true;
             }
             catch (Exception ex)
@@ -121,7 +99,7 @@ public sealed class RabbitMqConsumer : IDisposable
             {
                 if (!isAcknowledged)
                 {
-                    TryEnqueueMessageAgainAsync((sender as AsyncEventingBasicConsumer).Model, eventArgs).GetAwaiter().GetResult();
+                    TryEnqueueMessageAgainAsync(eventArgs).GetAwaiter().GetResult();
                 }
 
                 consumerPrefetchSemaphore.Release();
@@ -129,15 +107,17 @@ public sealed class RabbitMqConsumer : IDisposable
         });
     }
 
-    private async Task TryEnqueueMessageAgainAsync(IModel consumerChannel, BasicDeliverEventArgs eventArgs)
+    private async Task TryEnqueueMessageAgainAsync(BasicDeliverEventArgs eventArgs)
     {
         try
         {
             _logger.LogWarning("Adding message to queue again with {Time} seconds delay...", $"{_subscribeRetryTime.TotalSeconds:n1}");
 
             await Task.Delay(_subscribeRetryTime);
-            consumerChannel.BasicNack(eventArgs.DeliveryTag, false, true);
-
+            lock (ChannelAckResourceLock)
+            {
+                _consumerChannel.BasicNack(eventArgs.DeliveryTag, false, true);
+            }
             _logger.LogTrace("Message added to queue again.");
         }
         catch (Exception ex)
@@ -160,7 +140,7 @@ public sealed class RabbitMqConsumer : IDisposable
         // AbcEvent => AbcEventLogHandler, AbcEventMailHandler etc. Multiple subscription can be for one Event
         foreach (var subscription in subscriptions)
         {
-            using var scope = _serviceProvider.CreateScope(); // because handler type scoped service
+            using var scope = _serviceScopeFactory.CreateScope(); // because handler type scoped service
             var handler = scope.ServiceProvider.GetService(subscription.HandlerType);
             if (handler == null)
             {
@@ -192,5 +172,31 @@ public sealed class RabbitMqConsumer : IDisposable
         channel.ExchangeDeclare(exchange: _exchangeName, type: "direct");
 
         return channel;
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        var consumerChannelNumber = _consumerChannel.ChannelNumber.ToString();
+        _logger.LogInformation("Consumer channel [{ChannelNo}] queue [{QueueName}] shutting down...", consumerChannelNumber, _queueName);
+
+        var waitCounter = 0;
+        while (waitCounter * 1000 < MaxWaitDisposeTime && consumerPrefetchSemaphore.CurrentCount < prefetchCount)
+        {
+            _logger.LogInformation("Consumers channel [{ChannelNo}] queue [{QueueName}] Fetch Count [ {Done}/{All} ] => waiting...",
+                consumerChannelNumber, _queueName, consumerPrefetchSemaphore.CurrentCount, prefetchCount);
+            Thread.Sleep(1000);
+            waitCounter++;
+        }
+
+        _logger.LogInformation("Consumers channel [{ChannelNo}] queue [{QueueName}] Fetch Count [ {Done}/{All} ] => all fetching done",
+            consumerChannelNumber, _queueName, consumerPrefetchSemaphore.CurrentCount, prefetchCount);
+
+        consumerPrefetchSemaphore?.Dispose();
+        _consumerChannel?.Dispose();
+
+        _logger.LogInformation("Consumer channel [{ChannelNo}] queue [{QueueName}] terminated", consumerChannelNumber, _queueName);
     }
 }

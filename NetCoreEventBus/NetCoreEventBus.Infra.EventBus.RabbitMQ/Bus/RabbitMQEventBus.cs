@@ -9,31 +9,33 @@ using RabbitMQ.Client.Exceptions;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace NetCoreEventBus.Infra.EventBus.RabbitMQ.Bus;
 
 public class RabbitMQEventBus : IEventBus, IDisposable
 {
-    private readonly IServiceProvider _serviceProvider;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly IPersistentConnection _persistentConnection;
     private readonly IEventBusSubscriptionManager _subscriptionsManager;
     private readonly ILogger<RabbitMQEventBus> _logger;
     private readonly string _exchangeName;
     private readonly string _queueName;
-    
+
+    private readonly int _consumerMultiThreadChannelCount = 5;
     private readonly int _publishRetryCount = 5;
     private readonly List<RabbitMqConsumer> _consumers;
     private bool _disposed;
 
     public RabbitMQEventBus(
-        IServiceProvider serviceProvider,
+        IServiceScopeFactory serviceScopeFactory,
         IPersistentConnection persistentConnection,
         IEventBusSubscriptionManager subscriptionsManager,
         ILogger<RabbitMQEventBus> logger,
         string brokerName,
         string queueName)
     {
-        _serviceProvider = serviceProvider;
+        _serviceScopeFactory = serviceScopeFactory;
         _persistentConnection = persistentConnection ?? throw new ArgumentNullException(nameof(persistentConnection));
         _subscriptionsManager = subscriptionsManager ?? throw new ArgumentNullException(nameof(subscriptionsManager));
         _logger = logger;
@@ -109,11 +111,11 @@ public class RabbitMQEventBus : IEventBus, IDisposable
             }
 
             _logger.LogTrace("Creating RabbitMQ consumer channel...");
-        
+
             using (var channel = _persistentConnection.CreateModel())
             {
                 channel.ExchangeDeclare(exchange: _exchangeName, type: "direct");
-            
+
                 channel.QueueDeclare
                 (
                     queue: _queueName,
@@ -131,9 +133,9 @@ public class RabbitMQEventBus : IEventBus, IDisposable
 
         _subscriptionsManager.AddSubscription<TEvent, TEventHandler>();
 
-        for (int i = 0; i < 1; i++)
+        for (int i = 0; i < _consumerMultiThreadChannelCount; i++)
         {
-            var rabbitMqConsumer = new RabbitMqConsumer(_serviceProvider, _persistentConnection, _subscriptionsManager, _logger, _queueName, _exchangeName);
+            var rabbitMqConsumer = new RabbitMqConsumer(_serviceScopeFactory, _persistentConnection, _subscriptionsManager, _logger, _queueName, _exchangeName);
             rabbitMqConsumer.StartBasicConsume();
 
             _consumers.Add(rabbitMqConsumer);
@@ -179,11 +181,7 @@ public class RabbitMQEventBus : IEventBus, IDisposable
         _disposed = true;
         _logger.LogInformation("Message Broker Bridge shutting down...");
 
-        foreach (var consumer in _consumers)
-        {
-            consumer.Dispose();
-        }
-
+        Task.WaitAll(_consumers.Select(consumer => Task.Run(consumer.Dispose)).ToArray());
         _subscriptionsManager.Clear();
 
         _logger.LogInformation("Message Broker Bridge terminated");
