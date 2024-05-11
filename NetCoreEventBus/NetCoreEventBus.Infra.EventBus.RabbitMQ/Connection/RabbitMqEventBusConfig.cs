@@ -1,4 +1,4 @@
-﻿namespace NetCoreEventBus.Infra.EventBus.RabbitMQ;
+﻿namespace NetCoreEventBus.Infra.EventBus.RabbitMQ.Connection;
 
 public class RabbitMqEventBusConfig : EventBusConfig
 {
