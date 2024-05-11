@@ -152,8 +152,8 @@ public sealed class RabbitMqConsumer : IDisposable
             var eventType = _subscriptionsManager.GetEventTypeByName(eventName);
 
             var @event = JsonSerializer.Deserialize(message, eventType);
-            var eventHandlerType = typeof(IEventHandler<>).MakeGenericType(eventType);
-            ((Task)eventHandlerType.GetMethod(nameof(IEventHandler<Event>.HandleAsync)).Invoke(handler, new object[] { @event })).GetAwaiter().GetResult();
+            var eventHandlerType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType);
+            ((Task)eventHandlerType.GetMethod(nameof(IIntegrationEventHandler<Event>.HandleAsync)).Invoke(handler, new object[] { @event })).GetAwaiter().GetResult();
         }
 
         _logger.LogTrace("Processed event {EventName}.", eventName);

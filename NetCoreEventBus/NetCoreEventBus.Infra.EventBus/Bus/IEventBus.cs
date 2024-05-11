@@ -12,5 +12,5 @@ public interface IEventBus
 
 	void Subscribe<TEvent, TEventHandler>()
 		where TEvent : Event
-		where TEventHandler : IEventHandler<TEvent>;
+		where TEventHandler : IIntegrationEventHandler<TEvent>;
 }

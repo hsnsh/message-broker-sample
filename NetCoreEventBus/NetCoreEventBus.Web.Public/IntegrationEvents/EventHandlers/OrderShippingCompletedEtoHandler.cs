@@ -3,7 +3,7 @@ using NetCoreEventBus.Shared.Events;
 
 namespace NetCoreEventBus.Web.Public.IntegrationEvents.EventHandlers;
 
-public class OrderShippingCompletedEtoHandler : IEventHandler<OrderShippingCompletedEto>
+public class OrderShippingCompletedEtoHandler : IIntegrationEventHandler<OrderShippingCompletedEto>
 {
     private readonly ILogger<OrderShippingCompletedEtoHandler> _logger;
 

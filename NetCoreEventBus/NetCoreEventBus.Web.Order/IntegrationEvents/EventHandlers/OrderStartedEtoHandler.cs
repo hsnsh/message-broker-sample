@@ -4,7 +4,7 @@ using NetCoreEventBus.Web.Order.Services;
 
 namespace NetCoreEventBus.Web.Order.IntegrationEvents.EventHandlers;
 
-public class OrderStartedEtoHandler : IEventHandler<OrderStartedEto>
+public class OrderStartedEtoHandler : IIntegrationEventHandler<OrderStartedEto>
 {
     private readonly ILogger<OrderStartedEtoHandler> _logger;
     private readonly IOrderService _orderService;

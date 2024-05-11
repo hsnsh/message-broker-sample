@@ -99,7 +99,7 @@ public class RabbitMQEventBus : IEventBus, IDisposable
         _publishing = false;
     }
 
-    public void Subscribe<TEvent, TEventHandler>() where TEvent : Event where TEventHandler : IEventHandler<TEvent>
+    public void Subscribe<TEvent, TEventHandler>() where TEvent : Event where TEventHandler : IIntegrationEventHandler<TEvent>
     {
         var eventName = _subscriptionsManager.GetEventKey<TEvent>();
 

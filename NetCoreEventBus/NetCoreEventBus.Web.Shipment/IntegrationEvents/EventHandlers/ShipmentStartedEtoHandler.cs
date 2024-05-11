@@ -4,7 +4,7 @@ using NetCoreEventBus.Web.Shipment.Services;
 
 namespace NetCoreEventBus.Web.Shipment.IntegrationEvents.EventHandlers;
 
-public class ShipmentStartedEtoHandler : IEventHandler<ShipmentStartedEto>
+public class ShipmentStartedEtoHandler : IIntegrationEventHandler<ShipmentStartedEto>
 {
     private readonly ILogger<ShipmentStartedEtoHandler> _logger;
     private readonly IShipmentService _shipmentService;

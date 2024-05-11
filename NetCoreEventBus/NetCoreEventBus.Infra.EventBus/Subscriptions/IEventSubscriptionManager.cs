@@ -9,7 +9,7 @@ public interface IEventBusSubscriptionManager
 
     void AddSubscription<TEvent, TEventHandler>()
         where TEvent : Event
-        where TEventHandler : IEventHandler<TEvent>;
+        where TEventHandler : IIntegrationEventHandler<TEvent>;
 
     void Clear();
 
