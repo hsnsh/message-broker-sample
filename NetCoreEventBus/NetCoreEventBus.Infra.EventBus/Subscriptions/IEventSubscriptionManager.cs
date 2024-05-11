@@ -8,31 +8,40 @@ namespace NetCoreEventBus.Infra.EventBus.Subscriptions;
 /// </summary>
 public interface IEventBusSubscriptionManager
 {
-	#region Event Handlers
-	event EventHandler<string> OnEventRemoved;
-	#endregion
+    #region Event Handlers
 
-	#region Status
-	bool IsEmpty { get; }
-	bool HasSubscriptionsForEvent(string eventName);
-	#endregion
+    Func<string, string> EventNameGetter { get; set; }
+    event EventHandler<string> OnEventRemoved;
 
-	#region Events info
-	string GetEventIdentifier<TEvent>();
-	Type GetEventTypeByName(string eventName);
-	IEnumerable<Subscription> GetHandlersForEvent(string eventName);
-	Dictionary<string, List<Subscription>> GetAllSubscriptions();
-	#endregion
+    #endregion
 
-	#region Subscription management
-	void AddSubscription<TEvent, TEventHandler>()
-		where TEvent : Event
-		where TEventHandler : IEventHandler<TEvent>;
+    #region Status
 
-	void RemoveSubscription<TEvent, TEventHandler>()
-		where TEvent : Event
-		where TEventHandler : IEventHandler<TEvent>;
+    bool IsEmpty { get; }
+    bool HasSubscriptionsForEvent(string eventName);
 
-	void Clear();
-	#endregion
+    #endregion
+
+    #region Events info
+
+    string GetEventKey<TEvent>();
+    Type GetEventTypeByName(string eventName);
+    IEnumerable<Subscription> GetHandlersForEvent(string eventName);
+    Dictionary<string, List<Subscription>> GetAllSubscriptions();
+
+    #endregion
+
+    #region Subscription management
+
+    void AddSubscription<TEvent, TEventHandler>()
+        where TEvent : Event
+        where TEventHandler : IEventHandler<TEvent>;
+
+    void RemoveSubscription<TEvent, TEventHandler>()
+        where TEvent : Event
+        where TEventHandler : IEventHandler<TEvent>;
+
+    void Clear();
+
+    #endregion
 }

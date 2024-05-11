@@ -2,7 +2,9 @@ using System.Reflection;
 using Microsoft.OpenApi.Models;
 using NetCoreEventBus.Infra.EventBus.Bus;
 using NetCoreEventBus.Infra.EventBus.RabbitMQ.Extensions;
+using NetCoreEventBus.Shared.Events;
 using NetCoreEventBus.Web.Public.Controllers.Configurations;
+using NetCoreEventBus.Web.Public.IntegrationEvents.EventHandlers;
 
 namespace NetCoreEventBus.Web.Public;
 
@@ -82,16 +84,9 @@ public class Startup
 
 	private void ConfigureEventBusDependencies(IServiceCollection services)
 	{
-		var rabbitMQSection = Configuration.GetSection("RabbitMQ");
-		services.AddRabbitMQEventBus
-		(
-			connectionUrl: rabbitMQSection["ConnectionUrl"],
-			brokerName: "netCoreEventBusBroker",
-			queueName: "netCoreEventBusPublicQueue",
-			timeoutBeforeReconnecting: 15
-		);
+		services.AddRabbitMQEventBus(Configuration);
 
-		// services.AddTransient<OrderShippingCompletedEtoHandler>();
+		services.AddTransient<OrderShippingCompletedEtoHandler>();
 	}
 
 	private void ConfigureEventBusHandlers(IApplicationBuilder app)
@@ -99,6 +94,6 @@ public class Startup
 		var eventBus = app.ApplicationServices.GetRequiredService<IEventBus>();
         
 		// Here you add the event handlers for each intergration event.
-		// eventBus.Subscribe<OrderShippingCompletedEto, OrderShippingCompletedEtoHandler>();
+		eventBus.Subscribe<OrderShippingCompletedEto, OrderShippingCompletedEtoHandler>();
 	}
 }

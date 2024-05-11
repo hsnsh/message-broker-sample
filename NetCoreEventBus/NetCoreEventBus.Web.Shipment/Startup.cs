@@ -29,7 +29,7 @@ public class Startup
 
         // Must be Scoped or Transient => Cannot consume any scoped service
         services.AddScoped<IShipmentService, ShipmentService>();
-        
+
         // Here we configure the event bus
         ConfigureEventBusDependencies(services);
     }
@@ -57,14 +57,7 @@ public class Startup
 
     private void ConfigureEventBusDependencies(IServiceCollection services)
     {
-        var rabbitMQSection = Configuration.GetSection("RabbitMQ");
-        services.AddRabbitMQEventBus
-        (
-            connectionUrl: rabbitMQSection["ConnectionUrl"],
-            brokerName: "netCoreEventBusBroker",
-            queueName: "netCoreEventBusShipmentQueue",
-            timeoutBeforeReconnecting: 15
-        );
+        services.AddRabbitMQEventBus(Configuration);
 
         services.AddTransient<OrderShippingStartedEtoHandler>();
         services.AddTransient<ShipmentStartedEtoHandler>();

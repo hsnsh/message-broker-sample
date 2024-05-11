@@ -1,13 +1,13 @@
 using System.Net.Sockets;
-using GeneralLibrary.Base.EventBus.Logging;
 using JetBrains.Annotations;
-using Microsoft.Extensions.Options;
+using NetCoreEventBus.Infra.EventBus.Logging;
 using Polly;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
+using Microsoft.Extensions.Options;
 
-namespace GeneralLibrary.Base.RabbitMQ;
+namespace NetCoreEventBus.Infra.EventBus.RabbitMQ.Connection;
 
 public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
 {
@@ -63,8 +63,8 @@ public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
             {
                 _connection!.ConnectionShutdown += OnConnectionShutdown;
                 _connection!.CallbackException += OnCallbackException;
-                _connection!.ConnectionBlocked += OnConnectionBlocked;
-                _connection!.ConnectionUnblocked += OnConnectionUnblocked;
+                // _connection!.ConnectionBlocked += OnConnectionBlocked;
+                // _connection!.ConnectionUnblocked += OnConnectionUnblocked;
 
                 _logger.LogInformation("RabbitMQ Client acquired a persistent connection to '{HostName}'", _connection?.Endpoint?.HostName);
 
@@ -95,15 +95,17 @@ public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
 
         try
         {
-            if (IsConnected)
+            if (_connection != null)
             {
-                if (_connection != null)
+                if (_connection.IsOpen)
                 {
-                    _connection.ConnectionShutdown -= OnConnectionShutdown;
-                    _connection.CallbackException -= OnCallbackException;
-                    _connection.ConnectionBlocked -= OnConnectionBlocked;
                     _connection.Close();
                 }
+
+                _connection.ConnectionShutdown -= OnConnectionShutdown;
+                _connection.CallbackException -= OnCallbackException;
+                _connection.ConnectionBlocked -= OnConnectionBlocked;
+                _connection.ConnectionUnblocked -= OnConnectionUnblocked;
             }
 
             _connection?.Dispose();

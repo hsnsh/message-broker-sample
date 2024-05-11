@@ -13,53 +13,50 @@ namespace NetCoreEventBus.Infra.EventBus.RabbitMQ.Bus;
 public sealed class RabbitMqConsumer : IDisposable
 {
     private const int MaxWaitDisposeTime = 30000;
-    private const int prefetchCount = 10;
     private readonly TimeSpan _subscribeRetryTime = TimeSpan.FromSeconds(5);
 
     private readonly IServiceScopeFactory _serviceScopeFactory;
-    private readonly IPersistentConnection _persistentConnection;
+    private readonly IRabbitMqPersistentConnection _persistentConnection;
     private readonly IEventBusSubscriptionManager _subscriptionsManager;
+    private readonly RabbitMqEventBusConfig _rabbitMqEventBusConfig;
     private readonly ILogger _logger;
-    private readonly string _queueName;
-    private readonly string _exchangeName;
 
     private static readonly object ChannelAckResourceLock = new();
     private readonly SemaphoreSlim consumerPrefetchSemaphore;
-    private readonly IModel _consumerChannel;
+    public readonly IModel ConsumerChannel;
     private bool _disposed;
 
-    public RabbitMqConsumer(IServiceScopeFactory serviceScopeFactory, IPersistentConnection persistentConnection,
+    public RabbitMqConsumer(IServiceScopeFactory serviceScopeFactory,
+        IRabbitMqPersistentConnection persistentConnection,
         IEventBusSubscriptionManager subscriptionsManager,
-        ILogger logger,
-        string queueName, string exchangeName)
+        RabbitMqEventBusConfig rabbitMqEventBusConfig,
+        ILogger logger)
     {
         _serviceScopeFactory = serviceScopeFactory;
         _persistentConnection = persistentConnection;
         _subscriptionsManager = subscriptionsManager;
+        _rabbitMqEventBusConfig = rabbitMqEventBusConfig;
         _logger = logger;
-        _queueName = queueName;
-        _exchangeName = exchangeName;
 
-        _consumerChannel = CreateConsumerChannel();
-        consumerPrefetchSemaphore = new SemaphoreSlim(prefetchCount);
+        ConsumerChannel = CreateConsumerChannel();
+        consumerPrefetchSemaphore = new SemaphoreSlim(_rabbitMqEventBusConfig.ConsumerMaxFetchCount);
     }
 
-
-    public void StartBasicConsume()
+    public void StartBasicConsume(string eventName)
     {
         _logger.LogTrace("Creating RabbitMQ consumer channel...");
 
-        if (_consumerChannel == null)
+        if (ConsumerChannel == null)
         {
             _logger.LogError("Could not start basic consume because consumer channel is null.");
             return;
         }
 
         _logger.LogTrace("Starting RabbitMQ basic consume...");
-        _consumerChannel.BasicQos(0, prefetchCount, false);
-        var consumer = new AsyncEventingBasicConsumer(_consumerChannel);
+        ConsumerChannel.BasicQos(0, _rabbitMqEventBusConfig.ConsumerMaxFetchCount, false);
+        var consumer = new AsyncEventingBasicConsumer(ConsumerChannel);
         consumer.Received += ConsumerReceived;
-        _consumerChannel.BasicConsume(queue: _queueName, autoAck: false, consumer: consumer);
+        ConsumerChannel.BasicConsume(queue: GetConsumerQueueName(eventName), autoAck: false, consumer: consumer);
     }
 
     private async Task ConsumerReceived(object sender, BasicDeliverEventArgs eventArgs)
@@ -87,8 +84,9 @@ public sealed class RabbitMqConsumer : IDisposable
                 ProcessEvent(eventName, message);
                 lock (ChannelAckResourceLock)
                 {
-                    _consumerChannel.BasicAck(eventArgs.DeliveryTag, multiple: false);
+                    ConsumerChannel.BasicAck(eventArgs.DeliveryTag, multiple: false);
                 }
+
                 isAcknowledged = true;
             }
             catch (Exception ex)
@@ -113,11 +111,15 @@ public sealed class RabbitMqConsumer : IDisposable
         {
             _logger.LogWarning("Adding message to queue again with {Time} seconds delay...", $"{_subscribeRetryTime.TotalSeconds:n1}");
 
-            await Task.Delay(_subscribeRetryTime);
+            if (!_disposed)
+            {
+                await Task.Delay(_subscribeRetryTime);
+            }
             lock (ChannelAckResourceLock)
             {
-                _consumerChannel.BasicNack(eventArgs.DeliveryTag, false, true);
+                ConsumerChannel.BasicNack(eventArgs.DeliveryTag, false, true);
             }
+
             _logger.LogTrace("Message added to queue again.");
         }
         catch (Exception ex)
@@ -132,8 +134,7 @@ public sealed class RabbitMqConsumer : IDisposable
 
         if (!_subscriptionsManager.HasSubscriptionsForEvent(eventName))
         {
-            _logger.LogTrace("There are no subscriptions for this event.");
-            return;
+            throw new Exception("There are no subscriptions for this event.");
         }
 
         var subscriptions = _subscriptionsManager.GetHandlersForEvent(eventName);
@@ -169,7 +170,7 @@ public sealed class RabbitMqConsumer : IDisposable
 
         var channel = _persistentConnection.CreateModel();
 
-        channel.ExchangeDeclare(exchange: _exchangeName, type: "direct");
+        channel.ExchangeDeclare(exchange: _rabbitMqEventBusConfig.ExchangeName, type: "direct");
 
         return channel;
     }
@@ -179,24 +180,44 @@ public sealed class RabbitMqConsumer : IDisposable
         if (_disposed) return;
         _disposed = true;
 
-        var consumerChannelNumber = _consumerChannel.ChannelNumber.ToString();
-        _logger.LogInformation("Consumer channel [{ChannelNo}] queue [{QueueName}] shutting down...", consumerChannelNumber, _queueName);
+        var consumerChannelNumber = ConsumerChannel.ChannelNumber.ToString();
+        _logger.LogInformation("Consumer channel [{ChannelNo}] shutting down...", consumerChannelNumber);
 
         var waitCounter = 0;
-        while (waitCounter * 1000 < MaxWaitDisposeTime && consumerPrefetchSemaphore.CurrentCount < prefetchCount)
+        while (waitCounter * 1000 < MaxWaitDisposeTime && consumerPrefetchSemaphore.CurrentCount < _rabbitMqEventBusConfig.ConsumerMaxFetchCount)
         {
-            _logger.LogInformation("Consumers channel [{ChannelNo}] queue [{QueueName}] Fetch Count [ {Done}/{All} ] => waiting...",
-                consumerChannelNumber, _queueName, consumerPrefetchSemaphore.CurrentCount, prefetchCount);
+            _logger.LogInformation("Consumers channel [{ChannelNo}] Fetch Count [ {Done}/{All} ] => waiting...",
+                consumerChannelNumber, consumerPrefetchSemaphore.CurrentCount, _rabbitMqEventBusConfig.ConsumerMaxFetchCount);
             Thread.Sleep(1000);
             waitCounter++;
         }
 
-        _logger.LogInformation("Consumers channel [{ChannelNo}] queue [{QueueName}] Fetch Count [ {Done}/{All} ] => all fetching done",
-            consumerChannelNumber, _queueName, consumerPrefetchSemaphore.CurrentCount, prefetchCount);
+        _logger.LogInformation("Consumers channel [{ChannelNo}] Fetch Count [ {Done}/{All} ] => all fetching done",
+            consumerChannelNumber, consumerPrefetchSemaphore.CurrentCount, _rabbitMqEventBusConfig.ConsumerMaxFetchCount);
 
         consumerPrefetchSemaphore?.Dispose();
-        _consumerChannel?.Dispose();
+        ConsumerChannel?.Dispose();
 
-        _logger.LogInformation("Consumer channel [{ChannelNo}] queue [{QueueName}] terminated", consumerChannelNumber, _queueName);
+        _logger.LogInformation("Consumer channel [{ChannelNo}] terminated", consumerChannelNumber);
+    }
+
+    private string GetConsumerQueueName(string eventName)
+    {
+        return $"{_rabbitMqEventBusConfig.ClientInfo}_{TrimEventName(eventName)}";
+    }
+
+    private string TrimEventName(string eventName)
+    {
+        if (_rabbitMqEventBusConfig.DeleteEventPrefix && eventName.StartsWith(_rabbitMqEventBusConfig.EventNamePrefix))
+        {
+            eventName = eventName.Substring(_rabbitMqEventBusConfig.EventNamePrefix.Length);
+        }
+
+        if (_rabbitMqEventBusConfig.DeleteEventSuffix && eventName.EndsWith(_rabbitMqEventBusConfig.EventNameSuffix))
+        {
+            eventName = eventName.Substring(0, eventName.Length - _rabbitMqEventBusConfig.EventNameSuffix.Length);
+        }
+
+        return eventName;
     }
 }

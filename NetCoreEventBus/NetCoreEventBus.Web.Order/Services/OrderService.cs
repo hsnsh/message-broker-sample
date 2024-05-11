@@ -16,7 +16,7 @@ public sealed class OrderService : IOrderService
 
     public async Task OrderStartedAsync(OrderStartedEto input, CancellationToken cancellationToken = default)
     {
-        await Task.Delay(10000, cancellationToken);
+        await Task.Delay(5000, cancellationToken);
 
         // var random = new Random().Next(1, 5) * 1000;
         // _logger.LogInformation("PROCESSING ESTIMATED TIME [{OrderNo}] {Time}", input.OrderNo, random * 5);
