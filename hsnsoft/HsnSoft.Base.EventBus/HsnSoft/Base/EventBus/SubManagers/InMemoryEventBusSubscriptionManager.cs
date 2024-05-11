@@ -62,7 +62,7 @@ public class InMemoryEventBusSubscriptionManager : IEventBusSubscriptionManager
         if (!eventType.IsAssignableTo(typeof(IIntegrationEventMessage))) throw new TypeAccessException();
 
         var eventName = eventType.Name;
-        return _eventNameGetter(eventName);
+        return EventNameGetter(eventName);
     }
 
     private void DoAddSubscription(Type handlerType, string eventName)

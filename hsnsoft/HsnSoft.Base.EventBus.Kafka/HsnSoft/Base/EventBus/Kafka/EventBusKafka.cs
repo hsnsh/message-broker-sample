@@ -40,7 +40,8 @@ public class EventBusKafka : IEventBus, IDisposable
         _traceAccessor = _serviceProvider.GetService<ITraceAccesor>();
         _currentUser = _serviceProvider.GetService<ICurrentUser>();
 
-        _subsManager = new InMemoryEventBusSubscriptionManager(TrimEventName);
+        _subsManager = serviceProvider.GetService<IEventBusSubscriptionManager>();
+        _subsManager.EventNameGetter = TrimEventName;
 
         _tokenSource = new CancellationTokenSource();
         _consumerTasks = new List<Task>();
