@@ -13,9 +13,6 @@ public class InMemoryEventBusSubscriptionsManager : IEventBusSubscriptionsManage
 
     private readonly Func<string, string> _eventNameGetter;
 
-    [CanBeNull]
-    public event EventHandler<string> OnEventRemoved;
-
     public InMemoryEventBusSubscriptionsManager(Func<string, string> eventNameGetter)
     {
         _handlers = new Dictionary<string, List<SubscriptionInfo>>();
@@ -44,13 +41,6 @@ public class InMemoryEventBusSubscriptionsManager : IEventBusSubscriptionsManage
         {
             _eventTypes.Add(eventType);
         }
-    }
-
-    public void RemoveSubscription<T, TH>() where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>
-    {
-        var handlerToRemove = FindSubscriptionToRemove<T, TH>();
-        var eventName = GetEventKey<T>();
-        DoRemoveHandler(eventName, handlerToRemove);
     }
 
     public bool HasSubscriptionsForEvent<T>() where T : IIntegrationEventMessage
@@ -98,35 +88,5 @@ public class InMemoryEventBusSubscriptionsManager : IEventBusSubscriptionsManage
         }
 
         _handlers[eventName].Add(SubscriptionInfo.Typed(handlerType));
-    }
-
-    private void DoRemoveHandler(string eventName, [CanBeNull] SubscriptionInfo subsToRemove)
-    {
-        if (subsToRemove == null) return;
-        _handlers[eventName].Remove(subsToRemove);
-
-        if (_handlers[eventName].Any()) return;
-        _handlers.Remove(eventName);
-
-        var eventType = _eventTypes.SingleOrDefault(e => e.Name == eventName);
-        if (eventType != null)
-        {
-            _eventTypes.Remove(eventType);
-        }
-
-        OnEventRemoved?.Invoke(this, eventName);
-    }
-
-    [CanBeNull]
-    private SubscriptionInfo FindSubscriptionToRemove<T, TH>() where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>
-    {
-        var eventName = GetEventKey<T>();
-        return DoFindSubscriptionToRemove(eventName, typeof(TH));
-    }
-
-    [CanBeNull]
-    private SubscriptionInfo DoFindSubscriptionToRemove(string eventName, Type handlerType)
-    {
-        return !HasSubscriptionsForEvent(eventName) ? null : _handlers[eventName].SingleOrDefault(s => s.HandlerType == handlerType);
     }
 }

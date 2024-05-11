@@ -63,7 +63,6 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         _subsManager = new InMemoryEventBusSubscriptionsManager(TrimEventName);
 
         _consumerChannel = CreateConsumerChannel();
-        _subsManager.OnEventRemoved += SubsManager_OnEventRemoved;
 
         semaphoreConsumers = new SemaphoreSlim(_rabbitMqEventBusConfig.ConsumerParallelThreadCount * _rabbitMqEventBusConfig.ConsumerMaxFetchCount);
     }
@@ -189,16 +188,6 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         StartBasicConsume(eventName);
     }
 
-    public void Unsubscribe<T, TH>() where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>
-    {
-        var eventName = _subsManager.GetEventKey<T>();
-        eventName = TrimEventName(eventName);
-
-        _logger.LogInformation("RabbitMQ | Unsubscribing from event {EventName}", eventName);
-
-        _subsManager.RemoveSubscription<T, TH>();
-    }
-
     public void Dispose()
     {
         if (_disposed) return;
@@ -220,24 +209,6 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         _subsManager.Clear();
 
         _logger.LogInformation("Message Broker Bridge terminated");
-    }
-
-    private void SubsManager_OnEventRemoved([CanBeNull] object sender, string eventName)
-    {
-        if (!_persistentConnection.IsConnected)
-        {
-            _persistentConnection.TryConnect();
-        }
-
-        using var channel = _persistentConnection.CreateModel();
-        channel.QueueUnbind(queue: GetConsumerQueueName(eventName),
-            exchange: _rabbitMqEventBusConfig.ExchangeName,
-            routingKey: TrimEventName(eventName));
-
-        if (_subsManager.IsEmpty)
-        {
-            _consumerChannel?.Close();
-        }
     }
 
     [CanBeNull]

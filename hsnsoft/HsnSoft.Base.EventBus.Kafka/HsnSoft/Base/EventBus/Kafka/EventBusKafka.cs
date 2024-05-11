@@ -101,16 +101,6 @@ public class EventBusKafka : IEventBus, IDisposable
         }));
     }
 
-    public void Unsubscribe<T, TH>() where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>
-    {
-        var eventName = _subsManager.GetEventKey<T>();
-        eventName = TrimEventName(eventName);
-
-        _logger.LogDebug("Kafka | Unsubscribing from event {EventName}", eventName);
-
-        _subsManager.RemoveSubscription<T, TH>();
-    }
-
     public void Dispose()
     {
         _logger.LogDebug("Message Broker Bridge shutting down...");

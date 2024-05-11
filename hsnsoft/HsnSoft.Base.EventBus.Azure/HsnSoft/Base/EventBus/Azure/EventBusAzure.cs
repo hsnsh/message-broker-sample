@@ -108,28 +108,6 @@ public class EventBusAzure : IEventBus, IDisposable
         _subsManager.AddSubscription(eventType, eventHandlerType);
     }
 
-    public void Unsubscribe<T, TH>() where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>
-    {
-        var eventName = typeof(T).Name;
-        eventName = TrimEventName(eventName);
-        try
-        {
-            _serviceBusPersisterConnection
-                .AdministrationClient
-                .DeleteRuleAsync(_eventBusConfig.ExchangeName, _eventBusConfig.ClientName, eventName)
-                .GetAwaiter()
-                .GetResult();
-        }
-        catch (ServiceBusException ex) when (ex.Reason == ServiceBusFailureReason.MessagingEntityNotFound)
-        {
-            _logger.LogWarning("The messaging entity {EventName} Could not be found", eventName);
-        }
-
-        _logger.LogInformation("Unsubscribing from event {EventName}", eventName);
-
-        _subsManager.RemoveSubscription<T, TH>();
-    }
-
     public void Dispose()
     {
         _subsManager.Clear();
