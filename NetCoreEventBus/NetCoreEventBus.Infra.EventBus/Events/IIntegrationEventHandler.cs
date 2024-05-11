@@ -1,7 +1,11 @@
 ﻿namespace NetCoreEventBus.Infra.EventBus.Events;
 
-public interface IIntegrationEventHandler<in TEvent>
-	where TEvent : Event
+public interface IIntegrationEventHandler<TEventMessage> : IIntegrationEventHandler
+	where TEventMessage : IIntegrationEventMessage
 {
-	Task HandleAsync(TEvent @event);
+	Task HandleAsync(MessageEnvelope<TEventMessage> @event);
+}
+
+public interface IIntegrationEventHandler
+{
 }

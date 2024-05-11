@@ -13,16 +13,25 @@ public class InMemoryEventBusSubscriptionManager : IEventBusSubscriptionManager
 
     public bool IsEmpty => !_handlers.Keys.Any();
 
-    public void AddSubscription<TEvent, TEventHandler>()
-        where TEvent : Event
-        where TEventHandler : IIntegrationEventHandler<TEvent>
+
+    public void AddSubscription<T, TH>() where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>
     {
-        var eventName = GetEventKey<TEvent>();
+        AddSubscription(typeof(T), typeof(TH));
+    }
 
-        var eventHandlerName = typeof(TEventHandler).Name;
-        DoAddSubscription(typeof(TEvent), typeof(TEventHandler), eventName);
+    public void AddSubscription(Type eventType, Type eventHandlerType)
+    {
+        if (!eventType.IsAssignableTo(typeof(IIntegrationEventMessage))) throw new TypeAccessException();
+        if (!eventHandlerType.IsAssignableTo(typeof(IIntegrationEventHandler))) throw new TypeAccessException();
 
-        _eventTypes.TryAdd(eventName, typeof(TEvent));
+        var eventName = GetEventKey(eventType);
+
+        DoAddSubscription( eventHandlerType, eventName);
+
+        if (!_eventTypes.ContainsKey(eventName))
+        {
+            _eventTypes.TryAdd(eventName, eventType);
+        }
     }
 
     public void Clear()
@@ -47,7 +56,7 @@ public class InMemoryEventBusSubscriptionManager : IEventBusSubscriptionManager
 
     public IEnumerable<Subscription> GetHandlersForEvent(string eventName) => _handlers[eventName];
 
-    private void DoAddSubscription(Type eventType, Type handlerType, string eventName)
+    private void DoAddSubscription( Type handlerType, string eventName)
     {
         if (!HasSubscriptionsForEvent(eventName))
         {
@@ -59,6 +68,6 @@ public class InMemoryEventBusSubscriptionManager : IEventBusSubscriptionManager
             throw new ArgumentException($"Handler Type {handlerType.Name} already registered for '{eventName}'", nameof(handlerType));
         }
 
-        _handlers[eventName].Add(new Subscription(eventType, handlerType));
+        _handlers[eventName].Add(new Subscription( handlerType));
     }
 }

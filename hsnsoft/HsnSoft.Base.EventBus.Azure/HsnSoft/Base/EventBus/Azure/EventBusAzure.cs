@@ -119,7 +119,7 @@ public class EventBusAzure : IEventBus, IDisposable
         _processor.ProcessMessageAsync +=
             async (args) =>
             {
-                var eventName = $"{(_eventBusConfig.EventNamePrefix ?? string.Empty)}{args.Message.Subject}{(_eventBusConfig.EventNameSuffix ?? string.Empty)}";
+                var eventName = $"{_eventBusConfig.EventNamePrefix ?? string.Empty}{args.Message.Subject}{_eventBusConfig.EventNameSuffix ?? string.Empty}";
                 var messageData = args.Message.Body.ToString();
 
                 // Complete the message so that it is not received again.
@@ -207,7 +207,7 @@ public class EventBusAzure : IEventBus, IDisposable
 
                         _logger.LogDebug("AzureServiceBus | {ClientInfo} CONSUMER [ {EventName} ] => Handling STARTED : Event [ {Event} ]", _eventBusConfig.ClientInfo, eventName, @event);
                         var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType!);
-                        (((Task)concreteType.GetMethod("HandleAsync")?.Invoke(handler, new[] { @event }))!).GetAwaiter().GetResult();
+                        ((Task)concreteType.GetMethod("HandleAsync")?.Invoke(handler, new[] { @event }))!.GetAwaiter().GetResult();
                         _logger.LogDebug("AzureServiceBus | {ClientInfo} CONSUMER [ {EventName} ] => Handling COMPLETED : Event [ {Event} ]", _eventBusConfig.ClientInfo, eventName, @event);
                     }
                     catch (Exception ex)

@@ -1,4 +1,5 @@
 using NetCoreEventBus.Infra.EventBus.Bus;
+using NetCoreEventBus.Infra.EventBus.Logging;
 using NetCoreEventBus.Shared.Events;
 
 namespace NetCoreEventBus.Web.Order.Services;
@@ -6,9 +7,9 @@ namespace NetCoreEventBus.Web.Order.Services;
 public sealed class OrderService : IOrderService
 {
     private readonly IEventBus _eventBus;
-    private readonly ILogger<OrderService> _logger;
+    private readonly IBaseLogger _logger;
 
-    public OrderService(IEventBus eventBus, ILogger<OrderService> logger)
+    public OrderService(IEventBus eventBus, IBaseLogger logger)
     {
         _eventBus = eventBus;
         _logger = logger;
@@ -23,7 +24,7 @@ public sealed class OrderService : IOrderService
         // Thread.Sleep(random * 5);
         // await Task.Delay(random * 5, cancellationToken);
 
-        _eventBus.Publish(new OrderShippingStartedEto(input.OrderId));
+       await _eventBus.PublishAsync(new OrderShippingStartedEto(input.OrderId));
     }
 
     public async Task OrderShippingCompletedAsync(OrderShippingCompletedEto input, CancellationToken cancellationToken = default)

@@ -17,7 +17,7 @@ public sealed class ShipmentService : IShipmentService
         // SAMPLE WORK (work done , 10/second)
         await Task.Delay(5000, cancellationToken);
 
-        _eventBus.Publish(new ShipmentStartedEto(input.OrderId, Guid.NewGuid()));
+      await  _eventBus.PublishAsync(new ShipmentStartedEto(input.OrderId, Guid.NewGuid()));
     }
 
     public async Task ShipmentStartedAsync(ShipmentStartedEto input, CancellationToken cancellationToken = default)
@@ -25,7 +25,7 @@ public sealed class ShipmentService : IShipmentService
         // SAMPLE WORK (work done , 10/second)
         await Task.Delay(5000, cancellationToken);
 
-        _eventBus.Publish(new OrderShippingCompletedEto(input.OrderId, input.ShipmentId));
+       await _eventBus.PublishAsync(new OrderShippingCompletedEto(input.OrderId, input.ShipmentId));
 
         await Task.CompletedTask;
     }

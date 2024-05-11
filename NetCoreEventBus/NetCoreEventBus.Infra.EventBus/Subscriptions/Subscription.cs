@@ -2,12 +2,12 @@
 
 public class Subscription
 {
-	public Type EventType { get; private set; }
+	//public Type EventType { get; private set; }
 	public Type HandlerType { get; private set; }
 
-	public Subscription(Type eventType, Type handlerType)
+	public Subscription( Type handlerType)
 	{
-		EventType = eventType;
+		//EventType = eventType;
 		HandlerType = handlerType;
 	}
 }

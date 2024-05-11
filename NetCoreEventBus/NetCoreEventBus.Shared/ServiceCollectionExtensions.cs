@@ -27,9 +27,10 @@ public static class ServiceCollectionExtensions
             var persistentConnection = sp.GetService<IRabbitMqPersistentConnection>();
             var subscriptionManager = sp.GetService<IEventBusSubscriptionManager>();
             var eventBusSettings = sp.GetService<IOptions<RabbitMqEventBusConfig>>();
-            var logger = sp.GetService<ILogger<RabbitMQEventBus>>();
+            var conSettings = sp.GetService<IOptions<RabbitMqConnectionSettings>>();
+            var logger = sp.GetService<IEventBusLogger>();
 
-            return new RabbitMQEventBus(factory, persistentConnection, subscriptionManager, eventBusSettings, logger);
+            return new RabbitMQEventBus(factory, persistentConnection, conSettings?.Value, subscriptionManager, eventBusSettings, logger);
         });
     }
 }

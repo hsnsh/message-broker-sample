@@ -1,6 +1,7 @@
 using System.Reflection;
 using Microsoft.OpenApi.Models;
 using NetCoreEventBus.Infra.EventBus.Bus;
+using NetCoreEventBus.Infra.EventBus.Logging;
 using NetCoreEventBus.Shared;
 using NetCoreEventBus.Shared.Events;
 using NetCoreEventBus.Web.Public.Controllers.Configurations;
@@ -46,6 +47,8 @@ public class Startup
 				opt.InvalidModelStateResponseFactory = InvalidModelStateResponseFactory.ProduceErrorResponse;
 			});
 
+		services.AddSingleton<IBaseLogger, DefaultEventBusLogger>();
+		
 		// Here we configure the event bus
 		ConfigureEventBusDependencies(services);
 	}

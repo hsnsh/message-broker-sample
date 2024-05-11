@@ -24,14 +24,14 @@ public class EventBusController : Controller
     /// <returns>Message sent confirmation.</returns>
     [HttpPost]
     [ProducesResponseType(typeof(string), 200)]
-    public IActionResult SendMessage([FromBody] TestDto input)
+    public async Task<IActionResult> SendMessage([FromBody] TestDto input)
     {
         input ??= new TestDto();
         if (input.TestCount < 1) input.TestCount = 1;
 
         for (var i = 0; i < input.TestCount; i++)
         {
-            _eventBus.Publish(new OrderStartedEto(Guid.NewGuid(), i + 1));
+            await _eventBus.PublishAsync(new OrderStartedEto(Guid.NewGuid(), i + 1));
         }
 
         return Ok("Message sent.");

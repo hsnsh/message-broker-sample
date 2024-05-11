@@ -1,16 +1,15 @@
-﻿using NetCoreEventBus.Infra.EventBus.Events;
+﻿using JetBrains.Annotations;
+using NetCoreEventBus.Infra.EventBus.Events;
 
 namespace NetCoreEventBus.Infra.EventBus.Bus;
 
-/// <summary>
-/// Contract for the event bus. The event bus uses a message broker to send and subscribe to events.
-/// </summary>
 public interface IEventBus
 {
-	void Publish<TEvent>(TEvent @event)
-		where TEvent : Event;
+	Task PublishAsync<TEventMessage>([NotNull] TEventMessage eventMessage, [CanBeNull] ParentMessageEnvelope parentMessage = null, bool isReQueuePublish = false) where TEventMessage : IIntegrationEventMessage;
 
-	void Subscribe<TEvent, TEventHandler>()
-		where TEvent : Event
-		where TEventHandler : IIntegrationEventHandler<TEvent>;
+	void Subscribe<TEvent, THandler>()
+		where TEvent : IIntegrationEventMessage
+		where THandler : IIntegrationEventHandler<TEvent>;
+
+	void Subscribe(Type eventType, Type eventHandlerType);
 }

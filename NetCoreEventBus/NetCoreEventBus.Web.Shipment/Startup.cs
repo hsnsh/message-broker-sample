@@ -1,4 +1,5 @@
 using NetCoreEventBus.Infra.EventBus.Bus;
+using NetCoreEventBus.Infra.EventBus.Logging;
 using NetCoreEventBus.Shared;
 using NetCoreEventBus.Shared.Events;
 using NetCoreEventBus.Web.Shipment.IntegrationEvents.EventHandlers;
@@ -27,6 +28,8 @@ public class Startup
             services.AddSwaggerGen();
         }
 
+        services.AddSingleton<IBaseLogger, DefaultEventBusLogger>();
+        
         // Must be Scoped or Transient => Cannot consume any scoped service
         services.AddScoped<IShipmentService, ShipmentService>();
 

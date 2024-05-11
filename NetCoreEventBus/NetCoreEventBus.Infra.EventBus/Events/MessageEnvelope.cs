@@ -1,7 +1,6 @@
-using System;
 using JetBrains.Annotations;
 
-namespace HsnSoft.Base.Domain.Entities.Events;
+namespace NetCoreEventBus.Infra.EventBus.Events;
 
 public sealed record MessageEnvelope<T> where T : IIntegrationEventMessage
 {

@@ -3,6 +3,7 @@ using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NetCoreEventBus.Infra.EventBus.Events;
+using NetCoreEventBus.Infra.EventBus.Logging;
 using NetCoreEventBus.Infra.EventBus.RabbitMQ.Connection;
 using NetCoreEventBus.Infra.EventBus.Subscriptions;
 using RabbitMQ.Client;
@@ -19,7 +20,7 @@ public sealed class RabbitMqConsumer : IDisposable
     private readonly IRabbitMqPersistentConnection _persistentConnection;
     private readonly IEventBusSubscriptionManager _subscriptionsManager;
     private readonly RabbitMqEventBusConfig _rabbitMqEventBusConfig;
-    private readonly ILogger _logger;
+    private readonly IEventBusLogger _logger;
 
     private static readonly object ChannelAckResourceLock = new();
     private readonly SemaphoreSlim consumerPrefetchSemaphore;
@@ -30,9 +31,9 @@ public sealed class RabbitMqConsumer : IDisposable
         IRabbitMqPersistentConnection persistentConnection,
         IEventBusSubscriptionManager subscriptionsManager,
         RabbitMqEventBusConfig rabbitMqEventBusConfig,
-        ILogger logger)
+        IEventBusLogger logger)
     {
-        _serviceScopeFactory = serviceScopeFactory;
+        _serviceScopeFactory = serviceScopeFactory ?? throw new ArgumentNullException(nameof(serviceScopeFactory),"MessageBroker ServiceScopeFactory is null");
         _persistentConnection = persistentConnection;
         _subscriptionsManager = subscriptionsManager;
         _rabbitMqEventBusConfig = rabbitMqEventBusConfig;
@@ -44,7 +45,7 @@ public sealed class RabbitMqConsumer : IDisposable
 
     public void StartBasicConsume(string eventName)
     {
-        _logger.LogTrace("Creating RabbitMQ consumer channel...");
+        _logger.LogInformation("Creating RabbitMQ consumer channel...");
 
         if (ConsumerChannel == null)
         {
@@ -52,7 +53,7 @@ public sealed class RabbitMqConsumer : IDisposable
             return;
         }
 
-        _logger.LogTrace("Starting RabbitMQ basic consume...");
+        _logger.LogInformation("Starting RabbitMQ basic consume...");
         ConsumerChannel.BasicQos(0, _rabbitMqEventBusConfig.ConsumerMaxFetchCount, false);
         var consumer = new AsyncEventingBasicConsumer(ConsumerChannel);
         consumer.Received += ConsumerReceived;
@@ -91,7 +92,7 @@ public sealed class RabbitMqConsumer : IDisposable
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Error processing the following message: {Message}.", message);
+                _logger.LogWarning( "Error processing the following message: {Message}.", message);
             }
             finally
             {
@@ -120,7 +121,7 @@ public sealed class RabbitMqConsumer : IDisposable
                 ConsumerChannel.BasicNack(eventArgs.DeliveryTag, false, true);
             }
 
-            _logger.LogTrace("Message added to queue again.");
+            _logger.LogInformation("Message added to queue again.");
         }
         catch (Exception ex)
         {
@@ -130,13 +131,19 @@ public sealed class RabbitMqConsumer : IDisposable
 
     private void ProcessEvent(string eventName, string message)
     {
-        _logger.LogTrace("Processing RabbitMQ event: {EventName}...", eventName);
-
         if (!_subscriptionsManager.HasSubscriptionsForEvent(eventName))
         {
             throw new Exception("There are no subscriptions for this event.");
         }
 
+        var eventType = _subscriptionsManager.GetEventTypeByName(eventName);
+            
+        var genericClass = typeof(MessageEnvelope<>);
+        var constructedClass = genericClass.MakeGenericType(eventType!);
+        var @event = JsonSerializer.Deserialize(message, constructedClass);
+        
+        var eventHandlerType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType);
+        
         var subscriptions = _subscriptionsManager.GetHandlersForEvent(eventName);
         // AbcEvent => AbcEventLogHandler, AbcEventMailHandler etc. Multiple subscription can be for one Event
         foreach (var subscription in subscriptions)
@@ -149,14 +156,8 @@ public sealed class RabbitMqConsumer : IDisposable
                 continue;
             }
 
-            var eventType = _subscriptionsManager.GetEventTypeByName(eventName);
-
-            var @event = JsonSerializer.Deserialize(message, eventType);
-            var eventHandlerType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType);
-            ((Task)eventHandlerType.GetMethod(nameof(IIntegrationEventHandler<Event>.HandleAsync)).Invoke(handler, new object[] { @event })).GetAwaiter().GetResult();
+            ((Task)eventHandlerType.GetMethod(nameof(IIntegrationEventHandler<IIntegrationEventMessage>.HandleAsync))?.Invoke(handler, new object[] { @event }))!.GetAwaiter().GetResult();
         }
-
-        _logger.LogTrace("Processed event {EventName}.", eventName);
     }
 
     private IModel CreateConsumerChannel()
@@ -165,8 +166,6 @@ public sealed class RabbitMqConsumer : IDisposable
         {
             _persistentConnection.TryConnect();
         }
-
-        _logger.LogTrace("Creating RabbitMQ consumer channel...");
 
         var channel = _persistentConnection.CreateModel();
 

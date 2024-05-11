@@ -7,9 +7,9 @@ public interface IEventBusSubscriptionManager
     Func<string, string> EventNameGetter { get; set; }
     bool IsEmpty { get; }
 
-    void AddSubscription<TEvent, TEventHandler>()
-        where TEvent : Event
-        where TEventHandler : IIntegrationEventHandler<TEvent>;
+    void AddSubscription<T, TH>() where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>;
+
+    void AddSubscription(Type eventType, Type eventHandlerType);
 
     void Clear();
 
