@@ -1,5 +1,5 @@
 using NetCoreEventBus.Infra.EventBus.Bus;
-using NetCoreEventBus.Infra.EventBus.RabbitMQ.Extensions;
+using NetCoreEventBus.Shared;
 using NetCoreEventBus.Shared.Events;
 using NetCoreEventBus.Web.Shipment.IntegrationEvents.EventHandlers;
 using NetCoreEventBus.Web.Shipment.Services;

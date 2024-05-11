@@ -4,11 +4,12 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NetCoreEventBus.Infra.EventBus.Bus;
 using NetCoreEventBus.Infra.EventBus.Logging;
+using NetCoreEventBus.Infra.EventBus.RabbitMQ;
 using NetCoreEventBus.Infra.EventBus.RabbitMQ.Bus;
 using NetCoreEventBus.Infra.EventBus.RabbitMQ.Connection;
 using NetCoreEventBus.Infra.EventBus.Subscriptions;
 
-namespace NetCoreEventBus.Infra.EventBus.RabbitMQ.Extensions;
+namespace NetCoreEventBus.Shared;
 
 public static class ServiceCollectionExtensions
 {

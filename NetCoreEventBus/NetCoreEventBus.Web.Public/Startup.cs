@@ -1,7 +1,7 @@
 using System.Reflection;
 using Microsoft.OpenApi.Models;
 using NetCoreEventBus.Infra.EventBus.Bus;
-using NetCoreEventBus.Infra.EventBus.RabbitMQ.Extensions;
+using NetCoreEventBus.Shared;
 using NetCoreEventBus.Shared.Events;
 using NetCoreEventBus.Web.Public.Controllers.Configurations;
 using NetCoreEventBus.Web.Public.IntegrationEvents.EventHandlers;
