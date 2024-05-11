@@ -1,8 +1,5 @@
 ﻿namespace NetCoreEventBus.Infra.EventBus.Subscriptions;
 
-/// <summary>
-/// Represents an event subscription. Subscriptions control when we listen to events.
-/// </summary>
 public class Subscription
 {
 	public Type EventType { get; private set; }

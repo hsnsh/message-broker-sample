@@ -42,8 +42,6 @@ public class RabbitMQEventBus : IEventBus, IDisposable
         _logger = logger;
 
         _subscriptionsManager.EventNameGetter = TrimEventName;
-        _subscriptionsManager.OnEventRemoved += SubscriptionManager_OnEventRemoved;
-        // _persistentConnection.OnReconnectedAfterConnectionFailure += PersistentConnection_OnReconnectedAfterConnectionFailure;
 
         _consumers = new List<RabbitMqConsumer>();
     }
@@ -147,24 +145,7 @@ public class RabbitMQEventBus : IEventBus, IDisposable
 
         _logger.LogInformation("Subscribed to event {EventName} with {EvenHandler}.", eventName, eventHandlerName);
     }
-
-    public void Unsubscribe<TEvent, TEventHandler>()
-        where TEvent : Event
-        where TEventHandler : IEventHandler<TEvent>
-    {
-        var eventName = _subscriptionsManager.GetEventKey<TEvent>();
-
-        _logger.LogInformation("Unsubscribing from event {EventName}...", eventName);
-
-        _subscriptionsManager.RemoveSubscription<TEvent, TEventHandler>();
-
-        _logger.LogInformation("Unsubscribed from event {EventName}.", eventName);
-    }
-
-    private void SubscriptionManager_OnEventRemoved([CanBeNull] object sender, string eventName)
-    {
-    }
-
+    
     public void Dispose()
     {
         if (_disposed) return;
