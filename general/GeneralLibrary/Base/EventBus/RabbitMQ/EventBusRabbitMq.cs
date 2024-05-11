@@ -60,7 +60,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         semaphore = new SemaphoreSlim(_rabbitMqEventBusConfig.ConsumerParallelThreadCount * _rabbitMqEventBusConfig.ConsumerMaxFetchCount);
     }
 
-    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, bool isReQueuePublish = false) where TEventMessage : IIntegrationEventMessage
+    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, MessageEnvelope parentMessage = null, bool isReQueuePublish = false) where TEventMessage : IIntegrationEventMessage
     {
         if (!_persistentConnection.IsConnected)
         {
@@ -432,13 +432,13 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
 
         Type failedMessageType = null;
         dynamic failedMessageObject = null;
-        ParentMessageEnvelope failedEnvelopeInfo = null;
+        MessageEnvelope failedEnvelopeInfo = null;
         DateTimeOffset? failedMessageEnvelopeTime = null;
         try
         {
             failedMessageType = _subsManager.GetEventTypeByName($"{_rabbitMqEventBusConfig.EventNamePrefix}{failedEventName}{_rabbitMqEventBusConfig.EventNameSuffix}");
             var failedEnvelope = JsonConvert.DeserializeObject<dynamic>(failedMessageContent);
-            failedEnvelopeInfo = ((JObject)failedEnvelope)?.ToObject<ParentMessageEnvelope>();
+            failedEnvelopeInfo = ((JObject)failedEnvelope)?.ToObject<MessageEnvelope>();
 
             dynamic dynamicObject = JsonConvert.DeserializeObject<ExpandoObject>(failedMessageContent)!;
 

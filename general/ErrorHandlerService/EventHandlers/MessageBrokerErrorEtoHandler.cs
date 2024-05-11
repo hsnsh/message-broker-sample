@@ -40,7 +40,7 @@ public sealed class MessageBrokerErrorEtoHandler : IIntegrationEventHandler<Mess
             Console.WriteLine("HATA NEDIR: {0}, MESSAGE NEDIR:{1}", @event.Message.ErrorMessage, failedMessage ?? string.Empty);
 
             await _eventBus.PublishAsync(failedMessage,
-                parentMessage: JsonConvert.DeserializeObject<ParentMessageEnvelope>(JsonConvert.SerializeObject(@event)),
+                parentMessage: JsonConvert.DeserializeObject<MessageEnvelope>(JsonConvert.SerializeObject(@event)),
                 isReQueuePublish: true);
         }
     }
