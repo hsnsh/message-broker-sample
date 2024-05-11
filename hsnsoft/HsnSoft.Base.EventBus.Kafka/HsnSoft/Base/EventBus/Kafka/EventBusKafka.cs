@@ -24,7 +24,7 @@ public class EventBusKafka : IEventBus, IDisposable
     private readonly ITraceAccesor _traceAccessor;
     private readonly ICurrentUser _currentUser;
 
-    private readonly IEventBusSubscriptionsManager _subsManager;
+    private readonly IEventBusSubscriptionManager _subsManager;
     private readonly CancellationTokenSource _tokenSource;
     private readonly List<Task> _consumerTasks;
     private readonly List<Task> _messageProcessorTasks;
@@ -40,7 +40,7 @@ public class EventBusKafka : IEventBus, IDisposable
         _traceAccessor = _serviceProvider.GetService<ITraceAccesor>();
         _currentUser = _serviceProvider.GetService<ICurrentUser>();
 
-        _subsManager = new InMemoryEventBusSubscriptionsManager(TrimEventName);
+        _subsManager = new InMemoryEventBusSubscriptionManager(TrimEventName);
 
         _tokenSource = new CancellationTokenSource();
         _consumerTasks = new List<Task>();

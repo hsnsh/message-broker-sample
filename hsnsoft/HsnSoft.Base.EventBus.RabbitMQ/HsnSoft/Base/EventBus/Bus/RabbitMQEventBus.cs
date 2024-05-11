@@ -1,22 +1,24 @@
-﻿using Microsoft.Extensions.Logging;
-using NetCoreEventBus.Infra.EventBus.Bus;
-using NetCoreEventBus.Infra.EventBus.Events;
-using NetCoreEventBus.Infra.EventBus.RabbitMQ.Connection;
-using NetCoreEventBus.Infra.EventBus.Subscriptions;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Sockets;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using HsnSoft.Base.Domain.Entities.Events;
+using HsnSoft.Base.EventBus.Logging;
+using HsnSoft.Base.EventBus.RabbitMQ;
+using HsnSoft.Base.EventBus.RabbitMQ.Configs;
+using HsnSoft.Base.EventBus.RabbitMQ.Connection;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Polly;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Exceptions;
-using System.Net.Sockets;
-using System.Text;
-using System.Text.Json;
-using JetBrains.Annotations;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using NetCoreEventBus.Infra.EventBus.Logging;
 
-namespace NetCoreEventBus.Infra.EventBus.RabbitMQ.Bus;
+namespace HsnSoft.Base.EventBus.Bus;
 
-public class RabbitMQEventBus : IEventBus, IDisposable
+public class RabbitMQEventBusOld : IEventBus, IDisposable
 {
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly IRabbitMqPersistentConnection _persistentConnection;
@@ -30,7 +32,7 @@ public class RabbitMQEventBus : IEventBus, IDisposable
     private bool _disposed;
     private bool _publishing;
 
-    public RabbitMQEventBus(
+    public RabbitMQEventBusOld(
         IServiceScopeFactory serviceScopeFactory,
         IRabbitMqPersistentConnection persistentConnection, RabbitMqConnectionSettings rabbitMqConnectionSettings,
         IEventBusSubscriptionManager subscriptionsManager, IOptions<RabbitMqEventBusConfig> eventBusSettings,
@@ -60,7 +62,7 @@ public class RabbitMQEventBus : IEventBus, IDisposable
 
         var policy = Policy.Handle<BrokerUnreachableException>()
             .Or<SocketException>()
-            .WaitAndRetry(_rabbitMqConnectionSettings.ConnectionRetryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
+            .WaitAndRetry(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
             {
                 _publishing = false;
                 _logger.LogError("RabbitMQ | Could not publish event message : {Event} after {Timeout}s ({ExceptionMessage})", eventMessage, $"{time.TotalSeconds:n1}", ex.Message);

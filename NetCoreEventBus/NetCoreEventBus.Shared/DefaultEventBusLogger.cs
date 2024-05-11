@@ -1,7 +1,8 @@
+using HsnSoft.Base.EventBus.Logging;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
-namespace NetCoreEventBus.Infra.EventBus.Logging;
+namespace NetCoreEventBus.Shared;
 
 public class DefaultEventBusLogger : IEventBusLogger
 {

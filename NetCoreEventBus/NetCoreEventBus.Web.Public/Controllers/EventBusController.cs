@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using NetCoreEventBus.Infra.EventBus.Bus;
+﻿using HsnSoft.Base.EventBus;
+using Microsoft.AspNetCore.Mvc;
 using NetCoreEventBus.Shared.Events;
 using NetCoreEventBus.Web.Public.Dtos;
 

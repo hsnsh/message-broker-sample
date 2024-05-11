@@ -1,17 +1,20 @@
+using System;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using HsnSoft.Base.Domain.Entities.Events;
+using HsnSoft.Base.EventBus.Logging;
+using HsnSoft.Base.EventBus.RabbitMQ.Configs;
+using HsnSoft.Base.EventBus.RabbitMQ.Connection;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using NetCoreEventBus.Infra.EventBus.Events;
-using NetCoreEventBus.Infra.EventBus.Logging;
-using NetCoreEventBus.Infra.EventBus.RabbitMQ.Connection;
-using NetCoreEventBus.Infra.EventBus.Subscriptions;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
-namespace NetCoreEventBus.Infra.EventBus.RabbitMQ.Bus;
+namespace HsnSoft.Base.EventBus.Bus;
 
-public sealed class RabbitMqConsumer : IDisposable
+public sealed class RabbitMqConsumerOld : IDisposable
 {
     private const int MaxWaitDisposeTime = 30000;
     private readonly TimeSpan _subscribeRetryTime = TimeSpan.FromSeconds(5);
@@ -27,7 +30,7 @@ public sealed class RabbitMqConsumer : IDisposable
     public readonly IModel ConsumerChannel;
     private bool _disposed;
 
-    public RabbitMqConsumer(IServiceScopeFactory serviceScopeFactory,
+    public RabbitMqConsumerOld(IServiceScopeFactory serviceScopeFactory,
         IRabbitMqPersistentConnection persistentConnection,
         IEventBusSubscriptionManager subscriptionsManager,
         RabbitMqEventBusConfig rabbitMqEventBusConfig,

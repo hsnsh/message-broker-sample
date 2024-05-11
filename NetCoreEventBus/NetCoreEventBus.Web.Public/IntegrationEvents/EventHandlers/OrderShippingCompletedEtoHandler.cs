@@ -1,5 +1,6 @@
-﻿using NetCoreEventBus.Infra.EventBus.Events;
-using NetCoreEventBus.Infra.EventBus.Logging;
+﻿using HsnSoft.Base.Domain.Entities.Events;
+using HsnSoft.Base.EventBus;
+using HsnSoft.Base.Logging;
 using NetCoreEventBus.Shared.Events;
 
 namespace NetCoreEventBus.Web.Public.IntegrationEvents.EventHandlers;

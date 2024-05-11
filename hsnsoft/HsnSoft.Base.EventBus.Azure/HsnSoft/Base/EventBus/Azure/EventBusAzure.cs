@@ -21,7 +21,7 @@ public class EventBusAzure : IEventBus, IDisposable
     private readonly IServiceBusPersisterConnection _serviceBusPersisterConnection;
     private readonly EventBusConfig _eventBusConfig;
     private readonly IEventBusLogger _logger;
-    private readonly IEventBusSubscriptionsManager _subsManager;
+    private readonly IEventBusSubscriptionManager _subsManager;
     private readonly ITraceAccesor _traceAccessor;
 
     private ServiceBusSender _sender;
@@ -37,7 +37,7 @@ public class EventBusAzure : IEventBus, IDisposable
         _serviceBusPersisterConnection = _serviceProvider.GetRequiredService<IServiceBusPersisterConnection>();
         _traceAccessor = _serviceProvider.GetService<ITraceAccesor>();
 
-        _subsManager = new InMemoryEventBusSubscriptionsManager(TrimEventName);
+        _subsManager = new InMemoryEventBusSubscriptionManager(TrimEventName);
 
         _sender = _serviceBusPersisterConnection.TopicClient.CreateSender(_eventBusConfig.ExchangeName);
         var options = new ServiceBusProcessorOptions { MaxConcurrentCalls = 10, AutoCompleteMessages = false };

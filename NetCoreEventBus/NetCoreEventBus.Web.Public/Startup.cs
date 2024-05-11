@@ -1,7 +1,7 @@
 using System.Reflection;
+using HsnSoft.Base.EventBus;
+using HsnSoft.Base.Logging;
 using Microsoft.OpenApi.Models;
-using NetCoreEventBus.Infra.EventBus.Bus;
-using NetCoreEventBus.Infra.EventBus.Logging;
 using NetCoreEventBus.Shared;
 using NetCoreEventBus.Shared.Events;
 using NetCoreEventBus.Web.Public.Controllers.Configurations;

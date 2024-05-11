@@ -1,4 +1,4 @@
-using NetCoreEventBus.Infra.EventBus.Events;
+using HsnSoft.Base.Domain.Entities.Events;
 
 namespace NetCoreEventBus.Shared.Events;
 

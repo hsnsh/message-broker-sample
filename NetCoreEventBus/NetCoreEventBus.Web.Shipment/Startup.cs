@@ -1,5 +1,5 @@
-using NetCoreEventBus.Infra.EventBus.Bus;
-using NetCoreEventBus.Infra.EventBus.Logging;
+using HsnSoft.Base.EventBus;
+using HsnSoft.Base.Logging;
 using NetCoreEventBus.Shared;
 using NetCoreEventBus.Shared.Events;
 using NetCoreEventBus.Web.Shipment.IntegrationEvents.EventHandlers;

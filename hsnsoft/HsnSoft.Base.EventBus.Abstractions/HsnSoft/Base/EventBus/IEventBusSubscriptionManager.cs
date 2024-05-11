@@ -1,12 +1,14 @@
-﻿using JetBrains.Annotations;
-using NetCoreEventBus.Infra.EventBus.Events;
+using System;
+using System.Collections.Generic;
+using HsnSoft.Base.Domain.Entities.Events;
+using JetBrains.Annotations;
 
-namespace NetCoreEventBus.Infra.EventBus.Subscriptions;
+namespace HsnSoft.Base.EventBus;
 
 public interface IEventBusSubscriptionManager
 {
-    Func<string, string> EventNameGetter { get; set; }
-    
+    public Func<string, string> EventNameGetter { get; set; }
+
     bool IsEmpty { get; }
     void Clear();
 
@@ -26,6 +28,4 @@ public interface IEventBusSubscriptionManager
     string GetEventKey<T>() where T : IIntegrationEventMessage;
 
     string GetEventKey(Type eventType);
-
-
 }

@@ -16,7 +16,7 @@ public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
 {
     private readonly IConnectionFactory _connectionFactory;
     private readonly IEventBusLogger _logger;
-    private readonly int _retryCount;
+    private const int _retryCount=5;
 
     [CanBeNull]
     private IConnection _connection;
@@ -38,7 +38,6 @@ public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
             RequestedHeartbeat = TimeSpan.FromSeconds(60),
             DispatchConsumersAsync = true,
         };
-        _retryCount = conSettings.Value.ConnectionRetryCount;
     }
 
     public bool IsConnected => _connection is { IsOpen: true } && !_disposed;

@@ -1,31 +1,19 @@
-﻿using JetBrains.Annotations;
-using NetCoreEventBus.Infra.EventBus.Events;
-using Type = System.Type;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using HsnSoft.Base.Domain.Entities.Events;
 
-namespace NetCoreEventBus.Infra.EventBus.Subscriptions;
+namespace HsnSoft.Base.EventBus.SubManagers;
 
 public class InMemoryEventBusSubscriptionManager : IEventBusSubscriptionManager
 {
-    private readonly Dictionary<string, List<SubscriptionInfo>> _handlers;
-    private readonly Dictionary<string, Type> _eventTypes;
+    private readonly Dictionary<string, List<SubscriptionInfo>> _handlers = new();
+    private readonly List<Type> _eventTypes = new();
 
-    [CanBeNull]
     public Func<string, string> EventNameGetter { get; set; }
-
-    public InMemoryEventBusSubscriptionManager(Func<string, string> eventNameGetter)
-    {
-        _handlers = new Dictionary<string, List<SubscriptionInfo>>();
-        _eventTypes =new Dictionary<string, Type>();
-        EventNameGetter = eventNameGetter;
-    }
     public bool IsEmpty => _handlers is { Count: 0 };
+    public void Clear() => _handlers.Clear();
 
-    public void Clear()
-    {
-        _handlers.Clear();
-        _eventTypes.Clear();
-    }
-    
     public void AddSubscription<T, TH>() where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>
     {
         AddSubscription(typeof(T), typeof(TH));
@@ -40,7 +28,10 @@ public class InMemoryEventBusSubscriptionManager : IEventBusSubscriptionManager
 
         DoAddSubscription(eventHandlerType, eventName);
 
-        _eventTypes.TryAdd(eventName, eventType);
+        if (!_eventTypes.Contains(eventType))
+        {
+            _eventTypes.Add(eventType);
+        }
     }
 
     public bool HasSubscriptionsForEvent<T>() where T : IIntegrationEventMessage
@@ -59,7 +50,7 @@ public class InMemoryEventBusSubscriptionManager : IEventBusSubscriptionManager
 
     public IEnumerable<SubscriptionInfo> GetHandlersForEvent(string eventName) => _handlers[eventName];
 
-    public Type GetEventTypeByName(string eventName) => _eventTypes[eventName];
+    public Type GetEventTypeByName(string eventName) => _eventTypes.SingleOrDefault(t => t.Name == eventName);
 
     public string GetEventKey<T>() where T : IIntegrationEventMessage
     {
@@ -71,7 +62,7 @@ public class InMemoryEventBusSubscriptionManager : IEventBusSubscriptionManager
         if (!eventType.IsAssignableTo(typeof(IIntegrationEventMessage))) throw new TypeAccessException();
 
         var eventName = eventType.Name;
-        return EventNameGetter?.Invoke(eventName);
+        return _eventNameGetter(eventName);
     }
 
     private void DoAddSubscription(Type handlerType, string eventName)
@@ -83,7 +74,8 @@ public class InMemoryEventBusSubscriptionManager : IEventBusSubscriptionManager
 
         if (_handlers[eventName].Any(s => s.HandlerType == handlerType))
         {
-            throw new ArgumentException($"Handler Type {handlerType.Name} already registered for '{eventName}'", nameof(handlerType));
+            throw new ArgumentException(
+                $"Handler Type {handlerType.Name} already registered for '{eventName}'", nameof(handlerType));
         }
 
         _handlers[eventName].Add(SubscriptionInfo.Typed(handlerType));

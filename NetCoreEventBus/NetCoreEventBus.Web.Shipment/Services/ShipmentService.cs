@@ -1,4 +1,4 @@
-using NetCoreEventBus.Infra.EventBus.Bus;
+using HsnSoft.Base.EventBus;
 using NetCoreEventBus.Shared.Events;
 
 namespace NetCoreEventBus.Web.Shipment.Services;
