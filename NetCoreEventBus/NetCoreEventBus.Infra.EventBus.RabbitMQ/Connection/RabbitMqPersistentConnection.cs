@@ -1,11 +1,11 @@
 using System.Net.Sockets;
 using JetBrains.Annotations;
+using Microsoft.Extensions.Options;
 using NetCoreEventBus.Infra.EventBus.Logging;
 using Polly;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
-using Microsoft.Extensions.Options;
 
 namespace NetCoreEventBus.Infra.EventBus.RabbitMQ.Connection;
 
@@ -63,8 +63,8 @@ public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
             {
                 _connection!.ConnectionShutdown += OnConnectionShutdown;
                 _connection!.CallbackException += OnCallbackException;
-                // _connection!.ConnectionBlocked += OnConnectionBlocked;
-                // _connection!.ConnectionUnblocked += OnConnectionUnblocked;
+                _connection!.ConnectionBlocked += OnConnectionBlocked;
+                _connection!.ConnectionUnblocked += OnConnectionUnblocked;
 
                 _logger.LogInformation("RabbitMQ Client acquired a persistent connection to '{HostName}'", _connection?.Endpoint?.HostName);
 
@@ -130,6 +130,8 @@ public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
 
     private void OnConnectionBlocked(object sender, ConnectionBlockedEventArgs args)
     {
+        if (_disposed) return;
+
         _logger.LogWarning("A RabbitMQ connection is blocked. Trying to re-connect...");
         TryConnectIfNotDisposed();
     }
