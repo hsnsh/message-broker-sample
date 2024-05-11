@@ -28,10 +28,7 @@ public class InMemoryEventBusSubscriptionManager : IEventBusSubscriptionManager
 
         DoAddSubscription( eventHandlerType, eventName);
 
-        if (!_eventTypes.ContainsKey(eventName))
-        {
-            _eventTypes.TryAdd(eventName, eventType);
-        }
+        _eventTypes.TryAdd(eventName, eventType);
     }
 
     public void Clear()
