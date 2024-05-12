@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Dynamic;
 using System.Linq;
 using System.Net.Sockets;
@@ -166,7 +167,7 @@ public sealed class RabbitMqConsumer : IDisposable
                     continue;
                 }
 
-                var handleStartTime = DateTimeOffset.UtcNow;
+                var stopWatch = Stopwatch.StartNew();
                 try
                 {
                     _logger.LogDebug("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Handling STARTED : MessageId [ {MessageId} ]", _rabbitMqEventBusConfig.ClientInfo, eventName, messageId.ToString());
@@ -174,17 +175,15 @@ public sealed class RabbitMqConsumer : IDisposable
                     var eventHandlerType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType);
                     ((Task)eventHandlerType.GetMethod(nameof(IIntegrationEventHandler<IIntegrationEventMessage>.HandleAsync))?.Invoke(handler, new[] { @event }))!.GetAwaiter().GetResult();
 
-                    var handleEndTime = DateTimeOffset.UtcNow;
-                    var processTime = $"{(handleEndTime - handleStartTime).TotalMilliseconds:0.####}ms";
-
-                    _logger.LogDebug("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Handling COMPLETED : MessageId [ {MessageId} ], ConsumeHandleWorkingTime [ {ConsumeHandleWorkingTime} ]", _rabbitMqEventBusConfig.ClientInfo, eventName, messageId.ToString(), processTime);
+                    stopWatch.Stop();
+                    var timespan = stopWatch.Elapsed;
+                    _logger.LogDebug("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Handling COMPLETED : MessageId [ {MessageId} ], ConsumeHandleWorkingTime [ {ConsumeHandleWorkingTime}sn ]", _rabbitMqEventBusConfig.ClientInfo, eventName, messageId.ToString(), timespan.TotalSeconds.ToString("0.###"));
                 }
                 catch (Exception ex)
                 {
-                    var handleEndTime = DateTimeOffset.UtcNow;
-                    var processTime = $"{(handleEndTime - handleStartTime).TotalMilliseconds:0.####}ms";
-
-                    _logger.LogWarning("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Handling ERROR : MessageId [ {MessageId} ], ConsumeHandleWorkingTime [ {ConsumeHandleWorkingTime} ], {HandlingError}", _rabbitMqEventBusConfig.ClientInfo, eventName, messageId.ToString(), processTime, ex.Message);
+                    stopWatch.Stop();
+                    var timespan = stopWatch.Elapsed;
+                    _logger.LogWarning("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Handling ERROR : MessageId [ {MessageId} ], ConsumeHandleWorkingTime [ {ConsumeHandleWorkingTime}sn ], {HandlingError}", _rabbitMqEventBusConfig.ClientInfo, eventName, messageId.ToString(), timespan.TotalSeconds.ToString("0.###"), ex.Message);
                     throw new Exception(ex.Message);
                 }
             }
