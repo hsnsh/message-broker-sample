@@ -2,7 +2,7 @@ using HsnSoft.Base.EventBus;
 using HsnSoft.Base.Logging;
 using NetCoreEventBus.Shared;
 using NetCoreEventBus.Shared.Events;
-using NetCoreEventBus.Web.Order.Infra.Mongo;
+using NetCoreEventBus.Web.Order.Infra;
 using NetCoreEventBus.Web.Order.IntegrationEvents.EventHandlers;
 using NetCoreEventBus.Web.Order.Services;
 
@@ -34,7 +34,7 @@ public class Startup
         // Must be Scoped or Transient => Cannot consume any scoped service
         services.AddScoped<IOrderService, OrderService>();
 
-        services.AddMongoDatabaseConfiguration(Configuration);
+        services.AddEfCoreDatabaseConfiguration(Configuration);
 
         // Here we configure the event bus
         ConfigureEventBusDependencies(services);

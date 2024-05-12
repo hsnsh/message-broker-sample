@@ -1,0 +1,10 @@
+
+dotnet ef migrations add InitialCreate --context NetCoreEventBus.Web.Order.Infra.OrderEfCoreDbContext -o Migrations
+
+dotnet ef database update --context NetCoreEventBus.Web.Order.Infra.OrderEfCoreDbContext
+
+
+dotnet ef database remove --context NetCoreEventBus.Web.Order.Infra.OrderEfCoreDbContext
+
+
+

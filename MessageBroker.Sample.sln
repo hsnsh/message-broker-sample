@@ -71,6 +71,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HsnSoft.Base.Auditing", "hs
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HsnSoft.Base.Data", "hsnsoft\HsnSoft.Base.Data\HsnSoft.Base.Data.csproj", "{C84E3370-5B88-4BFC-A914-035EC7CCAA23}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HsnSoft.Base.EntityFrameworkCore", "hsnsoft\HsnSoft.Base.EntityFrameworkCore\HsnSoft.Base.EntityFrameworkCore.csproj", "{698343BC-9A59-4762-AAC2-BF2EE984C94B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -193,6 +195,10 @@ Global
 		{C84E3370-5B88-4BFC-A914-035EC7CCAA23}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C84E3370-5B88-4BFC-A914-035EC7CCAA23}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C84E3370-5B88-4BFC-A914-035EC7CCAA23}.Release|Any CPU.Build.0 = Release|Any CPU
+		{698343BC-9A59-4762-AAC2-BF2EE984C94B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{698343BC-9A59-4762-AAC2-BF2EE984C94B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{698343BC-9A59-4762-AAC2-BF2EE984C94B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{698343BC-9A59-4762-AAC2-BF2EE984C94B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -227,6 +233,7 @@ Global
 		{F6834332-B6B3-407A-AD42-981A97AA3DC5} = {7163643C-60D6-40CB-AD3B-70BA1623A8CA}
 		{33CEE8E0-75D1-4458-A74C-D3BC44AD4269} = {7163643C-60D6-40CB-AD3B-70BA1623A8CA}
 		{C84E3370-5B88-4BFC-A914-035EC7CCAA23} = {7163643C-60D6-40CB-AD3B-70BA1623A8CA}
+		{698343BC-9A59-4762-AAC2-BF2EE984C94B} = {7163643C-60D6-40CB-AD3B-70BA1623A8CA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C703DC80-0D51-435C-A25A-ED489A0A20CF}
