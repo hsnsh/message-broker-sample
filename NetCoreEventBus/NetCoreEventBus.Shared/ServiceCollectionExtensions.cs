@@ -13,7 +13,7 @@ public static class ServiceCollectionExtensions
 {
     public static void AddRabbitMQEventBus(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddSingleton<IEventBusLogger, DefaultEventBusLogger>();
+        services.AddSingleton(typeof(IEventBusLogger<>), typeof(DefaultEventBusLogger<>));
         services.Configure<RabbitMqConnectionSettings>(configuration.GetSection("RabbitMq:Connection"));
         services.Configure<RabbitMqEventBusConfig>(configuration.GetSection("RabbitMq:EventBus"));
         services.AddSingleton<IRabbitMqPersistentConnection, RabbitMqPersistentConnection>();

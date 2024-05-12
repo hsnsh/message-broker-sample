@@ -7,9 +7,9 @@ namespace NetCoreEventBus.Web.Order.Services;
 public sealed class OrderService : IOrderService
 {
     private readonly IEventBus _eventBus;
-    private readonly IBaseLogger _logger;
+    private readonly IBaseLogger<OrderService> _logger;
 
-    public OrderService(IEventBus eventBus, IBaseLogger logger)
+    public OrderService(IEventBus eventBus, IBaseLogger<OrderService> logger)
     {
         _eventBus = eventBus;
         _logger = logger;

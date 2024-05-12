@@ -20,7 +20,7 @@ public class EventBusAzure : IEventBus, IDisposable
     private readonly IServiceProvider _serviceProvider;
     private readonly IServiceBusPersisterConnection _serviceBusPersisterConnection;
     private readonly EventBusConfig _eventBusConfig;
-    private readonly IEventBusLogger _logger;
+    private readonly IEventBusLogger<EventBusLogger> _logger;
     private readonly IEventBusSubscriptionManager _subsManager;
     private readonly ITraceAccesor _traceAccessor;
 
@@ -31,7 +31,7 @@ public class EventBusAzure : IEventBus, IDisposable
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 
-        _logger = _serviceProvider.GetRequiredService<IEventBusLogger>();
+        _logger = _serviceProvider.GetRequiredService<IEventBusLogger<EventBusLogger>>();
 
         _eventBusConfig = _serviceProvider.GetRequiredService<IOptions<AzureEventBusConfig>>().Value;
         _serviceBusPersisterConnection = _serviceProvider.GetRequiredService<IServiceBusPersisterConnection>();

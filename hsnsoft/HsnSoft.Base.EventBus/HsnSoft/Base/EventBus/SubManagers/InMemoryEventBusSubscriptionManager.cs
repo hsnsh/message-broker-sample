@@ -8,7 +8,7 @@ namespace HsnSoft.Base.EventBus.SubManagers;
 public class InMemoryEventBusSubscriptionManager : IEventBusSubscriptionManager
 {
     private readonly Dictionary<string, List<SubscriptionInfo>> _handlers = new();
-    private readonly List<Type> _eventTypes = new();
+    private readonly Dictionary<string, Type> _eventTypes = new();
 
     public Func<string, string> EventNameGetter { get; set; }
     public bool IsEmpty => _handlers is { Count: 0 };
@@ -28,10 +28,7 @@ public class InMemoryEventBusSubscriptionManager : IEventBusSubscriptionManager
 
         DoAddSubscription(eventHandlerType, eventName);
 
-        if (!_eventTypes.Contains(eventType))
-        {
-            _eventTypes.Add(eventType);
-        }
+        _eventTypes.TryAdd(eventName, eventType);
     }
 
     public bool HasSubscriptionsForEvent<T>() where T : IIntegrationEventMessage
@@ -50,7 +47,7 @@ public class InMemoryEventBusSubscriptionManager : IEventBusSubscriptionManager
 
     public IEnumerable<SubscriptionInfo> GetHandlersForEvent(string eventName) => _handlers[eventName];
 
-    public Type GetEventTypeByName(string eventName) => _eventTypes.SingleOrDefault(t => t.Name == eventName);
+    public Type GetEventTypeByName(string eventName) => _eventTypes[eventName];
 
     public string GetEventKey<T>() where T : IIntegrationEventMessage
     {

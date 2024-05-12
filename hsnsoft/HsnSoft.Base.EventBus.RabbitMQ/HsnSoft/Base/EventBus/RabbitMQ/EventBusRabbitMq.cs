@@ -32,7 +32,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly IRabbitMqPersistentConnection _persistentConnection;
     private readonly RabbitMqEventBusConfig _rabbitMqEventBusConfig;
-    private readonly IEventBusLogger _logger;
+    private readonly IEventBusLogger<EventBusLogger> _logger;
     private readonly ITraceAccesor _traceAccessor;
     private readonly ICurrentUser _currentUser;
     private readonly IEventBusSubscriptionManager _subsManager;
@@ -46,7 +46,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
     {
         _serviceScopeFactory = serviceProvider.GetRequiredService<IServiceScopeFactory>();
 
-        _logger = serviceProvider.GetRequiredService<IEventBusLogger>();
+        _logger = serviceProvider.GetRequiredService<IEventBusLogger<EventBusLogger>>();
 
         _rabbitMqEventBusConfig = serviceProvider.GetRequiredService<IOptions<RabbitMqEventBusConfig>>().Value;
         _persistentConnection = serviceProvider.GetRequiredService<IRabbitMqPersistentConnection>();

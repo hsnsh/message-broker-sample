@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 
 namespace NetCoreEventBus.Shared;
 
-public class DefaultEventBusLogger : IEventBusLogger
+public class DefaultEventBusLogger<T> : IEventBusLogger<T>
 {
     private readonly ILogger _logger;
 
@@ -24,7 +24,7 @@ public class DefaultEventBusLogger : IEventBusLogger
             });
         });
 
-        _logger = loggerFactory.CreateLogger("EventBusLogger");
+        _logger = loggerFactory.CreateLogger(typeof(T).Name);
     }
 
     public void LogDebug(string messageTemplate, params object[] args) => _logger.LogDebug(messageTemplate, args);

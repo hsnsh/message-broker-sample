@@ -47,7 +47,7 @@ public class Startup
 				opt.InvalidModelStateResponseFactory = InvalidModelStateResponseFactory.ProduceErrorResponse;
 			});
 
-		services.AddSingleton<IBaseLogger, DefaultEventBusLogger>();
+		services.AddSingleton(typeof(IBaseLogger<>), typeof(DefaultEventBusLogger<>));
 		
 		// Here we configure the event bus
 		ConfigureEventBusDependencies(services);

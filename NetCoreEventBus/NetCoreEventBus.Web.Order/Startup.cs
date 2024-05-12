@@ -28,7 +28,7 @@ public class Startup
             services.AddSwaggerGen();
         }
 
-        services.AddSingleton<IBaseLogger, DefaultEventBusLogger>();
+        services.AddSingleton(typeof(IBaseLogger<>), typeof(DefaultEventBusLogger<>));
         
         // Must be Scoped or Transient => Cannot consume any scoped service
         services.AddScoped<IOrderService, OrderService>();

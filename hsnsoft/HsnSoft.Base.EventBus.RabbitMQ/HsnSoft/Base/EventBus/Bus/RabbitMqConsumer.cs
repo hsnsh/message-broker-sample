@@ -23,7 +23,7 @@ public sealed class RabbitMqConsumerOld : IDisposable
     private readonly IRabbitMqPersistentConnection _persistentConnection;
     private readonly IEventBusSubscriptionManager _subscriptionsManager;
     private readonly RabbitMqEventBusConfig _rabbitMqEventBusConfig;
-    private readonly IEventBusLogger _logger;
+    private readonly IEventBusLogger<EventBusLogger> _logger;
 
     private static readonly object ChannelAckResourceLock = new();
     private readonly SemaphoreSlim consumerPrefetchSemaphore;
@@ -34,7 +34,7 @@ public sealed class RabbitMqConsumerOld : IDisposable
         IRabbitMqPersistentConnection persistentConnection,
         IEventBusSubscriptionManager subscriptionsManager,
         RabbitMqEventBusConfig rabbitMqEventBusConfig,
-        IEventBusLogger logger)
+        IEventBusLogger<EventBusLogger> logger)
     {
         _serviceScopeFactory = serviceScopeFactory ?? throw new ArgumentNullException(nameof(serviceScopeFactory),"MessageBroker ServiceScopeFactory is null");
         _persistentConnection = persistentConnection;

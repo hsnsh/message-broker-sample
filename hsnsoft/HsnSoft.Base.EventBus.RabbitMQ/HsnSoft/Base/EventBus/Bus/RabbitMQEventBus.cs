@@ -25,7 +25,7 @@ public class RabbitMQEventBusOld : IEventBus, IDisposable
     private readonly RabbitMqConnectionSettings _rabbitMqConnectionSettings;
     private readonly IEventBusSubscriptionManager _subscriptionsManager;
     private readonly RabbitMqEventBusConfig _rabbitMqEventBusConfig;
-    private readonly IEventBusLogger _logger;
+    private readonly IEventBusLogger<EventBusLogger> _logger;
 
     private readonly int _publishRetryCount = 5;
     private readonly List<RabbitMqConsumer> _consumers;
@@ -36,7 +36,7 @@ public class RabbitMQEventBusOld : IEventBus, IDisposable
         IServiceScopeFactory serviceScopeFactory,
         IRabbitMqPersistentConnection persistentConnection, RabbitMqConnectionSettings rabbitMqConnectionSettings,
         IEventBusSubscriptionManager subscriptionsManager, IOptions<RabbitMqEventBusConfig> eventBusSettings,
-        IEventBusLogger logger)
+        IEventBusLogger<EventBusLogger> logger)
     {
         _serviceScopeFactory = serviceScopeFactory;
 

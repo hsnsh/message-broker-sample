@@ -8,10 +8,10 @@ namespace NetCoreEventBus.Web.Order.IntegrationEvents.EventHandlers;
 
 public class OrderStartedEtoHandler : IIntegrationEventHandler<OrderStartedEto>
 {
-    private readonly IBaseLogger _logger;
+    private readonly IBaseLogger<OrderStartedEtoHandler> _logger;
     private readonly IOrderService _orderService;
 
-    public OrderStartedEtoHandler(IBaseLogger logger, IOrderService orderService)
+    public OrderStartedEtoHandler(IBaseLogger<OrderStartedEtoHandler> logger, IOrderService orderService)
     {
         _logger = logger;
         _orderService = orderService;
@@ -19,8 +19,8 @@ public class OrderStartedEtoHandler : IIntegrationEventHandler<OrderStartedEto>
 
     public async Task HandleAsync(MessageEnvelope<OrderStartedEto> @event)
     {
-        _logger.LogInformation("OrderStarted BEGIN => OrderNo{OrderNo}", @event.Message.OrderNo.ToString());
+        _logger.LogInformation("OrderStarted BEGIN => OrderNo: {OrderNo}", @event.Message.OrderNo.ToString());
         await _orderService.OrderStartedAsync(@event.Message);
-        _logger.LogInformation("OrderStarted END => OrderNo{OrderNo}", @event.Message.OrderNo.ToString());
+        _logger.LogInformation("OrderStarted END => OrderNo: {OrderNo}", @event.Message.OrderNo.ToString());
     }
 }
