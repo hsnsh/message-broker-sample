@@ -1,14 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <Import Project="..\..\common.version.props"/>
-    
+
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\..\..\org\hsn-soft\base-framework\src\HsnSoft.Base.Ddd.Domain\HsnSoft.Base.Ddd.Domain.csproj"/>
+        <PackageReference Include="HsnSoft.Base.Ddd.Domain" Version="$(HsnSoftFrameworkVersion)"/>
+        <!--<ProjectReference Include="..\..\..\..\..\org\hsn-soft\base-framework\src\HsnSoft.Base.Ddd.Domain\HsnSoft.Base.Ddd.Domain.csproj"/>-->
     </ItemGroup>
-    
+
 </Project>
