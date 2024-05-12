@@ -202,7 +202,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
             _logger.LogInformation("Publisher workers waiting...");
             Thread.Sleep(1000);
         }
-
+        
         _subsManager.Clear();
         _consumers.Clear();
 

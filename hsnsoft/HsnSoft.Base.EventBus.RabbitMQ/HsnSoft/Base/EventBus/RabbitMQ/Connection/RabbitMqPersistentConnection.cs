@@ -16,7 +16,7 @@ public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
 {
     private readonly IConnectionFactory _connectionFactory;
     private readonly IEventBusLogger<EventBusLogger> _logger;
-    private const int _retryCount=5;
+    private const int RetryCount = 5;
 
     [CanBeNull]
     private IConnection _connection;
@@ -50,7 +50,7 @@ public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
         {
             var policy = Policy.Handle<SocketException>()
                 .Or<BrokerUnreachableException>()
-                .WaitAndRetry(_retryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
+                .WaitAndRetry(RetryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
                     {
                         _logger.LogWarning("RabbitMQ Client could not connect after {TimeOut}s ({ExceptionMessage})", $"{time.TotalSeconds:n1}", ex.Message);
                     }
@@ -99,18 +99,19 @@ public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
         {
             if (_connection != null)
             {
-                if (_connection.IsOpen)
-                {
-                    _connection.Close();
-                }
-
                 _connection.ConnectionShutdown -= OnConnectionShutdown;
                 _connection.CallbackException -= OnCallbackException;
                 _connection.ConnectionBlocked -= OnConnectionBlocked;
                 _connection.ConnectionUnblocked -= OnConnectionUnblocked;
+                if (_connection.IsOpen)
+                {
+                    _connection.Close();
+                    _logger.LogInformation("RabbitMQ client connection is closed.");
+                }
             }
 
             _connection?.Dispose();
+            _logger.LogInformation("RabbitMQ client is disposed.");
         }
         catch (IOException ex)
         {
