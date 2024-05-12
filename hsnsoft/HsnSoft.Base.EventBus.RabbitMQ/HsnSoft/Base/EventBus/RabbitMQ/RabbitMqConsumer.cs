@@ -117,7 +117,7 @@ public sealed class RabbitMqConsumer : IDisposable
 
             try
             {
-                _logger.LogDebug("RabbitMQ | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: ReceivedMessageEnvelope{{ReceivedMessageEnvelope}}",
+                _logger.LogDebug("RabbitMQ | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: ReceivedMessageEnvelope {ReceivedMessageEnvelope}",
                     consumerQueueName, consumerChannelNumber, _currentConsumerTag, fetcherId, message);
 
                 var stopWatch = Stopwatch.StartNew();

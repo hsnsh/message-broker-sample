@@ -31,6 +31,8 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
     private readonly ICurrentUser _currentUser;
     private readonly IEventBusSubscriptionManager _subsManager;
 
+    private static ushort MaxConsumerParallelThreadCount { get; set; } = 5;
+    private static ushort MaxConsumerMaxFetchCount { get; set; } = 10;
     private readonly int _publishRetryCount = 5;
     private readonly List<RabbitMqConsumer> _consumers;
     private bool _disposed;
@@ -39,13 +41,21 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
     public EventBusRabbitMq(IServiceProvider serviceProvider)
     {
         _serviceScopeFactory = serviceProvider.GetRequiredService<IServiceScopeFactory>();
-
         _logger = serviceProvider.GetRequiredService<IEventBusLogger<EventBusLogger>>();
-
-        _rabbitMqEventBusConfig = serviceProvider.GetRequiredService<IOptions<RabbitMqEventBusConfig>>().Value;
         _persistentConnection = serviceProvider.GetRequiredService<IRabbitMqPersistentConnection>();
         _traceAccessor = serviceProvider.GetService<ITraceAccesor>();
         _currentUser = serviceProvider.GetService<ICurrentUser>();
+
+        _rabbitMqEventBusConfig = serviceProvider.GetRequiredService<IOptions<RabbitMqEventBusConfig>>().Value;
+        if (_rabbitMqEventBusConfig.ConsumerParallelThreadCount > MaxConsumerParallelThreadCount)
+        {
+            _rabbitMqEventBusConfig.ConsumerParallelThreadCount = MaxConsumerParallelThreadCount;
+        }
+
+        if (_rabbitMqEventBusConfig.ConsumerMaxFetchCount > MaxConsumerMaxFetchCount)
+        {
+            _rabbitMqEventBusConfig.ConsumerMaxFetchCount = MaxConsumerMaxFetchCount;
+        }
 
         _subsManager = serviceProvider.GetService<IEventBusSubscriptionManager>();
         _subsManager.EventNameGetter = TrimEventName;
@@ -188,15 +198,16 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         _logger.LogInformation("RabbitMQ | Consumers terminating...");
         Task.WaitAll(_consumers.Select(consumer => Task.Run(consumer.Dispose)).ToArray());
         _logger.LogInformation("RabbitMQ | Consumers terminated");
-        
+
         _logger.LogInformation("RabbitMQ | Publisher terminating...");
         while (_publishing)
         {
             _logger.LogInformation("RabbitMQ | Publisher wait processing...");
             Thread.Sleep(1000);
         }
+
         _logger.LogInformation("RabbitMQ | Publisher terminated");
-        
+
         _subsManager.Clear();
         _consumers.Clear();
 
