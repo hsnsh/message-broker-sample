@@ -9,9 +9,9 @@ public sealed class OrderService : IOrderService
 {
     private readonly IEventBus _eventBus;
     private readonly IBaseLogger<OrderService> _logger;
-    private readonly IContentGenericRepository<SampleEntity> _genericRepository;
+    private readonly IContentGenericRepository<OrderEntity> _genericRepository;
 
-    public OrderService(IEventBus eventBus, IBaseLogger<OrderService> logger, IContentGenericRepository<SampleEntity> genericRepository)
+    public OrderService(IEventBus eventBus, IBaseLogger<OrderService> logger, IContentGenericRepository<OrderEntity> genericRepository)
     {
         _eventBus = eventBus;
         _logger = logger;
@@ -27,7 +27,7 @@ public sealed class OrderService : IOrderService
         // Thread.Sleep(random * 5);
         // await Task.Delay(random * 5, cancellationToken);
 
-        await _genericRepository.InsertAsync(new SampleEntity(input.OrderId, input.OrderNo.ToString()), cancellationToken);
+        await _genericRepository.InsertAsync(new OrderEntity(input.OrderId, input.OrderNo.ToString()), cancellationToken);
 
         await _eventBus.PublishAsync(new OrderShippingStartedEto(input.OrderId));
     }

@@ -4,10 +4,10 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Bson.Serialization.Serializers;
-using NetCoreEventBus.Web.Order.Infra.Domain;
-using NetCoreEventBus.Web.Order.Infra.Mongo.ConfigurationMaps;
+using NetCoreEventBus.Web.Shipment.Infra.Domain;
+using NetCoreEventBus.Web.Shipment.Infra.Mongo.ConfigurationMaps;
 
-namespace NetCoreEventBus.Web.Order.Infra.Mongo;
+namespace NetCoreEventBus.Web.Shipment.Infra.Mongo;
 
 public static class MongoDbExtensions
 {
@@ -20,7 +20,7 @@ public static class MongoDbExtensions
         MongoClassMap.RegisterClassMaps();
 
         // Must be Scoped => Cannot consume any scoped service and CurrentUser object creation on constructor
-        services.AddScoped<OrderMongoDbContext>();
+        services.AddScoped<ShipmentMongoDbContext>();
 
         // Must be Scoped => Cannot consume any scoped service and CurrentUser object creation on constructor
         services.AddScoped(typeof(IContentGenericRepository<>), typeof(MongoContentGenericRepository<>));

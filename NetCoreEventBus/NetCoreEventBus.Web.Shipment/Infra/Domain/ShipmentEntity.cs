@@ -1,21 +1,21 @@
 using HsnSoft.Base.Domain.Entities.Auditing;
 using JetBrains.Annotations;
 
-namespace NetCoreEventBus.Web.Order.Infra.Domain;
+namespace NetCoreEventBus.Web.Shipment.Infra.Domain;
 
-public sealed class SampleEntity : FullAuditedEntity<Guid>
+public sealed class ShipmentEntity : FullAuditedEntity<Guid>
 {
     [NotNull]
     public string Name { get;  set; }
     
     public string Desc { get;  set; }
 
-    private SampleEntity()
+    private ShipmentEntity()
     {
         Name = string.Empty;
     }
 
-    public SampleEntity(Guid id, [NotNull] string name) : this()
+    public ShipmentEntity(Guid id, [NotNull] string name) : this()
     {
         Id = id;
         SetName(name);

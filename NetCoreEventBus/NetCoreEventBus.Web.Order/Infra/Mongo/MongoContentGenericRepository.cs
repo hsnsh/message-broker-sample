@@ -4,10 +4,10 @@ using NetCoreEventBus.Web.Order.Infra.Domain;
 
 namespace NetCoreEventBus.Web.Order.Infra.Mongo;
 
-public sealed class MongoContentGenericRepository<TEntity> : MongoGenericRepository<SampleMongoDbContext, TEntity, Guid>, IContentGenericRepository<TEntity>
+public sealed class MongoContentGenericRepository<TEntity> : MongoGenericRepository<OrderMongoDbContext, TEntity, Guid>, IContentGenericRepository<TEntity>
     where TEntity : class, IEntity<Guid>
 {
-    public MongoContentGenericRepository(IServiceProvider provider, SampleMongoDbContext dbContext) : base(provider, dbContext)
+    public MongoContentGenericRepository(IServiceProvider provider, OrderMongoDbContext dbContext) : base(provider, dbContext)
     {
        
     }

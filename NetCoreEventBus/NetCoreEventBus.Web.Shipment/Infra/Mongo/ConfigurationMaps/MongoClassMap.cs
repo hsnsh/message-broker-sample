@@ -1,8 +1,8 @@
 using HsnSoft.Base.Domain.Entities;
 using MongoDB.Bson.Serialization;
-using NetCoreEventBus.Web.Order.Infra.Domain;
+using NetCoreEventBus.Web.Shipment.Infra.Domain;
 
-namespace NetCoreEventBus.Web.Order.Infra.Mongo.ConfigurationMaps;
+namespace NetCoreEventBus.Web.Shipment.Infra.Mongo.ConfigurationMaps;
 
 public sealed class MongoClassMap
 {
@@ -15,7 +15,7 @@ public sealed class MongoClassMap
             map.MapIdMember(x => x.Id);
         });
         
-        BsonClassMap.RegisterClassMap<OrderEntity>(map =>
+        BsonClassMap.RegisterClassMap<ShipmentEntity>(map =>
         {
             map.AutoMap();
             map.SetIgnoreExtraElements(true);

@@ -12,6 +12,14 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\hsnsoft\HsnSoft.Base.MongoDB\HsnSoft.Base.MongoDB.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\hsnsoft\HsnSoft.Base.Ddd.Domain\HsnSoft.Base.Ddd.Domain.csproj" />
+    </ItemGroup>
+    
+    <ItemGroup>
         <ProjectReference Include="..\NetCoreEventBus.Shared\NetCoreEventBus.Shared.csproj" />
     </ItemGroup>
 
