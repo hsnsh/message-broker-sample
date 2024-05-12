@@ -87,8 +87,6 @@ public sealed class RabbitMqConsumer : IDisposable
             // don't use semaphore count until disposed function semaphore count check 
             while (_consumerPrefetchSemaphore.CurrentCount < _rabbitMqEventBusConfig.ConsumerMaxFetchCount)
             {
-                _logger.LogDebug("xxxxxxxxxxxxxxxxxx | {ClientInfo} CONSUMER [ {ConsumerTag} ] => Wait disposing...",
-                    _rabbitMqEventBusConfig.ClientInfo, (sender as AsyncEventingBasicConsumer)?.ConsumerTags.FirstOrDefault() ?? string.Empty);
                 Thread.Sleep(1000);
             }
 

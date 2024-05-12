@@ -117,7 +117,6 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
             var properties = publisherChannel?.CreateBasicProperties();
             properties!.DeliveryMode = (int)DeliveryMode.Persistent;
 
-            //_logger.LogDebug("RabbitMQ | Publishing event: {Event}", @event);
             publisherChannel.BasicPublish(
                 exchange: isReQueuePublish ? "" : _rabbitMqEventBusConfig.ExchangeName,
                 routingKey: isReQueuePublish ? GetConsumerQueueName(eventName) : eventName,
