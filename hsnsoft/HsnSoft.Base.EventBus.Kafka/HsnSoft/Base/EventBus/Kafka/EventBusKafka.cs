@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus.Kafka.Configs;
 using HsnSoft.Base.EventBus.Logging;
-using HsnSoft.Base.EventBus.SubManagers;
 using HsnSoft.Base.Tracing;
 using HsnSoft.Base.User;
 using JetBrains.Annotations;

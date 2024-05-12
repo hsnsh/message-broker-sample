@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Dynamic;
 using System.Linq;
 using System.Net.Sockets;
-using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,17 +9,13 @@ using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus.Logging;
 using HsnSoft.Base.EventBus.RabbitMQ.Configs;
 using HsnSoft.Base.EventBus.RabbitMQ.Connection;
-using HsnSoft.Base.EventBus.SubManagers;
 using HsnSoft.Base.Tracing;
 using HsnSoft.Base.User;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Polly;
 using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
 
 namespace HsnSoft.Base.EventBus.RabbitMQ;
@@ -126,7 +120,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
             var properties = publisherChannel?.CreateBasicProperties();
             properties!.DeliveryMode = (int)DeliveryMode.Persistent;
 
-            _logger.LogDebug("RabbitMQ | Publishing event: {Event}", @event);
+            //_logger.LogDebug("RabbitMQ | Publishing event: {Event}", @event);
             publisherChannel.BasicPublish(
                 exchange: isReQueuePublish ? "" : _rabbitMqEventBusConfig.ExchangeName,
                 routingKey: isReQueuePublish ? GetConsumerQueueName(eventName) : eventName,

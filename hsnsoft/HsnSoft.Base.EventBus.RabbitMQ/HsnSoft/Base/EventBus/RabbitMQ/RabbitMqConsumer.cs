@@ -63,7 +63,7 @@ public sealed class RabbitMqConsumer : IDisposable
             return;
         }
 
-        lock (_consumerChannel)
+        lock (ChannelAckResourceLock)
         {
             _consumerChannel?.BasicQos(0, _rabbitMqEventBusConfig.ConsumerMaxFetchCount, false);
             var consumer = new AsyncEventingBasicConsumer(_consumerChannel);
@@ -100,15 +100,17 @@ public sealed class RabbitMqConsumer : IDisposable
 
         var message = Encoding.UTF8.GetString(eventArgs.Body.Span);
 
-        await Task.Run(() =>
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+        Task.Run(async () =>
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
         {
             _logger.LogDebug("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => ConsumerTag: {ConsumerTag}", _rabbitMqEventBusConfig.ClientInfo, eventName, (sender as AsyncEventingBasicConsumer)?.ConsumerTags.FirstOrDefault() ?? string.Empty);
 
             try
             {
-                _logger.LogDebug("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Received: {Message}", _rabbitMqEventBusConfig.ClientInfo, eventName, message);
+                //_logger.LogDebug("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Received: {Message}", _rabbitMqEventBusConfig.ClientInfo, eventName, message);
 
-                ProcessEvent(eventName, message);
+                await ProcessEvent(eventName, message);
                 lock (ChannelAckResourceLock)
                 {
                     _consumerChannel?.BasicAck(eventArgs.DeliveryTag, multiple: false);
@@ -149,7 +151,7 @@ public sealed class RabbitMqConsumer : IDisposable
         });
     }
 
-    private void ProcessEvent(string eventName, string message)
+    private async Task ProcessEvent(string eventName, string message)
     {
         eventName = TrimEventName(eventName);
         if (_subscriptionsManager.HasSubscriptionsForEvent(eventName))
@@ -179,7 +181,8 @@ public sealed class RabbitMqConsumer : IDisposable
                     _logger.LogDebug("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Handling STARTED : MessageId [ {MessageId} ]", _rabbitMqEventBusConfig.ClientInfo, eventName, messageId.ToString());
 
                     var eventHandlerType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType);
-                    ((Task)eventHandlerType.GetMethod(nameof(IIntegrationEventHandler<IIntegrationEventMessage>.HandleAsync))?.Invoke(handler, new[] { @event }))!.GetAwaiter().GetResult();
+                    await Task.Yield();
+                    await ((Task)eventHandlerType.GetMethod(nameof(IIntegrationEventHandler<IIntegrationEventMessage>.HandleAsync))?.Invoke(handler, new[] { @event }))!;
 
                     stopWatch.Stop();
                     var timespan = stopWatch.Elapsed;

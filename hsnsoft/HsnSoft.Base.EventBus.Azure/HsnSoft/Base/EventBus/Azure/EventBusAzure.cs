@@ -7,7 +7,6 @@ using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus.Azure.Configs;
 using HsnSoft.Base.EventBus.Azure.Connection;
 using HsnSoft.Base.EventBus.Logging;
-using HsnSoft.Base.EventBus.SubManagers;
 using HsnSoft.Base.Tracing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
