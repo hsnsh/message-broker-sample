@@ -44,7 +44,7 @@ public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
 
     public bool TryConnect()
     {
-        _logger.LogInformation("RabbitMQ Client is trying to connect");
+        _logger.LogInformation("RabbitMQ | Client is trying to connect");
 
         lock (_syncRoot)
         {
@@ -52,7 +52,7 @@ public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
                 .Or<BrokerUnreachableException>()
                 .WaitAndRetry(RetryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
                     {
-                        _logger.LogWarning("RabbitMQ Client could not connect after {TimeOut}s ({ExceptionMessage})", $"{time.TotalSeconds:n1}", ex.Message);
+                        _logger.LogWarning("RabbitMQ | Client could not connect after {TimeOut}s ({ExceptionMessage})", $"{time.TotalSeconds:n1}", ex.Message);
                     }
                 );
 
@@ -68,12 +68,12 @@ public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
                 _connection!.ConnectionBlocked += OnConnectionBlocked;
                 _connection!.ConnectionUnblocked += OnConnectionUnblocked;
 
-                _logger.LogInformation("RabbitMQ Client acquired a persistent connection to '{HostName}'", _connection?.Endpoint?.HostName);
+                _logger.LogInformation("RabbitMQ | Client acquired a persistent connection to '{HostName}'", _connection?.Endpoint?.HostName);
 
                 return true;
             }
 
-            _logger.LogError("FATAL ERROR: RabbitMQ connections could not be created and opened");
+            _logger.LogError("RabbitMQ | Connections could not be created and opened");
 
             return false;
         }
@@ -83,7 +83,7 @@ public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
     {
         if (!IsConnected)
         {
-            throw new InvalidOperationException("No RabbitMQ connections are available to perform this action");
+            throw new InvalidOperationException("RabbitMQ | No connections are available to perform this action");
         }
 
         return _connection?.CreateModel();
@@ -106,12 +106,12 @@ public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
                 if (_connection.IsOpen)
                 {
                     _connection.Close();
-                    _logger.LogInformation("RabbitMQ client connection is closed.");
+                    _logger.LogInformation("RabbitMQ | Client connection is closed");
                 }
             }
 
             _connection?.Dispose();
-            _logger.LogInformation("RabbitMQ client is disposed.");
+            _logger.LogInformation("RabbitMQ | Client is terminated");
         }
         catch (IOException ex)
         {
@@ -121,13 +121,13 @@ public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
 
     private void OnCallbackException(object sender, CallbackExceptionEventArgs args)
     {
-        _logger.LogWarning("A RabbitMQ connection throw exception. Trying to re-connect...");
+        _logger.LogWarning("RabbitMQ | Connection throw exception. Trying to re-connect...");
         TryConnectIfNotDisposed();
     }
 
     private void OnConnectionShutdown(object sender, ShutdownEventArgs args)
     {
-        _logger.LogWarning("A RabbitMQ connection is on shutdown. Trying to re-connect...");
+        _logger.LogWarning("RabbitMQ | Connection is on shutdown. Trying to re-connect...");
         TryConnectIfNotDisposed();
     }
 
@@ -135,13 +135,13 @@ public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
     {
         if (_disposed) return;
 
-        _logger.LogWarning("A RabbitMQ connection is blocked. Trying to re-connect...");
+        _logger.LogWarning("RabbitMQ | Connection is blocked. Trying to re-connect...");
         TryConnectIfNotDisposed();
     }
 
     private void OnConnectionUnblocked(object sender, EventArgs args)
     {
-        _logger.LogWarning("A RabbitMQ connection is unblocked. Trying to re-connect...");
+        _logger.LogWarning("RabbitMQ | Connection is unblocked. Trying to re-connect...");
         TryConnectIfNotDisposed();
     }
 
@@ -149,7 +149,7 @@ public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
     {
         if (_disposed)
         {
-            _logger.LogInformation("RabbitMQ client is disposed. No action will be taken.");
+            _logger.LogInformation("RabbitMQ | Client is terminating. No action will be taken.");
             return;
         }
 

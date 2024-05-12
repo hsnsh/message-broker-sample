@@ -96,20 +96,17 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
 
         var body = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(@event, @event.GetType(), new JsonSerializerOptions { WriteIndented = true });
 
-        _logger.LogDebug("RabbitMQ | Creating channel to publish event name: {EventName}", eventName);
         policy.Execute(() =>
         {
             using var publisherChannel = _persistentConnection.CreateModel();
 
             if (!isReQueuePublish)
             {
-                _logger.LogDebug("RabbitMQ | Declaring exchange to publish event name: {EventName}", eventName);
                 publisherChannel.ExchangeDeclare(exchange: _rabbitMqEventBusConfig.ExchangeName, type: "direct"); //Ensure exchange exists while publishing
             }
             else
             {
                 // Direct re-queue, no-exchange
-                _logger.LogDebug("RabbitMQ | Declaring queue to publish event name: {EventName}", eventName);
                 publisherChannel?.QueueDeclare(queue: GetConsumerQueueName(eventName),
                     durable: true,
                     exclusive: false,
@@ -187,15 +184,19 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
     {
         if (_disposed) return;
         _disposed = true;
-        _logger.LogInformation("Message Broker Bridge shutting down...");
+        _logger.LogInformation("RabbitMQ | Terminating...");
 
+        _logger.LogInformation("RabbitMQ | Consumers terminating...");
         Task.WaitAll(_consumers.Select(consumer => Task.Run(consumer.Dispose)).ToArray());
-
+        _logger.LogInformation("RabbitMQ | Consumers terminated");
+        
+        _logger.LogInformation("RabbitMQ | Publisher terminating...");
         while (_publishing)
         {
-            _logger.LogInformation("Publisher workers waiting...");
+            _logger.LogInformation("RabbitMQ | Publisher wait processing...");
             Thread.Sleep(1000);
         }
+        _logger.LogInformation("RabbitMQ | Publisher terminated");
         
         _subsManager.Clear();
         _consumers.Clear();
@@ -205,7 +206,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
             _persistentConnection?.Dispose();
         }
 
-        _logger.LogInformation("Message Broker Bridge terminated");
+        _logger.LogInformation("RabbitMQ | Terminated");
     }
 
     [CanBeNull]

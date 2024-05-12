@@ -19,8 +19,8 @@ public class OrderStartedEtoHandler : IIntegrationEventHandler<OrderStartedEto>
 
     public async Task HandleAsync(MessageEnvelope<OrderStartedEto> @event)
     {
-        _logger.LogInformation("OrderStarted BEGIN => OrderNo: {OrderNo}", @event.Message.OrderNo.ToString());
+        // _logger.LogInformation("OrderStarted BEGIN => OrderNo: {OrderNo}", @event.Message.OrderNo.ToString());
         await _orderService.OrderStartedAsync(@event.Message);
-        _logger.LogInformation("OrderStarted END => OrderNo: {OrderNo}", @event.Message.OrderNo.ToString());
+        // _logger.LogInformation("OrderStarted END => OrderNo: {OrderNo}", @event.Message.OrderNo.ToString());
     }
 }
