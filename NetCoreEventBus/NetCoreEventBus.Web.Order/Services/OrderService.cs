@@ -8,10 +8,10 @@ namespace NetCoreEventBus.Web.Order.Services;
 public sealed class OrderService : IOrderService
 {
     private readonly IEventBus _eventBus;
-    private readonly IBaseLogger<OrderService> _logger;
+    private readonly IBaseLogger _logger;
     private readonly IContentGenericRepository<OrderEntity> _genericRepository;
 
-    public OrderService(IEventBus eventBus, IBaseLogger<OrderService> logger, IContentGenericRepository<OrderEntity> genericRepository)
+    public OrderService(IEventBus eventBus, IBaseLogger logger, IContentGenericRepository<OrderEntity> genericRepository)
     {
         _eventBus = eventBus;
         _logger = logger;

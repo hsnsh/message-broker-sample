@@ -8,10 +8,10 @@ namespace NetCoreEventBus.Web.Shipment.IntegrationEvents.EventHandlers;
 
 public class ShipmentStartedEtoHandler : IIntegrationEventHandler<ShipmentStartedEto>
 {
-    private readonly IBaseLogger<ShipmentStartedEtoHandler> _logger;
+    private readonly IBaseLogger _logger;
     private readonly IShipmentService _shipmentService;
 
-    public ShipmentStartedEtoHandler(IBaseLogger<ShipmentStartedEtoHandler> logger, IShipmentService shipmentService)
+    public ShipmentStartedEtoHandler(IBaseLogger logger, IShipmentService shipmentService)
     {
         _logger = logger;
         _shipmentService = shipmentService;

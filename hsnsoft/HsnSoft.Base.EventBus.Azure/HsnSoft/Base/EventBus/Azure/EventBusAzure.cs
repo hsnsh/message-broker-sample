@@ -19,7 +19,7 @@ public class EventBusAzure : IEventBus, IDisposable
     private readonly IServiceProvider _serviceProvider;
     private readonly IServiceBusPersisterConnection _serviceBusPersisterConnection;
     private readonly EventBusConfig _eventBusConfig;
-    private readonly IEventBusLogger<EventBusLogger> _logger;
+    private readonly IEventBusLogger _logger;
     private readonly IEventBusSubscriptionManager _subsManager;
     private readonly ITraceAccesor _traceAccessor;
 
@@ -30,7 +30,7 @@ public class EventBusAzure : IEventBus, IDisposable
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 
-        _logger = _serviceProvider.GetRequiredService<IEventBusLogger<EventBusLogger>>();
+        _logger = _serviceProvider.GetRequiredService<IEventBusLogger>();
 
         _eventBusConfig = _serviceProvider.GetRequiredService<IOptions<AzureEventBusConfig>>().Value;
         _serviceBusPersisterConnection = _serviceProvider.GetRequiredService<IServiceBusPersisterConnection>();
@@ -138,7 +138,7 @@ public class EventBusAzure : IEventBus, IDisposable
         var ex = args.Exception;
         var context = args.ErrorSource;
 
-        _logger.LogError( "ERROR handling message: {ExceptionMessage} - Context: {@ExceptionContext}", ex.Message, context);
+        _logger.LogError("ERROR handling message: {ExceptionMessage} - Context: {@ExceptionContext}", ex.Message, context);
 
         return Task.CompletedTask;
     }

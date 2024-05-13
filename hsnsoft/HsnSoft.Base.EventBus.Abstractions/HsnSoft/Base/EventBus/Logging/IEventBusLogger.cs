@@ -1,9 +1,10 @@
 using HsnSoft.Base.Logging;
+using JetBrains.Annotations;
 
 namespace HsnSoft.Base.EventBus.Logging;
 
-public interface IEventBusLogger<T> : IBaseLogger<T>
+public interface IEventBusLogger : IBaseLogger
 {
-    public void EventBusInfoLog<TLog>(TLog t) where TLog : IEventBusLog;
-    public void EventBusErrorLog<TLog>(TLog t) where TLog : IEventBusLog;
+    public void EventBusInfoLog<T>([NotNull] T t) where T : IEventBusLog;
+    public void EventBusErrorLog<T>([NotNull] T t) where T : IEventBusLog;
 }

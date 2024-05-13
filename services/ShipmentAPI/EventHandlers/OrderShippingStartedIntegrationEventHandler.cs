@@ -1,7 +1,6 @@
 using Hosting.Events;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus;
-using HsnSoft.Base.EventBus.Logging;
 using ShipmentAPI.Services;
 
 namespace ShipmentAPI.EventHandlers;

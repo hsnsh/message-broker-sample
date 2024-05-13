@@ -8,10 +8,10 @@ namespace NetCoreEventBus.Web.Order.IntegrationEvents.EventHandlers;
 
 public class OrderStartedEtoHandler : IIntegrationEventHandler<OrderStartedEto>
 {
-    private readonly IBaseLogger<OrderStartedEtoHandler> _logger;
+    private readonly IBaseLogger _logger;
     private readonly IOrderService _orderService;
 
-    public OrderStartedEtoHandler(IBaseLogger<OrderStartedEtoHandler> logger, IOrderService orderService)
+    public OrderStartedEtoHandler(IBaseLogger logger, IOrderService orderService)
     {
         _logger = logger;
         _orderService = orderService;

@@ -7,9 +7,9 @@ namespace NetCoreEventBus.Web.Public.IntegrationEvents.EventHandlers;
 
 public class OrderShippingCompletedEtoHandler : IIntegrationEventHandler<OrderShippingCompletedEto>
 {
-    private readonly IBaseLogger<OrderShippingCompletedEtoHandler> _logger;
+    private readonly IBaseLogger _logger;
 
-    public OrderShippingCompletedEtoHandler(IBaseLogger<OrderShippingCompletedEtoHandler> logger)
+    public OrderShippingCompletedEtoHandler(IBaseLogger logger)
     {
         _logger = logger;
     }

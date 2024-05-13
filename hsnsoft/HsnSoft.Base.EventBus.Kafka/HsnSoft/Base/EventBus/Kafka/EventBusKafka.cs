@@ -17,7 +17,7 @@ namespace HsnSoft.Base.EventBus.Kafka;
 public class EventBusKafka : IEventBus, IDisposable
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly IEventBusLogger<EventBusLogger> _logger;
+    private readonly IEventBusLogger _logger;
     private readonly KafkaConnectionSettings _kafkaConnectionSettings;
     private readonly KafkaEventBusConfig _kafkaEventBusConfig;
     private readonly ITraceAccesor _traceAccessor;
@@ -32,7 +32,7 @@ public class EventBusKafka : IEventBus, IDisposable
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 
-        _logger = _serviceProvider.GetRequiredService<IEventBusLogger<EventBusLogger>>();
+        _logger = _serviceProvider.GetRequiredService<IEventBusLogger>();
 
         _kafkaConnectionSettings = _serviceProvider.GetRequiredService<IOptions<KafkaConnectionSettings>>().Value;
         _kafkaEventBusConfig = _serviceProvider.GetRequiredService<IOptions<KafkaEventBusConfig>>().Value;

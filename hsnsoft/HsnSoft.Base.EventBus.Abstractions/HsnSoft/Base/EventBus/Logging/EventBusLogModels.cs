@@ -85,8 +85,3 @@ public sealed record EventUserDetail([CanBeNull] string UserId, [CanBeNull] stri
     [CanBeNull]
     public string Role { get; } = Role;
 }
-
-// Marker
-public interface IEventBusLog
-{
-}
