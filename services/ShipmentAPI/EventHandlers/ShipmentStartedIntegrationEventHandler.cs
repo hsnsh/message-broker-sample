@@ -8,10 +8,10 @@ namespace ShipmentAPI.EventHandlers;
 
 public sealed class ShipmentStartedIntegrationEventHandler : IIntegrationEventHandler<ShipmentStartedEto>
 {
-    private readonly IEventBusLogger _logger;
+    private readonly ILogger _logger;
     private readonly IShipmentService _shipmentService;
 
-    public ShipmentStartedIntegrationEventHandler(IEventBusLogger logger,
+    public ShipmentStartedIntegrationEventHandler(ILogger logger,
         IShipmentService shipmentService)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));

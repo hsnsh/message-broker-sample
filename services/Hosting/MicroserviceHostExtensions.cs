@@ -1,14 +1,16 @@
 using System.Reflection;
 using HsnSoft.Base.AspNetCore;
+using HsnSoft.Base.AspNetCore.Logging;
 using HsnSoft.Base.AspNetCore.Security.Claims;
 using HsnSoft.Base.AspNetCore.Tracing;
 using HsnSoft.Base.EventBus;
 using HsnSoft.Base.EventBus.Kafka;
+using HsnSoft.Base.EventBus.Kafka.Configs;
 using HsnSoft.Base.EventBus.Logging;
 using HsnSoft.Base.EventBus.RabbitMQ;
-using HsnSoft.Base.Kafka;
+using HsnSoft.Base.EventBus.RabbitMQ.Configs;
+using HsnSoft.Base.EventBus.RabbitMQ.Connection;
 using HsnSoft.Base.MultiTenancy;
-using HsnSoft.Base.RabbitMQ;
 using HsnSoft.Base.Security.Claims;
 using HsnSoft.Base.Timing;
 using HsnSoft.Base.Tracing;
@@ -55,7 +57,7 @@ public static class MicroserviceHostExtensions
         services.AddSingleton<ICurrentPrincipalAccessor, HttpContextCurrentPrincipalAccessor>();
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddSingleton<ITraceAccesor, HttpContextTraceAccessor>();
-        services.AddSingleton<IEventBusLogger, DefaultEventBusLogger>();
+        services.AddSingleton(typeof(IEventBusLogger<>), typeof(DefaultPersistentLogger<>));
         services.AddSingleton<IEventBus, EventBusKafka>(sp => new EventBusKafka(sp));
     }
 
@@ -70,7 +72,7 @@ public static class MicroserviceHostExtensions
         services.AddSingleton<ICurrentPrincipalAccessor, HttpContextCurrentPrincipalAccessor>();
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddSingleton<ITraceAccesor, HttpContextTraceAccessor>();
-        services.AddSingleton<IEventBusLogger, DefaultEventBusLogger>();
+        services.AddSingleton(typeof(IEventBusLogger<>), typeof(DefaultPersistentLogger<>));
         services.AddSingleton<IRabbitMqPersistentConnection, RabbitMqPersistentConnection>();
         services.AddSingleton<IEventBus, EventBusRabbitMq>();
     }

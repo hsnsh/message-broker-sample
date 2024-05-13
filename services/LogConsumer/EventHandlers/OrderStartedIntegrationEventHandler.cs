@@ -2,14 +2,15 @@ using Hosting.Events;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus;
 using HsnSoft.Base.EventBus.Logging;
+using Microsoft.Extensions.Logging;
 
 namespace LogConsumer.EventHandlers;
 
 public sealed class OrderStartedIntegrationEventHandler : IIntegrationEventHandler<OrderStartedEto>
 {
-    private readonly IEventBusLogger _logger;
+    private readonly ILogger _logger;
 
-    public OrderStartedIntegrationEventHandler(IEventBusLogger logger)
+    public OrderStartedIntegrationEventHandler(ILogger logger)
     {
         _logger = logger;
     }

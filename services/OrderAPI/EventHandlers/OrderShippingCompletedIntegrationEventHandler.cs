@@ -8,10 +8,10 @@ namespace OrderAPI.EventHandlers;
 
 public sealed class OrderShippingCompletedIntegrationEventHandler : IIntegrationEventHandler<OrderShippingCompletedEto>
 {
-    private readonly IEventBusLogger _logger;
+    private readonly ILogger _logger;
     private readonly IOrderService _orderService;
 
-    public OrderShippingCompletedIntegrationEventHandler(IEventBusLogger logger,
+    public OrderShippingCompletedIntegrationEventHandler(ILogger logger,
         IOrderService orderService)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
