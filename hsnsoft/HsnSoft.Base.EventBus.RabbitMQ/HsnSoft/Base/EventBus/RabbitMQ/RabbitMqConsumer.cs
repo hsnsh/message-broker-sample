@@ -275,7 +275,6 @@ public sealed class RabbitMqConsumer : IDisposable
 
     private void TryEnqueueMessageAgainAsync(BasicDeliverEventArgs eventArgs, string taskId)
     {
-        if (_disposed) return;
         var consumerChannelNumber = _consumerChannel?.ChannelNumber.ToString() ?? "0";
 
         _logger.LogWarning("RabbitMQ | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: Adding message to queue again with {Time} seconds delay...",
@@ -329,7 +328,7 @@ public sealed class RabbitMqConsumer : IDisposable
 
             failedMessageObject = dynamicObject.Message;
         }
-        catch (Exception e) { errorMessage += "Failed envelope could not convert:" + e.Message; }
+        catch (Exception e) { errorMessage += ". FailedMessageContent convert operation error: " + e.Message; }
 
         var @event = new MessageEnvelope<MessageBrokerErrorEto>
         {
