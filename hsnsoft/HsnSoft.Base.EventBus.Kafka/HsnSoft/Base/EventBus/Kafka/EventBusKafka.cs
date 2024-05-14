@@ -6,7 +6,7 @@ using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus.Kafka.Configs;
 using HsnSoft.Base.EventBus.Logging;
 using HsnSoft.Base.Tracing;
-using HsnSoft.Base.User;
+using HsnSoft.Base.Users;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;

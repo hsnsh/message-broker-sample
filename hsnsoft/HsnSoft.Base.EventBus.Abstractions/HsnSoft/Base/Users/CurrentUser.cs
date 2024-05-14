@@ -2,7 +2,7 @@ using System;
 using System.Security.Claims;
 using HsnSoft.Base.DependencyInjection;
 
-namespace HsnSoft.Base.User;
+namespace HsnSoft.Base.Users;
 
 public class CurrentUser : ICurrentUser, ITransientDependency
 {

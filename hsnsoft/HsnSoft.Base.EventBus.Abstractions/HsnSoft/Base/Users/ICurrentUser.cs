@@ -2,7 +2,7 @@
 using System.Security.Claims;
 using JetBrains.Annotations;
 
-namespace HsnSoft.Base.User;
+namespace HsnSoft.Base.Users;
 
 public interface ICurrentUser
 {

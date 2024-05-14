@@ -10,7 +10,7 @@ using HsnSoft.Base.EventBus.Logging;
 using HsnSoft.Base.EventBus.RabbitMQ.Configs;
 using HsnSoft.Base.EventBus.RabbitMQ.Connection;
 using HsnSoft.Base.Tracing;
-using HsnSoft.Base.User;
+using HsnSoft.Base.Users;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -41,7 +41,6 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
     public EventBusRabbitMq(IServiceProvider serviceProvider)
     {
         if (serviceProvider == null) throw new ArgumentNullException(nameof(serviceProvider));
-
 
         _serviceScopeFactory = serviceProvider.GetRequiredService<IServiceScopeFactory>();
         _logger = serviceProvider.GetRequiredService<IEventBusLogger>();
