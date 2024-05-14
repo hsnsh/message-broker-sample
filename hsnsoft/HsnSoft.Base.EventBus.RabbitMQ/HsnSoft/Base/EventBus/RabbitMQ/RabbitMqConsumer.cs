@@ -1,6 +1,5 @@
 using System;
 using System.Diagnostics;
-using System.Dynamic;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
@@ -8,7 +7,6 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using HsnSoft.Base.Domain.Entities.Events;
-using HsnSoft.Base.EventBus.Extensions;
 using HsnSoft.Base.EventBus.Logging;
 using HsnSoft.Base.EventBus.RabbitMQ.Configs;
 using HsnSoft.Base.EventBus.RabbitMQ.Connection;

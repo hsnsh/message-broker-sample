@@ -1,6 +1,5 @@
 using System.Reflection;
 using HsnSoft.Base.AspNetCore;
-using HsnSoft.Base.AspNetCore.Logging;
 using HsnSoft.Base.AspNetCore.Security.Claims;
 using HsnSoft.Base.AspNetCore.Tracing;
 using HsnSoft.Base.EventBus;
