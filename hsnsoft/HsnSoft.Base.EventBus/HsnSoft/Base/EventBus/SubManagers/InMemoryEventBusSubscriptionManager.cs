@@ -28,7 +28,10 @@ public class InMemoryEventBusSubscriptionManager : IEventBusSubscriptionManager
 
         DoAddSubscription(eventHandlerType, eventName);
 
-        _eventTypes.TryAdd(eventName, eventType);
+        if (!_eventTypes.ContainsKey(eventName))
+        {
+            _eventTypes[eventName] = eventType;
+        }
     }
 
     public bool HasSubscriptionsForEvent<T>() where T : IIntegrationEventMessage

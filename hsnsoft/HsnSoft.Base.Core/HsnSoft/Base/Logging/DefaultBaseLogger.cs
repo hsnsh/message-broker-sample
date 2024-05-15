@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 
@@ -7,12 +8,12 @@ public class DefaultBaseLogger : IBaseLogger
 {
     protected readonly ILogger Logger;
 
-    public DefaultBaseLogger()
+    public DefaultBaseLogger(IConfiguration configuration)
     {
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.SetMinimumLevel(LogLevel.Trace);
             builder.ClearProviders();
+            builder.AddConfiguration(configuration);
 
             // Clear Microsoft's default providers (like event logs and others)
             builder.AddSimpleConsole(options =>
@@ -24,7 +25,7 @@ public class DefaultBaseLogger : IBaseLogger
             });
         });
 
-        Logger = loggerFactory.CreateLogger(GetType().FullName);
+        Logger = loggerFactory.CreateLogger(GetType().Name);
     }
 
     public void LogDebug(string messageTemplate, params object[] args) => Logger.LogDebug(messageTemplate, args);

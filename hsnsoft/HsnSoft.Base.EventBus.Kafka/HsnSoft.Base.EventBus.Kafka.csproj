@@ -21,8 +21,4 @@
         <ProjectReference Include="..\HsnSoft.Base.EventBus\HsnSoft.Base.EventBus.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="HsnSoft\Base\EventBus\" />
-    </ItemGroup>
-
 </Project>

@@ -17,4 +17,8 @@
     <ProjectReference Include="..\HsnSoft.Base.EventBus.Abstractions\HsnSoft.Base.EventBus.Abstractions.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="HsnSoft\Base\" />
+  </ItemGroup>
+
 </Project>
