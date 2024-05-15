@@ -4,5 +4,5 @@ namespace NetCoreEventBus.Web.EventManager.Services;
 
 public interface IEventErrorHandlerService 
 {
-    Task FailedEventConsumedAsync(MessageBrokerErrorEto input, CancellationToken cancellationToken = default);
+    Task FailedEventConsumedAsync(MessageEnvelope<FailedEventEto>  input, CancellationToken cancellationToken = default);
 }

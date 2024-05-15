@@ -17,7 +17,6 @@ public static class Program
             })
             .ConfigureLogging(builder =>
             {
-                builder.ClearProviders();
                 builder.AddSimpleConsole(options =>
                 {
                     options.IncludeScopes = true;

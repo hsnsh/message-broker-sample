@@ -12,7 +12,7 @@ public sealed class EventErrorHandlerService : IEventErrorHandlerService
         _genericRepository = genericRepository;
     }
 
-    public async Task FailedEventConsumedAsync(MessageBrokerErrorEto input, CancellationToken cancellationToken = default)
+    public async Task FailedEventConsumedAsync(MessageEnvelope<FailedEventEto> input, CancellationToken cancellationToken = default)
     {
         // SAMPLE WORK (work done , 10/second)
         await Task.Delay(10000, cancellationToken);
