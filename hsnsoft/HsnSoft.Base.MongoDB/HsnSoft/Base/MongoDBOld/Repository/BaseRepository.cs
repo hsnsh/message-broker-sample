@@ -827,7 +827,7 @@ public abstract class BaseRepository<TDocument> : IBaseRepository<TDocument>
 
     public async Task<IEnumerable<TDocument>> FilterByTextAsync(List<string> searchTerms, string defaultTextIndexLanguage = "en")
     {
-        var searchText = string.Join(' ', (searchTerms ?? new List<string>())).Trim();
+        var searchText = string.Join(' ', searchTerms ?? new List<string>()).Trim();
 
         var filter = Builders<TDocument>.Filter.Text(searchText, new TextSearchOptions
         {

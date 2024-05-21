@@ -31,7 +31,7 @@ public static class EntityFrameworkExtensions
         );
 
         // Must be Scoped => Cannot consume any scoped service and CurrentUser object creation on constructor
-        services.AddScoped(typeof(IContentGenericRepository<>), typeof(EfCoreContentGenericRepository<>));
+        services.AddScoped(typeof(IOrderGenericRepository<>), typeof(EfCoreOrderGenericRepository<>));
 
         return services;
     }

@@ -7,6 +7,7 @@ using HsnSoft.Base.EventBus.SubManagers;
 using HsnSoft.Base.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using NetCoreEventBus.Shared.Serilog;
 
 namespace NetCoreEventBus.Shared;
 
@@ -14,10 +15,14 @@ public static class ServiceCollectionExtensions
 {
     public static void AddRabbitMQEventBus(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddSingleton<IBaseLogger, DefaultBaseLogger>();
+        // services.AddSingleton<IBaseLogger, DefaultBaseLogger>();
+        services.AddSingleton<IBaseLogger, BaseLogger>();
 
-        services.AddSingleton<IEventBusLogger, DefaultEventBusLogger>();
-        // services.AddSingleton<IEventBusLogger, SerilogEventBusLogger>();
+        // services.AddSingleton<IPersistentLogger, DefaultPersistentLogger>();
+        services.AddSingleton<IPersistentLogger, FrameworkLogger>();
+
+        // services.AddSingleton<IEventBusLogger, DefaultEventBusLogger>();
+        services.AddSingleton<IEventBusLogger, EventBusLogger>();
         services.Configure<RabbitMqConnectionSettings>(configuration.GetSection("RabbitMq:Connection"));
         services.Configure<RabbitMqEventBusConfig>(configuration.GetSection("RabbitMq:EventBus"));
         services.AddSingleton<IRabbitMqPersistentConnection, RabbitMqPersistentConnection>();

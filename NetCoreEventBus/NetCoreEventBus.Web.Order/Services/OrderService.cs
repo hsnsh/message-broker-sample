@@ -9,9 +9,9 @@ public sealed class OrderService : IOrderService
 {
     private readonly IEventBus _eventBus;
     private readonly IBaseLogger _logger;
-    private readonly IContentGenericRepository<OrderEntity> _genericRepository;
+    private readonly IOrderGenericRepository<OrderEntity> _genericRepository;
 
-    public OrderService(IEventBus eventBus, IBaseLogger logger, IContentGenericRepository<OrderEntity> genericRepository)
+    public OrderService(IEventBus eventBus, IBaseLogger logger, IOrderGenericRepository<OrderEntity> genericRepository)
     {
         _eventBus = eventBus;
         _logger = logger;

@@ -2,7 +2,7 @@ using Microsoft.Extensions.Logging.Console;
 
 namespace NetCoreEventBus.Web.EventManager;
 
-public static class Program
+public class Program
 {
     public static void Main(string[] args)
     {
@@ -11,12 +11,14 @@ public static class Program
 
     public static IHostBuilder CreateHostBuilder(string[] args) =>
         Host.CreateDefaultBuilder(args)
+            .ConfigureAppConfiguration(x => x.AddConfiguration(GetConfiguration()))
             .ConfigureWebHostDefaults(webBuilder =>
             {
                 webBuilder.UseStartup<Startup>();
             })
             .ConfigureLogging(builder =>
             {
+                builder.ClearProviders();
                 builder.AddSimpleConsole(options =>
                 {
                     options.IncludeScopes = true;
@@ -25,4 +27,12 @@ public static class Program
                     options.ColorBehavior = LoggerColorBehavior.Default;
                 });
             });
+    
+    private static IConfiguration GetConfiguration() =>
+        new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json")
+            .AddEnvironmentVariables()
+            .Build();
 }
