@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using HsnSoft.Base.Domain.Entities.Events;
@@ -47,7 +48,7 @@ public class EventBusKafka : IEventBus, IDisposable
         _messageProcessorTasks = new List<Task>();
     }
 
-    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, bool isExchangeEvent = true, bool isReQueuePublish = false) where TEventMessage : IIntegrationEventMessage
+    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, string correlationId = null, bool isExchangeEvent = true, bool isReQueuePublish = false) where TEventMessage : IIntegrationEventMessage
     {
         var eventName = eventMessage.GetType().Name;
         eventName = TrimEventName(eventName);
@@ -61,16 +62,16 @@ public class EventBusKafka : IEventBus, IDisposable
             MessageTime = DateTime.UtcNow,
             Message = eventMessage,
             Producer = _kafkaEventBusConfig.ConsumerClientInfo,
-            CorrelationId = parentMessage?.CorrelationId ?? _traceAccessor?.GetCorrelationId(),
+            CorrelationId = (correlationId ?? parentMessage?.CorrelationId) ?? _traceAccessor?.GetCorrelationId(),
             Channel = parentMessage?.Channel ?? _traceAccessor?.GetChannel(),
             UserId = parentMessage?.UserId ?? _currentUser?.Id?.ToString(),
             UserRoleUniqueName = parentMessage?.UserRoleUniqueName ?? (_currentUser?.Roles is { Length: > 0 } ? _currentUser?.Roles.JoinAsString(",") : null),
             HopLevel = parentMessage != null ? (ushort)(parentMessage.HopLevel + 1) : (ushort)1,
-            IsReQueued = isReQueuePublish || (parentMessage?.IsReQueued ?? false)
+            ReQueuedCount = parentMessage?.ReQueuedCount ?? 0
         };
-        if (@event.IsReQueued)
+        if (isReQueuePublish)
         {
-            @event.ReQueueCount = parentMessage != null ? (ushort)(parentMessage.ReQueueCount + 1) : (ushort)0;
+            @event.ReQueuedCount++;
         }
 
         await kafkaProducer.StartSendingMessages(eventName, @event);
@@ -151,6 +152,8 @@ public class EventBusKafka : IEventBus, IDisposable
                     }
 
                     object @event = null;
+                    var watch = new Stopwatch();
+                    watch.Start();
                     var handleStartTime = DateTimeOffset.UtcNow;
                     try
                     {
@@ -160,35 +163,16 @@ public class EventBusKafka : IEventBus, IDisposable
 
                         Guid messageId = ((dynamic)@event)?.MessageId;
 
-                        _logger.EventBusInfoLog(new ConsumeMessageLogModel(
-                            LogId: Guid.NewGuid().ToString(),
-                            CorrelationId: ((dynamic)@event)?.CorrelationId,
-                            Facility: EventBusLogFacility.CONSUME_EVENT_HANDLING_STARTED.ToString(),
-                            ConsumeDateTimeUtc: handleStartTime,
-                            MessageLog: new MessageLogDetail(
-                                EventType: eventName,
-                                HopLevel: ((dynamic)@event)?.HopLevel,
-                                ParentMessageId: ((dynamic)@event)?.ParentMessageId,
-                                MessageId: ((dynamic)@event)?.MessageId,
-                                MessageTime: ((dynamic)@event)?.MessageTime,
-                                Message: ((dynamic)@event)?.Message,
-                                UserInfo: new EventUserDetail(
-                                    UserId: ((dynamic)@event)?.UserId,
-                                    Role: ((dynamic)@event)?.UserRoleUniqueName
-                                )),
-                            ConsumeDetails: "Message handling started",
-                            ConsumeHandleWorkingTime: "-"));
-
                         _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Handling STARTED : MessageId [ {MessageId} ]", _kafkaEventBusConfig.ConsumerClientInfo, eventName, messageId.ToString());
                         var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(messageObject.Key);
                         ((Task)concreteType.GetMethod("HandleAsync")?.Invoke(handler, new[] { @event }))!.GetAwaiter().GetResult();
                         _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Handling COMPLETED : MessageId [ {MessageId} ]", _kafkaEventBusConfig.ConsumerClientInfo, eventName, messageId.ToString());
 
-                        var handleEndTime = DateTimeOffset.UtcNow;
+                        watch.Stop();
                         _logger.EventBusInfoLog(new ConsumeMessageLogModel(
                             LogId: Guid.NewGuid().ToString(),
                             CorrelationId: ((dynamic)@event)?.CorrelationId,
-                            Facility: EventBusLogFacility.CONSUME_EVENT_HANDLING_FINISHED.ToString(),
+                            Facility: EventBusLogFacility.CONSUME_EVENT_SUCCESS.ToString(),
                             ConsumeDateTimeUtc: handleStartTime,
                             MessageLog: new MessageLogDetail(
                                 EventType: eventName,
@@ -202,17 +186,17 @@ public class EventBusKafka : IEventBus, IDisposable
                                     Role: ((dynamic)@event)?.UserRoleUniqueName
                                 )),
                             ConsumeDetails: "Message handling successfully completed",
-                            ConsumeHandleWorkingTime: $"{(handleEndTime - handleStartTime).TotalMilliseconds:0.####}ms"));
+                            ConsumeHandleWorkingTime: $"{watch.ElapsedMilliseconds:0.####}ms"));
                     }
                     catch (Exception ex)
                     {
                         _logger.LogError("Kafka | CorrelationId: {CorrelationId} {ClientInfo} CONSUMER [ {EventName} ] => Handling ERROR : {HandlingError}", ((dynamic)@event)?.CorrelationId, _kafkaEventBusConfig.ConsumerClientInfo, eventName, ex.Message);
 
-                        var handleEndTime = DateTimeOffset.UtcNow;
+                        watch.Stop();
                         _logger.EventBusErrorLog(new ConsumeMessageLogModel(
                             LogId: Guid.NewGuid().ToString(),
                             CorrelationId: ((dynamic)@event)?.CorrelationId,
-                            Facility: EventBusLogFacility.CONSUME_EVENT_HANDLING_ERROR.ToString(),
+                            Facility: EventBusLogFacility.CONSUME_EVENT_ERROR.ToString(),
                             ConsumeDateTimeUtc: handleStartTime,
                             MessageLog: new MessageLogDetail(
                                 EventType: eventName,
@@ -226,7 +210,7 @@ public class EventBusKafka : IEventBus, IDisposable
                                     Role: ((dynamic)@event)?.UserRoleUniqueName
                                 )),
                             ConsumeDetails: $"Handle Error: {ex.Message}",
-                            ConsumeHandleWorkingTime: $"{(handleEndTime - handleStartTime).TotalMilliseconds:0.####}ms"));
+                            ConsumeHandleWorkingTime: $"{watch.ElapsedMilliseconds:0.####}ms"));
                     }
                 }
             }

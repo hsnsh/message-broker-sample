@@ -19,10 +19,10 @@ public class OrderStartedEtoHandler : IIntegrationEventHandler<OrderStartedEto>
 
     public async Task HandleAsync(MessageEnvelope<OrderStartedEto> @event)
     {
-        throw new Exception("SAMPLE ERROR WHEN ON PROCESSING");
         
-        // _logger.LogInformation("OrderStarted BEGIN => OrderNo: {OrderNo}", @event.Message.OrderNo.ToString());
+        
+        _logger.LogInformation("OrderStarted BEGIN => OrderNo: {OrderNo}", @event.Message.OrderNo.ToString());
         await _orderService.OrderStartedAsync(@event.Message);
-        // _logger.LogInformation("OrderStarted END => OrderNo: {OrderNo}", @event.Message.OrderNo.ToString());
+        _logger.LogInformation("OrderStarted END => OrderNo: {OrderNo}", @event.Message.OrderNo.ToString());
     }
 }

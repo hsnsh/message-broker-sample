@@ -64,7 +64,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         _consumers = new List<RabbitMqConsumer>();
     }
 
-    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, bool isExchangeEvent = true, bool isReQueuePublish = false) where TEventMessage : IIntegrationEventMessage
+    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, string correlationId = null, bool isExchangeEvent = true, bool isReQueuePublish = false) where TEventMessage : IIntegrationEventMessage
     {
         if (!_persistentConnection.IsConnected)
         {
@@ -73,52 +73,75 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
 
         _publishing = true;
 
+        var eventName = eventMessage.GetType().Name;
+        eventName = TrimEventName(eventName);
+
+        var produceTime = DateTime.UtcNow;
+        var @event = new MessageEnvelope<TEventMessage>
+        {
+            ParentMessageId = parentMessage?.MessageId,
+            MessageId = Guid.NewGuid(),
+            MessageTime = produceTime,
+            Message = eventMessage,
+            Producer = _rabbitMqEventBusConfig.ConsumerClientInfo,
+            CorrelationId = (correlationId ?? parentMessage?.CorrelationId) ?? _traceAccessor?.GetCorrelationId(),
+            Channel = parentMessage?.Channel ?? _traceAccessor?.GetChannel(),
+            UserId = parentMessage?.UserId ?? _currentUser?.Id?.ToString(),
+            UserRoleUniqueName = parentMessage?.UserRoleUniqueName ?? (_currentUser?.Roles is { Length: > 0 } ? _currentUser?.Roles.JoinAsString(",") : null),
+            HopLevel = parentMessage != null ? (ushort)(parentMessage.HopLevel + 1) : (ushort)1,
+            ReQueuedCount = parentMessage?.ReQueuedCount ?? 0
+        };
+        if (isReQueuePublish)
+        {
+            @event.ReQueuedCount++;
+        }
+
+        _logger.LogDebug("RabbitMQ | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
+
         var policy = Policy.Handle<BrokerUnreachableException>()
             .Or<SocketException>()
             .WaitAndRetry(_publishRetryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
             {
                 _publishing = false;
                 _logger.LogError("RabbitMQ | Could not publish event message : {Event} after {Timeout}s ({ExceptionMessage})", eventMessage, $"{time.TotalSeconds:n1}", ex.Message);
+
+                // Persistent Log
+                _logger.EventBusErrorLog(new ProduceMessageLogModel(
+                    LogId: Guid.NewGuid().ToString(),
+                    CorrelationId: @event.CorrelationId,
+                    Facility: EventBusLogFacility.PRODUCE_EVENT_ERROR.ToString(),
+                    ProduceDateTimeUtc: produceTime,
+                    MessageLog: new MessageLogDetail(
+                        EventType: eventName,
+                        HopLevel: @event.HopLevel,
+                        ParentMessageId: @event.ParentMessageId,
+                        MessageId: @event.MessageId,
+                        MessageTime: @event.MessageTime,
+                        Message: @event.Message,
+                        UserInfo: new EventUserDetail(
+                            UserId: @event.UserId,
+                            Role: @event.UserRoleUniqueName
+                        )),
+                    ProduceDetails: $"Message publish error: {ex.Message}"));
             });
-
-        var eventName = eventMessage.GetType().Name;
-        eventName = TrimEventName(eventName);
-
-        var @event = new MessageEnvelope<TEventMessage>
-        {
-            ParentMessageId = parentMessage?.MessageId,
-            MessageId = Guid.NewGuid(),
-            MessageTime = DateTime.UtcNow,
-            Message = eventMessage,
-            Producer = _rabbitMqEventBusConfig.ConsumerClientInfo,
-            CorrelationId = parentMessage?.CorrelationId ?? _traceAccessor?.GetCorrelationId(),
-            Channel = parentMessage?.Channel ?? _traceAccessor?.GetChannel(),
-            UserId = parentMessage?.UserId ?? _currentUser?.Id?.ToString(),
-            UserRoleUniqueName = parentMessage?.UserRoleUniqueName ?? (_currentUser?.Roles is { Length: > 0 } ? _currentUser?.Roles.JoinAsString(",") : null),
-            HopLevel = parentMessage != null ? (ushort)(parentMessage.HopLevel + 1) : (ushort)1,
-            IsReQueued = isReQueuePublish || (parentMessage?.IsReQueued ?? false)
-        };
-        if (@event.IsReQueued)
-        {
-            @event.ReQueueCount = parentMessage != null ? (ushort)(parentMessage.ReQueueCount + 1) : (ushort)0;
-        }
-
-        _logger.LogDebug("RabbitMQ | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
-
+        
         var body = JsonSerializer.SerializeToUtf8Bytes(@event, @event.GetType(), new JsonSerializerOptions { WriteIndented = true });
 
         policy.Execute(() =>
         {
             using var publisherChannel = _persistentConnection.CreateModel();
 
-            var publishQueueName = EventNameHelper.GetConsumerClientEventQueueName(_rabbitMqEventBusConfig, eventName);
-
+            var publishQueueName = string.Empty;
             if (!isReQueuePublish && isExchangeEvent)
             {
                 publisherChannel.ExchangeDeclare(exchange: _rabbitMqEventBusConfig.ExchangeName, type: "direct"); //Ensure exchange exists while publishing
             }
             else
             {
+                publishQueueName = eventName.Equals("ReQueued")
+                    ? EventNameHelper.GetConsumerReQueuedEventQueueName((eventMessage as ReQueuedEto).ReQueuedMessageEnvelopeConsumer, eventName)
+                    : EventNameHelper.GetConsumerClientEventQueueName(_rabbitMqEventBusConfig, eventName);
+
                 // Direct re-queue, no-exchange
                 publisherChannel?.QueueDeclare(queue: publishQueueName,
                     durable: true,

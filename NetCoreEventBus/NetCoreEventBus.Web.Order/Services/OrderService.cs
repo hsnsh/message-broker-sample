@@ -1,7 +1,9 @@
+using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus;
 using HsnSoft.Base.Logging;
 using NetCoreEventBus.Shared.Events;
 using NetCoreEventBus.Web.Order.Infra.Domain;
+using Newtonsoft.Json;
 
 namespace NetCoreEventBus.Web.Order.Services;
 
@@ -20,8 +22,14 @@ public sealed class OrderService : IOrderService
 
     public async Task OrderStartedAsync(OrderStartedEto input, CancellationToken cancellationToken = default)
     {
-        await Task.Delay(10000, cancellationToken);
+        await Task.Delay(1000, cancellationToken);
 
+        
+        throw new Exception("SAMPLE ERROR WHEN ON PROCESSING");
+
+        
+        
+        
         // var random = new Random().Next(1, 5) * 1000;
         // _logger.LogInformation("PROCESSING ESTIMATED TIME [{OrderNo}] {Time}", input.OrderNo, random * 5);
         // Thread.Sleep(random * 5);
@@ -29,6 +37,7 @@ public sealed class OrderService : IOrderService
 
         await _genericRepository.InsertAsync(new OrderEntity(input.OrderId, input.OrderNo.ToString()), cancellationToken);
 
+        var parent= JsonConvert.DeserializeObject<ParentMessageEnvelope>(JsonConvert.SerializeObject(input));
         await _eventBus.PublishAsync(new OrderShippingStartedEto(input.OrderId));
     }
 

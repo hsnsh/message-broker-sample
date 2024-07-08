@@ -1,4 +1,5 @@
-﻿using HsnSoft.Base.EventBus;
+﻿using HsnSoft.Base.Domain.Entities.Events;
+using HsnSoft.Base.EventBus;
 using Microsoft.AspNetCore.Mvc;
 using NetCoreEventBus.Shared.Events;
 using NetCoreEventBus.Web.Public.Dtos;
@@ -29,9 +30,20 @@ public class EventBusController : Controller
         input ??= new TestDto();
         if (input.TestCount < 1) input.TestCount = 1;
 
+
+        // var parent= JsonConvert.DeserializeObject<ParentMessageEnvelope>(JsonConvert.SerializeObject(@event));
+        var parent = new ParentMessageEnvelope
+        {
+            CorrelationId = "bfb8ffd3a71a4b9e92d24e8b0e5f9957",
+            UserId = "hasan",
+            UserRoleUniqueName = "admin",
+            Channel = "test-app",
+            Producer = "PublicApiTest"
+        };
+
         for (var i = 0; i < input.TestCount; i++)
         {
-            await _eventBus.PublishAsync(new OrderStartedEto(Guid.NewGuid(), i + 1));
+            await _eventBus.PublishAsync(new OrderStartedEto(Guid.Parse("4fe789ab-0652-4e7b-bd35-07019058081d"), i + 1), parentMessage: parent);
         }
 
         return Ok("Message sent.");

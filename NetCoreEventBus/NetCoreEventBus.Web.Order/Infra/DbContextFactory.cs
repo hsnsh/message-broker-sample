@@ -8,7 +8,7 @@ public class DbContextFactory : IDesignTimeDbContextFactory<OrderEfCoreDbContext
     public OrderEfCoreDbContext CreateDbContext(string[] args)
     {
         var builder = new DbContextOptionsBuilder<OrderEfCoreDbContext>()
-            .UseNpgsql("Host=localhost;Port=35432;Database=OrderDb;User ID=postgres;Password=postgres;Pooling=true;Connection Lifetime=0;",
+            .UseNpgsql("Host=localhost;Port=5432;Database=OrderDb;User ID=postgres;Password=postgres;Pooling=true;Connection Lifetime=0;",
                 b =>
                 {
                     b.MigrationsHistoryTable("__EFMigrationsHistory");

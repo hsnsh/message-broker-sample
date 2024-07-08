@@ -180,7 +180,7 @@ public sealed class RabbitMqConsumer : IDisposable
                     consumerQueueName, consumerChannelNumber, _currentConsumerTag, fetcherId, ex.Message, DateTime.UtcNow.ToString("yyyy-MM-dd hh:mm:ss zz"));
                 try
                 {
-                    if (eventName.Equals(EventNameHelper.TrimEventName(_rabbitMqEventBusConfig, nameof(FailedEventEto))))
+                    if (eventName.Equals(EventNameHelper.TrimEventName(_rabbitMqEventBusConfig, nameof(FailedEto))))
                     {
                         // FATAL ERROR: event error handling loop
                         _logger.LogError("RabbitMQ | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: FailedEvent {FailedEvent} Handling error, {Error}",
@@ -235,9 +235,59 @@ public sealed class RabbitMqConsumer : IDisposable
                     continue;
                 }
 
-                var eventHandlerType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType);
-                await Task.Yield();
-                await ((Task)eventHandlerType.GetMethod(nameof(IIntegrationEventHandler<IIntegrationEventMessage>.HandleAsync))?.Invoke(handler, new[] { @event }))!;
+                var watch = new Stopwatch();
+                watch.Start();
+                var handleStartTime = DateTimeOffset.UtcNow;
+                try
+                {
+                    var eventHandlerType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType);
+                    await Task.Yield();
+                    await ((Task)eventHandlerType.GetMethod(nameof(IIntegrationEventHandler<IIntegrationEventMessage>.HandleAsync))?.Invoke(handler, new[] { @event }))!;
+
+                    watch.Stop();
+                    _logger.EventBusInfoLog(new ConsumeMessageLogModel(
+                        LogId: Guid.NewGuid().ToString(),
+                        CorrelationId: ((dynamic)@event)?.CorrelationId,
+                        Facility: EventBusLogFacility.CONSUME_EVENT_SUCCESS.ToString(),
+                        ConsumeDateTimeUtc: handleStartTime,
+                        MessageLog: new MessageLogDetail(
+                            EventType: eventName,
+                            HopLevel: ((dynamic)@event)?.HopLevel,
+                            ParentMessageId: ((dynamic)@event)?.ParentMessageId,
+                            MessageId: ((dynamic)@event)?.MessageId,
+                            MessageTime: ((dynamic)@event)?.MessageTime,
+                            Message: ((dynamic)@event)?.Message,
+                            UserInfo: new EventUserDetail(
+                                UserId: ((dynamic)@event)?.UserId,
+                                Role: ((dynamic)@event)?.UserRoleUniqueName
+                            )),
+                        ConsumeDetails: "Message handling successfully completed",
+                        ConsumeHandleWorkingTime: $"{watch.ElapsedMilliseconds:0.####}ms"));
+                }
+                catch (Exception ex)
+                {
+                    watch.Stop();
+                    _logger.EventBusErrorLog(new ConsumeMessageLogModel(
+                        LogId: Guid.NewGuid().ToString(),
+                        CorrelationId: ((dynamic)@event)?.CorrelationId,
+                        Facility: EventBusLogFacility.CONSUME_EVENT_ERROR.ToString(),
+                        ConsumeDateTimeUtc: handleStartTime,
+                        MessageLog: new MessageLogDetail(
+                            EventType: eventName,
+                            HopLevel: ((dynamic)@event)?.HopLevel,
+                            ParentMessageId: ((dynamic)@event)?.ParentMessageId,
+                            MessageId: ((dynamic)@event)?.MessageId,
+                            MessageTime: ((dynamic)@event)?.MessageTime,
+                            Message: ((dynamic)@event)?.Message,
+                            UserInfo: new EventUserDetail(
+                                UserId: ((dynamic)@event)?.UserId,
+                                Role: ((dynamic)@event)?.UserRoleUniqueName
+                            )),
+                        ConsumeDetails: $"Handle Error: {ex.Message}",
+                        ConsumeHandleWorkingTime: $"{watch.ElapsedMilliseconds:0.####}ms"));
+
+                    throw ex;
+                }
             }
         }
         else
@@ -277,13 +327,6 @@ public sealed class RabbitMqConsumer : IDisposable
             _persistentConnection.TryConnect();
         }
 
-        var policy = Policy.Handle<BrokerUnreachableException>()
-            .Or<SocketException>()
-            .WaitAndRetry(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
-            {
-                _logger.LogError("RabbitMQ | Could not publish failed event message : {Event} after {Timeout}s ({ExceptionMessage})", failedMessageContent, $"{time.TotalSeconds:n1}", ex.Message);
-            });
-
         ParentMessageEnvelope failedEnvelopeInfo = null;
         Type failedEventEnvelopeMessageType = null;
         IIntegrationEventMessage failedMessageObject = null;
@@ -302,12 +345,13 @@ public sealed class RabbitMqConsumer : IDisposable
         }
         catch (Exception e) { errorMessage += ". FailedMessageContent convert operation error: " + e.Message; }
 
-        var @event = new MessageEnvelope<FailedEventEto>
+        var produceTime = DateTime.UtcNow;
+        var @event = new MessageEnvelope<FailedEto>
         {
             ParentMessageId = failedEnvelopeInfo?.MessageId,
             MessageId = Guid.NewGuid(),
-            MessageTime = DateTime.UtcNow,
-            Message = new FailedEventEto(
+            MessageTime = produceTime,
+            Message = new FailedEto(
                 FailedReason: errorMessage,
                 FailedMessageEnvelopeTime: failedEnvelopeInfo?.MessageTime.ToUniversalTime(),
                 FailedMessageObject: failedMessageObject,
@@ -319,18 +363,40 @@ public sealed class RabbitMqConsumer : IDisposable
             UserId = failedEnvelopeInfo?.UserId,
             UserRoleUniqueName = failedEnvelopeInfo?.UserRoleUniqueName,
             HopLevel = failedEnvelopeInfo != null ? (ushort)(failedEnvelopeInfo.HopLevel + 1) : (ushort)1,
-            IsReQueued = failedEnvelopeInfo?.IsReQueued ?? false
+            ReQueuedCount = failedEnvelopeInfo?.ReQueuedCount ?? 0
         };
-        if (@event.IsReQueued)
-        {
-            @event.ReQueueCount = failedEnvelopeInfo?.ReQueueCount ?? 0;
-        }
 
         var eventName = @event.Message.GetType().Name;
         eventName = EventNameHelper.TrimEventName(_rabbitMqEventBusConfig, eventName);
         consumerErrorQueueName = $"{_rabbitMqEventBusConfig.ErrorClientInfo}_{eventName}";
 
         _logger.LogWarning("RabbitMQ | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
+
+        var policy = Policy.Handle<BrokerUnreachableException>()
+            .Or<SocketException>()
+            .WaitAndRetry(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
+            {
+                _logger.LogError("RabbitMQ | Could not publish failed event message : {Event} after {Timeout}s ({ExceptionMessage})", failedMessageContent, $"{time.TotalSeconds:n1}", ex.Message);
+
+                // Persistent Log
+                _logger.EventBusErrorLog(new ProduceMessageLogModel(
+                    LogId: Guid.NewGuid().ToString(),
+                    CorrelationId: @event.CorrelationId,
+                    Facility: EventBusLogFacility.PRODUCE_EVENT_ERROR.ToString(),
+                    ProduceDateTimeUtc: produceTime,
+                    MessageLog: new MessageLogDetail(
+                        EventType: eventName,
+                        HopLevel: @event.HopLevel,
+                        ParentMessageId: @event.ParentMessageId,
+                        MessageId: @event.MessageId,
+                        MessageTime: @event.MessageTime,
+                        Message: @event.Message,
+                        UserInfo: new EventUserDetail(
+                            UserId: @event.UserId,
+                            Role: @event.UserRoleUniqueName
+                        )),
+                    ProduceDetails: $"Message publish error: {ex.Message}"));
+            });
 
         var body = JsonSerializer.SerializeToUtf8Bytes(@event, @event.GetType(), new JsonSerializerOptions { WriteIndented = true });
 

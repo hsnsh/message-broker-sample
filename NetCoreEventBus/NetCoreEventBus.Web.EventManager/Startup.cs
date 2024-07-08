@@ -65,7 +65,7 @@ public class Startup
     {
         services.AddRabbitMQEventBus(Configuration);
 
-        services.AddTransient<FailedEventEtoHandler>();
+        services.AddTransient<FailedEtoHandler>();
     }
 
     private void ConfigureEventBusHandlers(IApplicationBuilder app)
@@ -73,6 +73,6 @@ public class Startup
         var eventBus = app.ApplicationServices.GetRequiredService<IEventBus>();
 
         // Here you add the event handlers for each intergration event.
-        eventBus.Subscribe<FailedEventEto, FailedEventEtoHandler>();
+        eventBus.Subscribe<FailedEto, FailedEtoHandler>();
     }
 }

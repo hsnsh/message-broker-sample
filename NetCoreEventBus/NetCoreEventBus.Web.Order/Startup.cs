@@ -1,3 +1,4 @@
+using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus;
 using HsnSoft.Base.Logging;
 using NetCoreEventBus.Shared;
@@ -29,7 +30,7 @@ public class Startup
             services.AddSwaggerGen();
         }
 
-        services.AddSingleton<IBaseLogger,DefaultBaseLogger>();
+        services.AddSingleton<IBaseLogger, DefaultBaseLogger>();
 
         // Must be Scoped or Transient => Cannot consume any scoped service
         services.AddScoped<IOrderService, OrderService>();
@@ -66,6 +67,7 @@ public class Startup
         services.AddRabbitMQEventBus(Configuration);
 
         services.AddTransient<OrderStartedEtoHandler>();
+        services.AddTransient<ReQueuedEtoHandler>();
         // services.AddTransient<OrderShippingCompletedEtoHandler>();
     }
 
@@ -75,6 +77,7 @@ public class Startup
 
         // Here you add the event handlers for each intergration event.
         eventBus.Subscribe<OrderStartedEto, OrderStartedEtoHandler>();
+        eventBus.Subscribe<ReQueuedEto, ReQueuedEtoHandler>();
         // eventBus.Subscribe<OrderShippingCompletedEto, OrderShippingCompletedEtoHandler>();
     }
 }

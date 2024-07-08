@@ -4,14 +4,14 @@ using NetCoreEventBus.Web.EventManager.Services;
 
 namespace NetCoreEventBus.Web.EventManager.IntegrationEvents.EventHandlers;
 
-public class FailedEventEtoHandler : IIntegrationEventHandler<FailedEventEto>
+public class FailedEtoHandler : IIntegrationEventHandler<FailedEto>
 {
     private readonly IEventErrorHandlerService _eventErrorHandlerService;
 
-    public FailedEventEtoHandler(IEventErrorHandlerService eventErrorHandlerService)
+    public FailedEtoHandler(IEventErrorHandlerService eventErrorHandlerService)
     {
         _eventErrorHandlerService = eventErrorHandlerService;
     }
 
-    public async Task HandleAsync(MessageEnvelope<FailedEventEto> @event) => await _eventErrorHandlerService.FailedEventConsumedAsync(@event);
+    public async Task HandleAsync(MessageEnvelope<FailedEto> @event) => await _eventErrorHandlerService.FailedEventConsumedAsync(@event);
 }

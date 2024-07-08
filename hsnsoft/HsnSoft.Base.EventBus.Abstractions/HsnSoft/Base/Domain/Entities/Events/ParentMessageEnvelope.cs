@@ -6,13 +6,12 @@ namespace HsnSoft.Base.Domain.Entities.Events;
 public record ParentMessageEnvelope
 {
     public ushort HopLevel { get; set; }
-
-    public bool IsReQueued { get; set; }
-    public ushort ReQueueCount { get; set; }
+    
+    public ushort ReQueuedCount { get; set; }
 
     public Guid MessageId { get; set; }
 
-    public DateTimeOffset MessageTime { get; set; }
+    public DateTime MessageTime { get; set; }
 
     [CanBeNull]
     public string CorrelationId { get; set; }
