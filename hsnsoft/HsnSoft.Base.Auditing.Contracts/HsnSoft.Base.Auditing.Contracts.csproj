@@ -3,7 +3,7 @@
     <Import Project="..\..\common.version.props"/>
 
     <PropertyGroup>
-        <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0</TargetFrameworks>
+        <TargetFramework>net9.0</TargetFramework>
         <AssemblyName>HsnSoft.Base.Auditing.Contracts</AssemblyName>
         <PackageId>HsnSoft.Base.Auditing.Contracts</PackageId>
         <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>

@@ -3,7 +3,7 @@
   <Import Project="..\..\common.version.props"/>
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0</TargetFrameworks>
+    <TargetFramework>net9.0</TargetFramework>
     <AssemblyName>HsnSoft.Base.Data</AssemblyName>
     <PackageId>HsnSoft.Base.Data</PackageId>
     <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>

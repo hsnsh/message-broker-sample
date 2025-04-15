@@ -3,7 +3,7 @@
     <Import Project="..\..\common.version.props"/>
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net9.0</TargetFramework>
         <AssemblyName>HsnSoft.Base.EventBus.Azure</AssemblyName>
         <PackageId>HsnSoft.Base.EventBus.Azure</PackageId>
         <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
