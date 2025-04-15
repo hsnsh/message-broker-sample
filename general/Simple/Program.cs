@@ -13,39 +13,46 @@ internal static class Program
         var connectionFactory = new ConnectionFactory
         {
             HostName = "localhost",
-            Port = 35672,
+            Port = 5672,
             UserName = "guest",
             Password = "guest",
+            VirtualHost = "/"
         };
 
-        Publish(connectionFactory, 100);
-
-        // SimpleConsume(connectionFactory);
-        SemaphoreConsume(connectionFactory, 10);
-    }
-
-    private static async Task Publish(IConnectionFactory connectionFactory, int publishCount = 1)
-    {
-        if (publishCount < 1) publishCount = 1;
-
-        using (var connection = await connectionFactory.CreateConnectionAsync())
-        using (var channel = await connection.CreateChannelAsync())
+        try
         {
-            await channel.QueueDeclareAsync("iskuyrugu", durable: true, false, false, null);
-            for (var i = 1; i <= publishCount; i++)
-            {
-                var bytemessage = Encoding.UTF8.GetBytes($"is - {i}");
+            PublishAsync(connectionFactory, 100).GetAwaiter().GetResult();
 
-                var props = new BasicProperties();
-                props.ContentType = "text/plain";
-                props.DeliveryMode = DeliveryModes.Persistent;
-
-                await channel.BasicPublishAsync("", "iskuyrugu", false, props, body: bytemessage);
-            }
+            // SimpleConsume(connectionFactory);
+            SemaphoreConsumeAsync(connectionFactory, 10).GetAwaiter().GetResult();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
         }
     }
 
-    private static async Task SimpleConsume(IConnectionFactory connectionFactory)
+    private static async Task PublishAsync(ConnectionFactory connectionFactory, int publishCount = 1)
+    {
+        if (publishCount < 1) publishCount = 1;
+
+        await using var connection = await connectionFactory.CreateConnectionAsync();
+        await using var channel = await connection.CreateChannelAsync();
+
+        await channel.QueueDeclareAsync("iskuyrugu", durable: true, false, false, null);
+        for (var i = 1; i <= publishCount; i++)
+        {
+            var bytemessage = Encoding.UTF8.GetBytes($"is - {i}");
+
+            var props = new BasicProperties();
+            props.ContentType = "text/plain";
+            props.DeliveryMode = DeliveryModes.Persistent;
+
+            await channel.BasicPublishAsync("", "iskuyrugu", false, props, body: bytemessage);
+        }
+    }
+
+    private static async Task SimpleConsumeAsync(IConnectionFactory connectionFactory)
     {
         using (var connection = await connectionFactory.CreateConnectionAsync())
         using (var channel = await connection.CreateChannelAsync())
@@ -74,7 +81,7 @@ internal static class Program
         }
     }
 
-    private static async Task SemaphoreConsume(IConnectionFactory connectionFactory, ushort threadCount = 1)
+    private static async Task SemaphoreConsumeAsync(IConnectionFactory connectionFactory, ushort threadCount = 1)
     {
         await using var connection = await connectionFactory.CreateConnectionAsync();
         await using var channel = await connection.CreateChannelAsync();
