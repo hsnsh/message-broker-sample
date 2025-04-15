@@ -33,8 +33,8 @@ public static class MongoDbExtensions
         try
         {
             // MongoDB Guid support
-            BsonDefaults.GuidRepresentation = GuidRepresentation.Standard;
-            // BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
+           // BsonDefaults.GuidRepresentation = GuidRepresentation.Standard;
+             BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
         }
         catch { }
 
