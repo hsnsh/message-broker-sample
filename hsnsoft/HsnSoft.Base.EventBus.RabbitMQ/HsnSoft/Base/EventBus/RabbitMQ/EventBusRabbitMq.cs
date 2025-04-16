@@ -64,7 +64,8 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         _consumers = new List<RabbitMqConsumer>();
     }
 
-    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, string correlationId = null, bool isExchangeEvent = true, bool isReQueuePublish = false) where TEventMessage : IIntegrationEventMessage
+    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, string correlationId = null, bool isExchangeEvent = true, bool isReQueuePublish = false)
+        where TEventMessage : IIntegrationEventMessage
     {
         if (!_persistentConnection.IsConnected)
         {
@@ -96,14 +97,15 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
             @event.ReQueuedCount++;
         }
 
-        _logger.LogDebug("RabbitMQ | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
+        _logger.LogDebug("{BrokerName} | PRODUCER {ClientInfo} EVENT [ {EventName} ] => MessageId [ {MessageId} ] {OperationStatus}", "RabbitMQ", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString(),
+            "STARTED");
 
         var policy = Policy.Handle<BrokerUnreachableException>()
             .Or<SocketException>()
             .WaitAndRetry(_publishRetryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
             {
                 _publishing = false;
-                _logger.LogError("RabbitMQ | Could not publish event message : {Event} after {Timeout}s ({ExceptionMessage})", eventMessage, $"{time.TotalSeconds:n1}", ex.Message);
+                _logger.LogError("{BrokerName} | Could not publish event message : {Event} after {Timeout}s ({ExceptionMessage})", "RabbitMQ", eventMessage, $"{time.TotalSeconds:n1}", ex.Message);
 
                 // Persistent Log
                 _logger.EventBusErrorLog(new ProduceMessageLogModel(
@@ -124,7 +126,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
                         )),
                     ProduceDetails: $"Message publish error: {ex.Message}"));
             });
-        
+
         var body = JsonSerializer.SerializeToUtf8Bytes(@event, @event.GetType(), new JsonSerializerOptions { WriteIndented = true });
 
         policy.Execute(() =>
@@ -162,7 +164,8 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         });
 
         Thread.Sleep(TimeSpan.FromMilliseconds(50));
-        _logger.LogDebug("RabbitMQ | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] COMPLETED", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
+        _logger.LogDebug("{BrokerName} | PRODUCER {ClientInfo} EVENT [ {EventName} ] => MessageId [ {MessageId} ] {OperationStatus}", "RabbitMQ", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString(),
+            "COMPLETED");
         _publishing = false;
     }
 
@@ -203,7 +206,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
             }
         }
 
-        _logger.LogDebug("RabbitMQ | Subscribing to event {EventName} with {EventHandler}", eventName, eventHandlerType.Name);
+        _logger.LogDebug("{BrokerName} | Subscribing to event {EventName} with {EventHandler}", "RabbitMQ", eventName, eventHandlerType.Name);
 
         _subsManager.AddSubscription(eventType, eventHandlerType);
 
@@ -220,20 +223,20 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
     {
         if (_disposed) return;
         _disposed = true;
-        _logger.LogInformation("RabbitMQ | Terminating...");
+        _logger.LogInformation("{BrokerName} | {OperationStatus}", "RabbitMQ", "TERMINATING");
 
-        _logger.LogDebug("RabbitMQ | Consumers terminating...");
+        _logger.LogDebug("{BrokerName} | Consumers terminating...", "RabbitMQ");
         Task.WaitAll(_consumers.Select(consumer => Task.Run(consumer.Dispose)).ToArray());
-        _logger.LogDebug("RabbitMQ | Consumers terminated");
+        _logger.LogDebug("{BrokerName} | Consumers terminated", "RabbitMQ");
 
-        _logger.LogDebug("RabbitMQ | Publisher terminating...");
+        _logger.LogDebug("{BrokerName} | Publisher terminating...", "RabbitMQ");
         while (_publishing)
         {
-            _logger.LogDebug("RabbitMQ | Publisher wait processing...");
+            _logger.LogDebug("{BrokerName} | Publisher wait processing...", "RabbitMQ");
             Thread.Sleep(1000);
         }
 
-        _logger.LogDebug("RabbitMQ | Publisher terminated");
+        _logger.LogDebug("{BrokerName} | Publisher terminated", "RabbitMQ");
 
         _subsManager.Clear();
         _consumers.Clear();
@@ -243,7 +246,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
             _persistentConnection?.Dispose();
         }
 
-        _logger.LogInformation("RabbitMQ | Terminated");
+        _logger.LogInformation("{BrokerName} | {OperationStatus}", "RabbitMQ", "TERMINATED");
     }
 
     private string TrimEventName(string eventName) => EventNameHelper.TrimEventName(_rabbitMqEventBusConfig, eventName);
