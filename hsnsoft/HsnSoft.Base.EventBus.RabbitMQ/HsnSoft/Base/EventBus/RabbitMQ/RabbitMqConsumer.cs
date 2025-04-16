@@ -39,24 +39,29 @@ public sealed class RabbitMqConsumer : IDisposable
     private string _currentConsumerTag = "no-active-consumer";
     private string _consumerQueueName = string.Empty;
     private string _consumerErrorQueueName = string.Empty;
+    private readonly string _consumerEventName;
+    private readonly IntegrationEventInfo _consumerEventInfo;
 
     public RabbitMqConsumer(IServiceScopeFactory serviceScopeFactory,
         IRabbitMqPersistentConnection persistentConnection,
         IEventBusSubscriptionManager subscriptionsManager,
         RabbitMqEventBusConfig rabbitMqEventBusConfig,
-        IEventBusLogger logger)
+        IEventBusLogger logger,
+        string consumerEventName)
     {
         _serviceScopeFactory = serviceScopeFactory ?? throw new ArgumentNullException(nameof(serviceScopeFactory), "MessageBroker ServiceScopeFactory is null");
         _persistentConnection = persistentConnection;
         _subscriptionsManager = subscriptionsManager;
         _rabbitMqEventBusConfig = rabbitMqEventBusConfig;
         _logger = logger;
+        _consumerEventName = consumerEventName;
 
         _consumerChannel = CreateConsumerChannelAsync()?.GetAwaiter().GetResult();
-        _consumerPrefetchSemaphore = new SemaphoreSlim(_rabbitMqEventBusConfig.ConsumerMaxFetchCount);
+        _consumerEventInfo = _subscriptionsManager.GetEventInfoByName(_consumerEventName);
+        _consumerPrefetchSemaphore = new SemaphoreSlim(_consumerEventInfo?.FetchCount ?? 1);
     }
 
-    public void StartBasicConsume(string eventName)
+    public void StartBasicConsume()
     {
         if (_consumerChannel == null)
         {
@@ -66,8 +71,8 @@ public sealed class RabbitMqConsumer : IDisposable
 
         lock (ChannelAckResourceLock)
         {
-            _consumerQueueName = EventNameHelper.GetConsumerClientEventQueueName(_rabbitMqEventBusConfig, eventName);
-            _consumerChannel?.BasicQosAsync(0, _rabbitMqEventBusConfig.ConsumerMaxFetchCount, false).GetAwaiter().GetResult();
+            _consumerQueueName = EventNameHelper.GetConsumerClientEventQueueName(_rabbitMqEventBusConfig, _consumerEventName);
+            _consumerChannel?.BasicQosAsync(0, _consumerEventInfo?.FetchCount ?? 1, false).GetAwaiter().GetResult();
 
             var consumer = new AsyncEventingBasicConsumer(_consumerChannel ?? throw new InvalidOperationException());
             consumer.ReceivedAsync += ConsumerReceivedAsync;
@@ -90,10 +95,10 @@ public sealed class RabbitMqConsumer : IDisposable
             _consumerQueueName, consumerChannelNumber, _currentConsumerTag, "TERMINATING");
 
         var waitCounter = 0;
-        while (waitCounter * 1000 < MaxWaitDisposeTime && _consumerPrefetchSemaphore.CurrentCount < _rabbitMqEventBusConfig.ConsumerMaxFetchCount)
+        while (waitCounter * 1000 < MaxWaitDisposeTime && _consumerPrefetchSemaphore.CurrentCount < (_consumerEventInfo?.FetchCount ?? 1))
         {
             _logger.LogDebug("{BrokerName} | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ]: Consumer Fetcher [ {Done}/{All} ] wait processing...", "RabbitMQ",
-                _consumerQueueName, consumerChannelNumber, _currentConsumerTag, _consumerPrefetchSemaphore.CurrentCount, _rabbitMqEventBusConfig.ConsumerMaxFetchCount);
+                _consumerQueueName, consumerChannelNumber, _currentConsumerTag, _consumerPrefetchSemaphore.CurrentCount, _consumerEventInfo?.FetchCount ?? 1);
             Thread.Sleep(1000);
             waitCounter++;
         }
@@ -101,7 +106,7 @@ public sealed class RabbitMqConsumer : IDisposable
         if (waitCounter > 0)
         {
             _logger.LogDebug("{BrokerName} | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ]: Consumer Fetcher [ {Done}/{All} ] processed", "RabbitMQ",
-                _consumerQueueName, consumerChannelNumber, _currentConsumerTag, _consumerPrefetchSemaphore.CurrentCount, _rabbitMqEventBusConfig.ConsumerMaxFetchCount);
+                _consumerQueueName, consumerChannelNumber, _currentConsumerTag, _consumerPrefetchSemaphore.CurrentCount, _consumerEventInfo?.FetchCount ?? 1);
         }
 
         _consumerPrefetchSemaphore?.Dispose();
@@ -117,7 +122,7 @@ public sealed class RabbitMqConsumer : IDisposable
         if (_disposed)
         {
             // don't use semaphore count until disposed function semaphore count check
-            while (_consumerPrefetchSemaphore.CurrentCount < _rabbitMqEventBusConfig.ConsumerMaxFetchCount)
+            while (_consumerPrefetchSemaphore.CurrentCount < (_consumerEventInfo?.FetchCount ?? 1))
             {
                 Thread.Sleep(1000);
             }
@@ -218,10 +223,10 @@ public sealed class RabbitMqConsumer : IDisposable
     {
         if (_subscriptionsManager.HasSubscriptionsForEvent(eventName))
         {
-            var eventType = _subscriptionsManager.GetEventTypeByName(eventName);
+            var eventInfo = _subscriptionsManager.GetEventInfoByName(eventName);
 
             var genericClass = typeof(MessageEnvelope<>);
-            var constructedClass = genericClass.MakeGenericType(eventType!);
+            var constructedClass = genericClass.MakeGenericType(eventInfo?.EventType!);
             var @event = System.Text.Json.JsonSerializer.Deserialize(message, constructedClass);
             //Guid messageId = ((dynamic)@event)?.MessageId;
 
@@ -243,7 +248,7 @@ public sealed class RabbitMqConsumer : IDisposable
                 var handleStartTime = DateTimeOffset.UtcNow;
                 try
                 {
-                    var eventHandlerType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType);
+                    var eventHandlerType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventInfo?.EventType!);
                     await Task.Yield();
                     await ((Task)eventHandlerType.GetMethod(nameof(IIntegrationEventHandler<IIntegrationEventMessage>.HandleAsync))?.Invoke(handler, [@event]))!;
 
@@ -341,7 +346,7 @@ public sealed class RabbitMqConsumer : IDisposable
             var failedEnvelope = JsonConvert.DeserializeObject<dynamic>(failedMessageContent);
             failedEnvelopeInfo = ((JObject)failedEnvelope)?.ToObject<ParentMessageEnvelope>();
 
-            failedEventEnvelopeMessageType = _subscriptionsManager.GetEventTypeByName(failedEventName);
+            failedEventEnvelopeMessageType = _subscriptionsManager.GetEventInfoByName(failedEventName)?.EventType;
 
             var genericClass = typeof(MessageEnvelope<>);
             var constructedClass = genericClass.MakeGenericType(failedEventEnvelopeMessageType!);

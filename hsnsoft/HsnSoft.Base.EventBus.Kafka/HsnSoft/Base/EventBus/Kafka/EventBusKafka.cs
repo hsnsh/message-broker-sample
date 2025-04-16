@@ -78,12 +78,12 @@ public class EventBusKafka : IEventBus, IDisposable
         await kafkaProducer.StartSendingMessages(eventName, @event);
     }
 
-    public void Subscribe<T, TH>() where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>
+    public void Subscribe<T, TH>(ushort fetchCount = 1) where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>
     {
-        Subscribe(typeof(T), typeof(TH));
+        Subscribe(typeof(T), typeof(TH), fetchCount);
     }
 
-    public void Subscribe(Type eventType, Type eventHandlerType)
+    public void Subscribe(Type eventType, Type eventHandlerType, ushort fetchCount = 1)
     {
         if (!eventType.IsAssignableTo(typeof(IIntegrationEventMessage))) throw new TypeAccessException();
         if (!eventHandlerType.IsAssignableTo(typeof(IIntegrationEventHandler))) throw new TypeAccessException();

@@ -30,8 +30,8 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
     private readonly ICurrentUser _currentUser;
     private readonly IEventBusSubscriptionManager _subsManager;
 
-    private static ushort MaxConsumerParallelThreadCount { get; set; } = 5;
-    private static ushort MaxConsumerMaxFetchCount { get; set; } = 10;
+    private static ushort MaxChannelParallelThreadCount = 5;
+    private static ushort MaxConsumerMaxFetchCount = 10;
     private readonly int _publishRetryCount = 5;
     private readonly List<RabbitMqConsumer> _consumers;
     private bool _disposed;
@@ -48,14 +48,9 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         _currentUser = serviceProvider.GetService<ICurrentUser>();
 
         _rabbitMqEventBusConfig = serviceProvider.GetRequiredService<IOptions<RabbitMqEventBusConfig>>().Value;
-        if (_rabbitMqEventBusConfig.ConsumerParallelThreadCount > MaxConsumerParallelThreadCount)
+        if (_rabbitMqEventBusConfig.ChannelParallelThreadCount > MaxChannelParallelThreadCount)
         {
-            _rabbitMqEventBusConfig.ConsumerParallelThreadCount = MaxConsumerParallelThreadCount;
-        }
-
-        if (_rabbitMqEventBusConfig.ConsumerMaxFetchCount > MaxConsumerMaxFetchCount)
-        {
-            _rabbitMqEventBusConfig.ConsumerMaxFetchCount = MaxConsumerMaxFetchCount;
+            _rabbitMqEventBusConfig.ChannelParallelThreadCount = MaxChannelParallelThreadCount;
         }
 
         _subsManager = serviceProvider.GetService<IEventBusSubscriptionManager>();
@@ -166,12 +161,14 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         _publishing = false;
     }
 
-    public void Subscribe<T, TH>() where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>
+    public void Subscribe<TEvent, THandler>(ushort fetchCount = 1)
+        where TEvent : IIntegrationEventMessage
+        where THandler : IIntegrationEventHandler<TEvent>
     {
-        Subscribe(typeof(T), typeof(TH));
+        Subscribe(typeof(TEvent), typeof(THandler), fetchCount);
     }
 
-    public void Subscribe(Type eventType, Type eventHandlerType)
+    public void Subscribe(Type eventType, Type eventHandlerType, ushort fetchCount = 1)
     {
         if (!eventType.IsAssignableTo(typeof(IIntegrationEventMessage))) throw new TypeAccessException();
         if (!eventHandlerType.IsAssignableTo(typeof(IIntegrationEventHandler))) throw new TypeAccessException();
@@ -183,12 +180,12 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
 
         _logger.LogDebug("{BrokerName} | Subscribing to event {EventName} with {EventHandler}", "RabbitMQ", eventName, eventHandlerType.Name);
 
-        _subsManager.AddSubscription(eventType, eventHandlerType);
+        _subsManager.AddSubscription(eventType, eventHandlerType, fetchCount);
 
-        for (int i = 0; i < _rabbitMqEventBusConfig.ConsumerParallelThreadCount; i++)
+        for (int i = 0; i < _rabbitMqEventBusConfig.ChannelParallelThreadCount; i++)
         {
-            var rabbitMqConsumer = new RabbitMqConsumer(_serviceScopeFactory, _persistentConnection, _subsManager, _rabbitMqEventBusConfig, _logger);
-            rabbitMqConsumer.StartBasicConsume(eventName);
+            var rabbitMqConsumer = new RabbitMqConsumer(_serviceScopeFactory, _persistentConnection, _subsManager, _rabbitMqEventBusConfig, _logger, eventName);
+            rabbitMqConsumer.StartBasicConsume();
 
             _consumers.Add(rabbitMqConsumer);
         }

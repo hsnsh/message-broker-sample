@@ -76,8 +76,8 @@ public class Startup
         var eventBus = app.ApplicationServices.GetRequiredService<IEventBus>();
 
         // Here you add the event handlers for each intergration event.
-        eventBus.Subscribe<OrderStartedEto, OrderStartedEtoHandler>();
-        eventBus.Subscribe<ReQueuedEto, ReQueuedEtoHandler>();
-        // eventBus.Subscribe<OrderShippingCompletedEto, OrderShippingCompletedEtoHandler>();
+        eventBus.Subscribe<OrderStartedEto, OrderStartedEtoHandler>(10);
+        eventBus.Subscribe<ReQueuedEto, ReQueuedEtoHandler>(10);
+        // eventBus.Subscribe<OrderShippingCompletedEto, OrderShippingCompletedEtoHandler>(10);
     }
 }
