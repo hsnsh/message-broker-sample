@@ -5,7 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using HsnSoft.Base.EventBus.Logging;
 using HsnSoft.Base.EventBus.RabbitMQ.Configs;
-using JetBrains.Annotations;
 using Microsoft.Extensions.Options;
 using Polly;
 using RabbitMQ.Client;

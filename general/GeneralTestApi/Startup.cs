@@ -1,5 +1,4 @@
 using GeneralLibrary.Base.EventBus;
-using GeneralLibrary.Base.EventBus.Kafka;
 using GeneralLibrary.Base.EventBus.Logging;
 using GeneralLibrary.Base.EventBus.RabbitMQ;
 using GeneralLibrary.Base.RabbitMQ;

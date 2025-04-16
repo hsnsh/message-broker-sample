@@ -150,7 +150,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         var eventName = eventType.Name;
         eventName = TrimEventName(eventName);
 
-        AddQueueBindForEventSubscription(eventName).GetAwaiter().GetResult();
+        AddQueueBindForEventSubscriptionAsync(eventName).GetAwaiter().GetResult();
 
         _logger.LogInformation("RabbitMQ | Subscribing to event {EventName} with {EventHandler}", eventName, eventHandlerType.Name);
 
@@ -158,7 +158,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         StartBasicConsume(eventName);
     }
 
-    private async Task AddQueueBindForEventSubscription(string eventName)
+    private async Task AddQueueBindForEventSubscriptionAsync(string eventName)
     {
         var containsKey = _subsManager.HasSubscriptionsForEvent(eventName);
         if (containsKey)
