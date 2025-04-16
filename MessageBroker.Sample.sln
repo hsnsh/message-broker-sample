@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.28010.2041
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "services", "services", "{72EA5373-07DA-4764-AD5F-73D83A4788AB}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "general-message-broker", "general-message-broker", "{766872AD-B2B0-4859-8B29-A9ADD8FA8491}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "1-general-message-broker", "1-general-message-broker", "{766872AD-B2B0-4859-8B29-A9ADD8FA8491}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeneralTestApi", "general\GeneralTestApi\GeneralTestApi.csproj", "{1F387A9D-23D6-4052-9701-4870669179A7}"
 EndProject

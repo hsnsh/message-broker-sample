@@ -7,8 +7,8 @@ public interface IRabbitMqPersistentConnection : IDisposable
 {
     bool IsConnected { get; }
 
-    bool TryConnect();
+    Task<bool> TryConnectAsync();
 
     [CanBeNull]
-    IModel CreateModel();
+    Task<IChannel> CreateModelAsync();
 }

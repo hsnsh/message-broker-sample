@@ -15,21 +15,21 @@ public sealed class OrderStartedIntegrationEventHandler : IIntegrationEventHandl
 
     public async Task HandleAsync(MessageEnvelope<OrderStartedEto> @event)
     {
-        // var parentIntegrationEvent = new ParentMessageEnvelope
-        // {
-        //     HopLevel = @event.HopLevel,
-        //     MessageId = @event.MessageId,
-        //     CorrelationId = @event.CorrelationId,
-        //     UserId = @event.UserId,
-        //     UserRoleUniqueName = @event.UserRoleUniqueName,
-        //     Channel = @event.Channel,
-        //     Producer = @event.Producer
-        // };
-        //
-        // await _eventBus.PublishAsync(new OrderStartedEto(Guid.NewGuid()), parentIntegrationEvent);
+        var parentIntegrationEvent = new MessageEnvelope
+        {
+            HopLevel = @event.HopLevel,
+            MessageId = @event.MessageId,
+            CorrelationId = @event.CorrelationId,
+            UserId = @event.UserId,
+            UserRoleUniqueName = @event.UserRoleUniqueName,
+            Channel = @event.Channel,
+            Producer = @event.Producer
+        };
+        
+        await _eventBus.PublishAsync(new OrderStartedEto(Guid.NewGuid()), parentIntegrationEvent);
 
-        await Task.Delay(1000);
+        await Task.Delay(5000);
 
-        throw new Exception("VERITABANINA BAGLANAMADIM");
+        // throw new Exception("VERITABANINA BAGLANAMADIM");
     }
 }
