@@ -18,10 +18,10 @@ public sealed class ShipmentService : IShipmentService
     public async Task OrderShippingStartedAsync(OrderShippingStartedEto input, CancellationToken cancellationToken = default)
     {
         // SAMPLE WORK (work done , 10/second)
-        await Task.Delay(10000, cancellationToken);
+        await Task.Delay(1000, cancellationToken);
 
         var shipmentId = Guid.NewGuid();
-        await _genericRepository.InsertAsync(new ShipmentEntity(shipmentId, input.OrderId.ToString()), cancellationToken);
+        // await _genericRepository.InsertAsync(new ShipmentEntity(shipmentId, input.OrderId.ToString()), cancellationToken);
 
         await _eventBus.PublishAsync(new ShipmentStartedEto(input.OrderId, shipmentId));
     }
@@ -29,7 +29,7 @@ public sealed class ShipmentService : IShipmentService
     public async Task ShipmentStartedAsync(ShipmentStartedEto input, CancellationToken cancellationToken = default)
     {
         // SAMPLE WORK (work done , 10/second)
-        await Task.Delay(10000, cancellationToken);
+        await Task.Delay(1000, cancellationToken);
 
         await _eventBus.PublishAsync(new OrderShippingCompletedEto(input.OrderId, input.ShipmentId));
 

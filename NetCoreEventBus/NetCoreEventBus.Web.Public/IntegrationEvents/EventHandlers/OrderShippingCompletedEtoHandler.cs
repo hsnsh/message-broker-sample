@@ -14,9 +14,11 @@ public class OrderShippingCompletedEtoHandler : IIntegrationEventHandler<OrderSh
         _logger = logger;
     }
 
-    public Task HandleAsync(MessageEnvelope<OrderShippingCompletedEto> @event)
+    public async Task HandleAsync(MessageEnvelope<OrderShippingCompletedEto> @event)
     {
         _logger.LogInformation(@event.ToString());
-        return Task.CompletedTask;
+
+        // SAMPLE WORK (work done , 10/second)
+        await Task.Delay(1000);
     }
 }
