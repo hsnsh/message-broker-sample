@@ -47,7 +47,8 @@ public class EventBusAzure : IEventBus, IDisposable
         RegisterSubscriptionClientMessageHandlerAsync().GetAwaiter().GetResult();
     }
 
-    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, string correlationId = null, bool isExchangeEvent = true, bool isReQueuePublish = false) where TEventMessage : IIntegrationEventMessage
+    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, string correlationId = null, bool isExchangeEvent = true, bool isReQueuePublish = false)
+        where TEventMessage : IIntegrationEventMessage
     {
         var eventName = eventMessage.GetType().Name;
         eventName = TrimEventName(eventName);
@@ -100,7 +101,8 @@ public class EventBusAzure : IEventBus, IDisposable
         {
             try
             {
-                _serviceBusPersisterConnection.AdministrationClient.CreateRuleAsync(_eventBusConfig.ExchangeName, _eventBusConfig.ConsumerClientName, new CreateRuleOptions { Filter = new CorrelationRuleFilter { Subject = eventName }, Name = eventName }).GetAwaiter().GetResult();
+                _serviceBusPersisterConnection.AdministrationClient
+                    .CreateRuleAsync(_eventBusConfig.ExchangeName, _eventBusConfig.ConsumerClientName, new CreateRuleOptions { Filter = new CorrelationRuleFilter { Subject = eventName }, Name = eventName }).GetAwaiter().GetResult();
             }
             catch (ServiceBusException)
             {
