@@ -6,7 +6,6 @@ using HsnSoft.Base.MongoDB.Context;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
-using MongoDB.Driver.Linq;
 
 namespace HsnSoft.Base.MongoDB;
 

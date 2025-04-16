@@ -8,7 +8,7 @@ internal static class Program
 {
     private static int _waitSampleWorkTime = 1000;
 
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var connectionFactory = new ConnectionFactory
         {
@@ -21,10 +21,10 @@ internal static class Program
 
         try
         {
-            PublishAsync(connectionFactory, 100).GetAwaiter().GetResult();
+            await PublishAsync(connectionFactory, 100);
 
-            // SimpleConsume(connectionFactory);
-            SemaphoreConsumeAsync(connectionFactory, 10).GetAwaiter().GetResult();
+            //await SimpleConsumeAsync(connectionFactory, 10);
+            await SemaphoreConsumeAsync(connectionFactory, 10);
         }
         catch (Exception e)
         {
@@ -39,7 +39,7 @@ internal static class Program
         await using var connection = await connectionFactory.CreateConnectionAsync();
         await using var channel = await connection.CreateChannelAsync();
 
-        await channel.QueueDeclareAsync("iskuyrugu", durable: true, false, false, null);
+        await channel.QueueDeclareAsync("iskuyrugu", durable: true, false, false);
         for (var i = 1; i <= publishCount; i++)
         {
             var bytemessage = Encoding.UTF8.GetBytes($"is - {i}");
@@ -52,43 +52,43 @@ internal static class Program
         }
     }
 
-    private static async Task SimpleConsumeAsync(IConnectionFactory connectionFactory)
-    {
-        using (var connection = await connectionFactory.CreateConnectionAsync())
-        using (var channel = await connection.CreateChannelAsync())
-        {
-            await channel.QueueDeclareAsync("iskuyrugu", durable: true, false, false, null);
-            channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false);
-
-            var consumer = new AsyncEventingBasicConsumer(channel);
-            consumer.ReceivedAsync += async (ch, ea) =>
-            {
-                var body = ea.Body.ToArray();
-                // copy or deserialise the payload
-                // and process the message
-                Thread.Sleep(_waitSampleWorkTime);
-                // ...
-                await channel.BasicAckAsync(ea.DeliveryTag, false);
-
-                Console.WriteLine(Encoding.UTF8.GetString(body) + " alındı");
-            };
-            // this consumer tag identifies the subscription
-            // when it has to be cancelled
-            var consumerTag = await channel.BasicConsumeAsync("iskuyrugu", false, consumer);
-            Console.WriteLine("consumerTag: " + consumerTag);
-
-            Console.Read(); // Block Consume Function terminate, Received Function Wait
-        }
-    }
-
-    private static async Task SemaphoreConsumeAsync(IConnectionFactory connectionFactory, ushort threadCount = 1)
+    private static async Task SimpleConsumeAsync(IConnectionFactory connectionFactory, ushort prefetchCount = 1)
     {
         await using var connection = await connectionFactory.CreateConnectionAsync();
         await using var channel = await connection.CreateChannelAsync();
-        using var semaphore = new SemaphoreSlim(threadCount);
 
-        await channel.QueueDeclareAsync("iskuyrugu", durable: true, false, false, null);
-        await channel.BasicQosAsync(prefetchSize: 0, prefetchCount: threadCount, global: false);
+        await channel.QueueDeclareAsync("iskuyrugu", durable: true, false, false);
+        await channel.BasicQosAsync(prefetchSize: 0, prefetchCount: prefetchCount, global: false);
+
+        var consumer = new AsyncEventingBasicConsumer(channel);
+        consumer.ReceivedAsync += async (ch, ea) =>
+        {
+            var body = ea.Body.ToArray();
+            var no = Encoding.UTF8.GetString(body);
+            // copy or deserialise the payload
+            // and process the message
+            Thread.Sleep(_waitSampleWorkTime);
+            // ...
+            await channel.BasicAckAsync(ea.DeliveryTag, false);
+
+            Console.WriteLine(no + " alındı");
+        };
+        // this consumer tag identifies the subscription
+        // when it has to be cancelled
+        var consumerTag = await channel.BasicConsumeAsync("iskuyrugu", false, consumer);
+        Console.WriteLine("consumerTag: " + consumerTag);
+
+        Console.Read(); // Block Consume Function terminate, Received Function Wait
+    }
+
+    private static async Task SemaphoreConsumeAsync(IConnectionFactory connectionFactory, ushort prefetchCount = 1)
+    {
+        await using var connection = await connectionFactory.CreateConnectionAsync();
+        await using var channel = await connection.CreateChannelAsync();
+        using var semaphore = new SemaphoreSlim(prefetchCount);
+
+        await channel.QueueDeclareAsync("iskuyrugu", durable: true, false, false);
+        await channel.BasicQosAsync(prefetchSize: 0, prefetchCount: prefetchCount, global: false);
 
         var consumer = new AsyncEventingBasicConsumer(channel);
         consumer.ReceivedAsync += async (ch, ea) =>
@@ -96,7 +96,9 @@ internal static class Program
             await semaphore.WaitAsync();
             var body = ea.Body.ToArray();
             var no = Encoding.UTF8.GetString(body);
-            Task.Run(() =>
+
+            // Do not using AWAIT , run asyncronosly
+            Task.Run(async () =>
             {
                 try
                 {
@@ -105,13 +107,13 @@ internal static class Program
                     // int b = 0;
                     // var c = a / b;
 
-                    channel.BasicAckAsync(ea.DeliveryTag, false).GetAwaiter().GetResult();
-                    Console.WriteLine(Encoding.UTF8.GetString(ea.Body.ToArray()) + " alındı");
+                    await channel.BasicAckAsync(ea.DeliveryTag, false);
+                    Console.WriteLine(no + " alındı");
                 }
                 catch (TimeoutException timeProblem)
                 {
                     // re-queue 
-                    channel.BasicNackAsync(ea.DeliveryTag, false, true).GetAwaiter().GetResult();
+                    await channel.BasicNackAsync(ea.DeliveryTag, false, true);
                     //channel.BasicReject(ea.DeliveryTag, true);
                 }
                 catch (Exception ex)
@@ -120,9 +122,9 @@ internal static class Program
 
                     #region Copy To Error Queue
 
-                    using (var channelError = connection.CreateChannelAsync().GetAwaiter().GetResult())
+                    await using (var channelError = await connection.CreateChannelAsync())
                     {
-                        channelError.QueueDeclareAsync("iskuyruguError", durable: true, false, false, null).GetAwaiter().GetResult();
+                        await channelError.QueueDeclareAsync("iskuyruguError", durable: true, false, false);
 
                         var bytemessage = Encoding.UTF8.GetBytes(no);
 
@@ -130,7 +132,7 @@ internal static class Program
                         props.ContentType = "text/plain";
                         props.DeliveryMode = DeliveryModes.Persistent;
 
-                        channelError.BasicPublishAsync("", "iskuyruguError", false, basicProperties: props, body: bytemessage).GetAwaiter().GetResult();
+                        await channelError.BasicPublishAsync("", "iskuyruguError", false, basicProperties: props, body: bytemessage);
                     }
 
                     #endregion
@@ -138,7 +140,7 @@ internal static class Program
                     Console.WriteLine(no + " HATA kuyruguna aktarıldı");
 
                     // remove from old queue 
-                    channel.BasicNackAsync(ea.DeliveryTag, false, false).GetAwaiter().GetResult();
+                    await channel.BasicNackAsync(ea.DeliveryTag, false, false);
                 }
                 finally
                 {
