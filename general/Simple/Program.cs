@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System.Net.Http.Headers;
+using System.Text;
+using Newtonsoft.Json.Linq;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
@@ -8,23 +10,30 @@ internal static class Program
 {
     private static int _waitSampleWorkTime = 1000;
 
+    private const string RabbitMqHost = "http://localhost:15672";
+    private const string Username = "guest";
+    private const string Password = "guest";
+    private const string VHost = "%2f"; // default vhost için URL encoded "/"
+
     public static async Task Main(string[] args)
     {
         var connectionFactory = new ConnectionFactory
         {
             HostName = "localhost",
             Port = 5672,
-            UserName = "guest",
-            Password = "guest",
+            UserName = Username,
+            Password = Password,
             VirtualHost = "/"
         };
 
         try
         {
-            await PublishAsync(connectionFactory, 100);
+            await ClearExchangeAllQueuesAsync("EDS");
+
+            //await PublishAsync(connectionFactory, 100);
 
             //await SimpleConsumeAsync(connectionFactory, 10);
-            await SemaphoreConsumeAsync(connectionFactory, 10);
+            //await SemaphoreConsumeAsync(connectionFactory, 10);
         }
         catch (Exception e)
         {
@@ -153,5 +162,40 @@ internal static class Program
         Console.WriteLine("consumerTag: " + consumerTag);
 
         Console.Read(); // Block Consume Function terminate, Received Function Wait
+    }
+
+    private static async Task ClearExchangeAllQueuesAsync(string exchangeName)
+    {
+        using var client = new HttpClient();
+        var authToken = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{Username}:{Password}"));
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authToken);
+        
+        // 1. Tüm kuyrukları al
+        var response = await client.GetAsync($"{RabbitMqHost}/api/queues/{VHost}");
+        response.EnsureSuccessStatusCode();
+
+        var content = await response.Content.ReadAsStringAsync();
+        var queues = JArray.Parse(content);
+
+        // 2. Her bir kuyruğu sil
+        foreach (var queue in queues)
+        {
+            var queueName = queue["name"]?.ToString();
+            if (!string.IsNullOrEmpty(queueName))
+            {
+                var deleteUrl = $"{RabbitMqHost}/api/queues/{VHost}/{Uri.EscapeDataString(queueName)}";
+
+                var deleteResponse = await client.DeleteAsync(deleteUrl);
+
+                if (deleteResponse.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"✓ Silindi: {queueName}");
+                }
+                else
+                {
+                    Console.WriteLine($"✗ Silinemedi: {queueName} - {deleteResponse.StatusCode}");
+                }
+            }
+        }
     }
 }
